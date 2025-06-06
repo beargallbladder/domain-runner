@@ -147,6 +147,90 @@ async function ensureSchemaExists(): Promise<void> {
   }
 }
 
+// Domain seeding function
+async function seedDomains(): Promise<{ inserted: number; skipped: number; total: number }> {
+  // Embedded domains list (our 266 premium domains)
+  const domains = [
+    'google.com', 'blogger.com', 'youtube.com', 'linkedin.com', 'cloudflare.com',
+    'microsoft.com', 'apple.com', 'wikipedia.org', 'wordpress.org', 'mozilla.org',
+    'youtu.be', 'blogspot.com', 'googleusercontent.com', 't.me', 'europa.eu',
+    'whatsapp.com', 'adobe.com', 'facebook.com', 'uol.com.br', 'istockphoto.com',
+    'vimeo.com', 'vk.com', 'github.com', 'amazon.com', 'bbc.co.uk',
+    'google.de', 'live.com', 'gravatar.com', 'nih.gov', 'dan.com',
+    'wordpress.com', 'yahoo.com', 'cnn.com', 'dropbox.com', 'wikimedia.org',
+    'creativecommons.org', 'google.com.br', 'line.me', 'googleblog.com', 'opera.com',
+    'globo.com', 'brandbucket.com', 'myspace.com', 'slideshare.net', 'paypal.com',
+    'tiktok.com', 'netvibes.com', 'theguardian.com', 'who.int', 'goo.gl',
+    'medium.com', 'weebly.com', 'w3.org', 'gstatic.com', 'jimdofree.com',
+    'cpanel.net', 'imdb.com', 'wa.me', 'feedburner.com', 'enable-javascript.com',
+    'nytimes.com', 'ok.ru', 'google.es', 'dailymotion.com', 'afternic.com',
+    'bloomberg.com', 'amazon.de', 'wiley.com', 'aliexpress.com', 'indiatimes.com',
+    'youronlinechoices.com', 'elpais.com', 'tinyurl.com', 'yadi.sk', 'spotify.com',
+    'huffpost.com', 'google.fr', 'webmd.com', 'samsung.com', 'independent.co.uk',
+    'amazon.co.jp', 'amazon.co.uk', '4shared.com', 'telegram.me', 'planalto.gov.br',
+    'businessinsider.com', 'ig.com.br', 'issuu.com', 'gov.br', 'wsj.com',
+    'hugedomains.com', 'usatoday.com', 'scribd.com', 'gov.uk', 'googleapis.com',
+    'huffingtonpost.com', 'bbc.com', 'estadao.com.br', 'nature.com', 'mediafire.com',
+    'washingtonpost.com', 'forms.gle', 'namecheap.com', 'forbes.com', 'mirror.co.uk',
+    'soundcloud.com', 'fb.com', 'domainmarket.com', 'ytimg.com', 'terra.com.br',
+    'google.co.uk', 'shutterstock.com', 'dailymail.co.uk', 'reg.ru', 't.co',
+    'cdc.gov', 'thesun.co.uk', 'wp.com', 'cnet.com', 'instagram.com',
+    'researchgate.net', 'google.it', 'fandom.com', 'office.com', 'list-manage.com',
+    'msn.com', 'un.org', 'ovh.com', 'mail.ru', 'bing.com',
+    'hatena.ne.jp', 'shopify.com', 'bit.ly', 'reuters.com', 'booking.com',
+    'discord.com', 'buydomains.com', 'nasa.gov', 'aboutads.info', 'time.com',
+    'abril.com.br', 'change.org', 'nginx.org', 'twitter.com', 'archive.org',
+    'cbsnews.com', 'networkadvertising.org', 'telegraph.co.uk', 'pinterest.com', 'google.co.jp',
+    'pixabay.com', 'zendesk.com', 'cpanel.com', 'vistaprint.com', 'sky.com',
+    'windows.net', 'alicdn.com', 'google.ca', 'lemonde.fr', 'newyorker.com',
+    'webnode.page', 'surveymonkey.com', 'amazonaws.com', 'academia.edu', 'apache.org',
+    'imageshack.us', 'akamaihd.net', 'nginx.com', 'discord.gg', 'thetimes.co.uk',
+    'amazon.fr', 'yelp.com', 'berkeley.edu', 'google.ru', 'sedoparking.com',
+    'cbc.ca', 'unesco.org', 'ggpht.com', 'privacyshield.gov', 'over-blog.com',
+    'clarin.com', 'wix.com', 'whitehouse.gov', 'icann.org', 'gnu.org',
+    'yandex.ru', 'francetvinfo.fr', 'gmail.com', 'mozilla.com', 'ziddu.com',
+    'guardian.co.uk', 'twitch.tv', 'sedo.com', 'foxnews.com', 'rambler.ru',
+    'stanford.edu', 'wikihow.com', '20minutos.es', 'sfgate.com', 'liveinternet.ru',
+    '000webhost.com', 'espn.com', 'eventbrite.com', 'disney.com', 'statista.com',
+    'addthis.com', 'pinterest.fr', 'lavanguardia.com', 'vkontakte.ru', 'doubleclick.net',
+    'skype.com', 'sciencedaily.com', 'bloglovin.com', 'insider.com', 'sputniknews.com',
+    'doi.org', 'nypost.com', 'elmundo.es', 'go.com', 'deezer.com',
+    'express.co.uk', 'detik.com', 'mystrikingly.com', 'rakuten.co.jp', 'amzn.to',
+    'arxiv.org', 'alibaba.com', 'fb.me', 'wikia.com', 't-online.de',
+    'telegra.ph', 'mega.nz', 'usnews.com', 'plos.org', 'naver.com',
+    'ibm.com', 'smh.com.au', 'dw.com', 'google.nl', 'lefigaro.fr',
+    'theatlantic.com', 'nydailynews.com', 'themeforest.net', 'rtve.es', 'newsweek.com',
+    'ovh.net', 'ca.gov', 'goodreads.com', 'economist.com', 'target.com',
+    'marca.com', 'kickstarter.com', 'hindustantimes.com', 'weibo.com', 'huawei.com',
+    'e-monsite.com', 'hubspot.com', 'npr.org', 'netflix.com', 'gizmodo.com',
+    'netlify.app', 'yandex.com', 'mashable.com', 'ebay.com', 'etsy.com', 'walmart.com'
+  ];
+
+  let inserted = 0;
+  let skipped = 0;
+  
+  for (const domain of domains) {
+    try {
+      const result = await query(`
+        INSERT INTO domains (domain, source, status)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (domain) DO NOTHING
+        RETURNING id
+      `, [domain.trim(), 'api_seed', 'pending']);
+      
+      if (result.rows.length > 0) {
+        inserted++;
+      } else {
+        skipped++;
+      }
+    } catch (error) {
+      console.error(`Error inserting ${domain}:`, error);
+    }
+  }
+
+  return { inserted, skipped, total: domains.length };
+}
+
 // Initialize monitoring
 const monitoring = MonitoringService.getInstance();
 
@@ -156,6 +240,50 @@ const port = process.env.PORT || 3000;
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'dashboard/public')));
+
+// SEED ENDPOINT - THE MONEY SHOT! 🚀
+app.post('/seed', async (req: Request, res: Response) => {
+  try {
+    console.log('🌱 Seeding domains via API endpoint...');
+    const result = await seedDomains();
+    
+    // Get current stats
+    const stats = await query(`
+      SELECT 
+        COUNT(*) as total_domains,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending_domains,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed_domains,
+        COUNT(*) FILTER (WHERE status = 'processing') as processing_domains
+      FROM domains
+    `);
+
+    const response = {
+      success: true,
+      message: '🎉 Domain seeding complete!',
+      inserted: result.inserted,
+      skipped: result.skipped,
+      total_in_list: result.total,
+      database_stats: {
+        total_domains: parseInt(stats.rows[0].total_domains),
+        pending: parseInt(stats.rows[0].pending_domains),
+        processing: parseInt(stats.rows[0].processing_domains),
+        completed: parseInt(stats.rows[0].completed_domains)
+      },
+      estimated_time: `~${Math.ceil(parseInt(stats.rows[0].pending_domains) / 60)} hours for first complete run`,
+      processing_rate: '1 domain per minute, 3 prompts per domain'
+    };
+
+    console.log('🎉 Seeding complete!', response);
+    res.json(response);
+  } catch (error) {
+    console.error('❌ Seeding failed:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Seeding failed', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
 
 // API endpoints for metrics
 app.get('/api/stats', async (req: Request, res: Response) => {
