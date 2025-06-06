@@ -337,6 +337,38 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
+// Simple status endpoint for domain progress
+app.get('/status', async (req: Request, res: Response) => {
+  try {
+    const stats = await query(`
+      SELECT 
+        COUNT(*) as total_domains,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending,
+        COUNT(*) FILTER (WHERE status = 'processing') as processing,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed,
+        COUNT(*) FILTER (WHERE status = 'error') as errors
+      FROM domains
+    `);
+
+    const recent = await query(`
+      SELECT domain, status, updated_at 
+      FROM domains 
+      WHERE status != 'pending' 
+      ORDER BY updated_at DESC 
+      LIMIT 5
+    `);
+
+    res.json({
+      domain_stats: stats.rows[0],
+      recent_activity: recent.rows,
+      processing_rate: '1 domain per minute',
+      estimated_completion: `~${Math.ceil(parseInt(stats.rows[0].pending) / 60)} hours remaining`
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch status' });
+  }
+});
+
 // Initialize application
 async function initializeApp(): Promise<void> {
   try {
