@@ -450,6 +450,34 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
+// Peek at actual LLM responses
+app.get('/responses', async (req: Request, res: Response) => {
+  try {
+    const responses = await query(`
+      SELECT 
+        d.domain,
+        r.model,
+        r.prompt_type,
+        LEFT(r.raw_response, 200) as response_preview,
+        r.token_count,
+        r.total_cost_usd,
+        r.latency_ms,
+        r.captured_at
+      FROM responses r
+      JOIN domains d ON r.domain_id = d.id
+      ORDER BY r.captured_at DESC
+      LIMIT 10
+    `);
+    
+    res.json({
+      recent_responses: responses.rows,
+      total_responses: responses.rows.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch responses' });
+  }
+});
+
 // Simple status endpoint for domain progress
 app.get('/status', async (req: Request, res: Response) => {
   try {
