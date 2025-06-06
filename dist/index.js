@@ -44,6 +44,7 @@ const database_1 = require("./config/database");
 const fs = __importStar(require("fs"));
 const openai_1 = __importDefault(require("openai"));
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const axios_1 = __importDefault(require("axios"));
 // Load environment variables
 dotenv.config();
 // Initialize LLM clients
@@ -52,6 +53,27 @@ const openai = new openai_1.default({
 });
 const anthropic = new sdk_1.default({
     apiKey: process.env.ANTHROPIC_API_KEY
+});
+// Initialize additional API clients for comprehensive 2025 coverage
+const deepseekClient = axios_1.default.create({
+    baseURL: 'https://api.deepseek.com/v1',
+    headers: {
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json'
+    }
+});
+const googleClient = axios_1.default.create({
+    baseURL: 'https://generativelanguage.googleapis.com/v1beta',
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+const mistralClient = axios_1.default.create({
+    baseURL: 'https://api.mistral.ai/v1',
+    headers: {
+        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+        'Content-Type': 'application/json'
+    }
 });
 // Real prompt templates for domain analysis
 const PROMPT_TEMPLATES = {
@@ -392,6 +414,90 @@ async function callLLM(model, prompt, domain) {
                 latency: latency
             };
         }
+        else if (model.includes('deepseek')) {
+            // 🔬 DeepSeek API call (OpenAI-compatible)
+            const response = await deepseekClient.post('/chat/completions', {
+                model: model,
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 1000,
+                temperature: 0.7
+            });
+            const latency = Date.now() - startTime;
+            const usage = response.data.usage || {};
+            const promptTokens = usage.prompt_tokens || 0;
+            const completionTokens = usage.completion_tokens || 0;
+            // DeepSeek V3 pricing (extremely competitive)
+            let cost = 0;
+            if (model.includes('coder')) {
+                cost = promptTokens * 0.000002 + completionTokens * 0.000008; // DeepSeek Coder pricing
+            }
+            else {
+                cost = promptTokens * 0.000002 + completionTokens * 0.000006; // DeepSeek Chat pricing
+            }
+            return {
+                response: response.data.choices[0]?.message?.content || 'No response',
+                tokenUsage: usage,
+                cost: cost,
+                latency: latency
+            };
+        }
+        else if (model.includes('gemini')) {
+            // 🌟 Google Gemini API call
+            const response = await googleClient.post(`/models/${model}:generateContent?key=${process.env.GOOGLE_API_KEY}`, {
+                contents: [{
+                        parts: [{ text: prompt }]
+                    }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1000
+                }
+            });
+            const latency = Date.now() - startTime;
+            const usage = response.data.usageMetadata || {};
+            const promptTokens = usage.promptTokenCount || 0;
+            const completionTokens = usage.candidatesTokenCount || 0;
+            // Google Gemini pricing
+            let cost = 0;
+            if (model.includes('1.5-pro')) {
+                cost = promptTokens * 0.00000125 + completionTokens * 0.000005; // Gemini 1.5 Pro pricing
+            }
+            else if (model.includes('1.5-flash')) {
+                cost = promptTokens * 0.00000025 + completionTokens * 0.000001; // Gemini 1.5 Flash pricing
+            }
+            return {
+                response: response.data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response',
+                tokenUsage: usage,
+                cost: cost,
+                latency: latency
+            };
+        }
+        else if (model.includes('mistral')) {
+            // 🔮 Mistral API call
+            const response = await mistralClient.post('/chat/completions', {
+                model: model,
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 1000,
+                temperature: 0.7
+            });
+            const latency = Date.now() - startTime;
+            const usage = response.data.usage || {};
+            const promptTokens = usage.prompt_tokens || 0;
+            const completionTokens = usage.completion_tokens || 0;
+            // Mistral pricing
+            let cost = 0;
+            if (model.includes('large')) {
+                cost = promptTokens * 0.000004 + completionTokens * 0.000012; // Mistral Large pricing
+            }
+            else if (model.includes('small')) {
+                cost = promptTokens * 0.000002 + completionTokens * 0.000006; // Mistral Small pricing
+            }
+            return {
+                response: response.data.choices[0]?.message?.content || 'No response',
+                tokenUsage: usage,
+                cost: cost,
+                latency: latency
+            };
+        }
         else {
             throw new Error(`Unsupported model: ${model}`);
         }
@@ -438,8 +544,8 @@ app.post('/seed', async (req, res) => {
                 completed: parseInt(stats.rows[0].completed_domains)
             },
             estimated_time: `~${Math.ceil(parseInt(stats.rows[0].pending_domains) / 60)} hours for complete 2025 tensor analysis`,
-            processing_rate: '1 domain per minute, 39 responses per domain (13 models × 3 prompts)',
-            tensor_upgrade: '🚀 UPGRADED to 13 latest 2025 models: GPT-4.1, GPT-4.5, Claude 4 Opus/Sonnet!'
+            processing_rate: '1 domain per minute, 60 responses per domain (20 models × 3 prompts)',
+            tensor_upgrade: '🚀 ULTIMATE UPGRADE: 20 models - GPT-4.1/4.5, Claude 4, DeepSeek V3, Gemini 1.5, Mistral!'
         };
         console.log('🎉 Seeding complete!', response);
         res.json(response);
@@ -646,7 +752,7 @@ async function processNextBatch() {
             try {
                 // Real LLM processing with multiple models
                 console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
-                // Define ALL 13 models for MAXIMUM 2025 tensor analysis 🚀
+                // Define ALL 20 models for ULTIMATE 2025 tensor analysis 🚀🔥
                 const models = [
                     // 🤖 Latest OpenAI Models (2025)
                     'gpt-4.1', // Enhanced coding and reasoning capabilities
@@ -662,12 +768,21 @@ async function processNextBatch() {
                     'claude-3-7-sonnet-20250219', // Claude 3.7 Sonnet - enhanced
                     'claude-3-opus-20240229', // Claude 3 Opus - legacy flagship
                     'claude-3-sonnet-20240229', // Claude 3 Sonnet - legacy balanced
-                    'claude-3-haiku-20240307' // Claude 3 Haiku - fast and efficient
+                    'claude-3-haiku-20240307', // Claude 3 Haiku - fast and efficient
+                    // 🔬 DeepSeek Models (2025) - Llama & Advanced Reasoning
+                    'deepseek-chat', // DeepSeek V3 - Advanced reasoning & coding
+                    'deepseek-coder', // DeepSeek Coder - Specialized coding model
+                    // 🌟 Google Gemini Models (2025)
+                    'gemini-1.5-pro', // Gemini 1.5 Pro - Multimodal powerhouse
+                    'gemini-1.5-flash', // Gemini 1.5 Flash - Fast and efficient
+                    // 🔮 Mistral Models (2025) 
+                    'mistral-large-2407', // Mistral Large - Flagship model
+                    'mistral-small-2402' // Mistral Small - Cost-effective
                 ];
                 const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'];
-                // ⚡ PARALLEL PROCESSING - 5X SPEED BOOST WITH 13 MODELS!
+                // ⚡ PARALLEL PROCESSING - 5X SPEED BOOST WITH 20 MODELS!
                 for (const promptType of promptTypes) {
-                    console.log(`🚀 PARALLEL processing ${promptType} across ALL 13 MODELS (2025 LINEUP) for ${domain.domain}`);
+                    console.log(`🚀 PARALLEL processing ${promptType} across ALL 20 MODELS (ULTIMATE 2025 LINEUP) for ${domain.domain}`);
                     // Create parallel promises for all models
                     const modelPromises = models.map(async (model) => {
                         try {
