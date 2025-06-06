@@ -10,15 +10,16 @@ async function processDomain(domain: string) {
   try {
     console.log(`Processing domain: ${domain}`);
     
-    await saveDomain(domain);
-    console.log(`✅ Domain saved: ${domain}`);
+    // Save domain and get its ID
+    const domainId = await saveDomain(domain);
+    console.log(`✅ Domain saved: ${domain} (ID: ${domainId})`);
     
     // Example response capture - we'll replace this with real LLM calls later
     await saveResponse({
-      domain_id: 1, // This should be the actual domain ID from the database
+      domain_id: domainId,
       model_name: 'test-model',
       prompt_type: 'what-is',
-      raw_response: 'Test response',
+      raw_response: `Test response for ${domain} at ${new Date().toISOString()}`,
       token_count: 100
     });
     console.log(`✅ Test response saved for domain: ${domain}`);

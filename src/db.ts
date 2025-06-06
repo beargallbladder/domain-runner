@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { RawResponse, Domain } from './types';
+import { Domain, Response } from './types';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -8,13 +8,16 @@ const pool = new Pool({
   }
 });
 
-export async function saveDomain(domain: string): Promise<void> {
+export async function saveDomain(domain: string): Promise<number> {
   const query = `
     INSERT INTO domains (domain)
     VALUES ($1)
-    ON CONFLICT (domain) DO NOTHING
+    ON CONFLICT (domain) 
+    DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+    RETURNING id
   `;
-  await pool.query(query, [domain]);
+  const result = await pool.query(query, [domain]);
+  return result.rows[0].id;
 }
 
 export async function saveResponse(response: {
@@ -30,6 +33,11 @@ export async function saveResponse(response: {
       token_count, created_at
     )
     VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+    ON CONFLICT (domain_id, model_name, prompt_type) 
+    DO UPDATE SET 
+      raw_response = $4,
+      token_count = $5,
+      created_at = CURRENT_TIMESTAMP
   `;
   
   await pool.query(query, [
