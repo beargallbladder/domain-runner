@@ -510,7 +510,7 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
         latency: latency
       };
       
-    } else if (model.includes('llama') || model.includes('mixtral') || model.includes('yi-') || model.includes('codellama')) {
+    } else if (model.includes('meta-llama') || model.includes('mistralai') || model.includes('NousResearch') || model.includes('CodeLlama')) {
       // 🦙 Together AI for open-source models (Llama, Mixtral, etc.)
       const response = await togetherClient.post('/chat/completions', {
         model: model,
@@ -526,13 +526,13 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
       
       // Budget model pricing (extremely competitive)
       let cost = 0;
-      if (model.includes('70b') || model.includes('72b')) {
+      if (model.includes('70B') || model.includes('72B')) {
         cost = promptTokens * 0.000008 + completionTokens * 0.000015; // Large models
-      } else if (model.includes('34b') || model.includes('22b')) {
+      } else if (model.includes('34B') || model.includes('22B')) {
         cost = promptTokens * 0.000005 + completionTokens * 0.000010; // Mid-size models
-      } else if (model.includes('8b') || model.includes('7b') || model.includes('9b')) {
+      } else if (model.includes('8B') || model.includes('7B') || model.includes('9B')) {
         cost = promptTokens * 0.0000015 + completionTokens * 0.000003; // Small models
-      } else if (model.includes('3b')) {
+      } else if (model.includes('3B')) {
         cost = promptTokens * 0.0000008 + completionTokens * 0.000001; // Tiny models
       } else {
         cost = promptTokens * 0.000002 + completionTokens * 0.000004; // Default budget pricing
@@ -545,7 +545,7 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
         latency: latency
       };
       
-    } else if (model.includes('qwen') || model.includes('phi-') || model.includes('gemma')) {
+    } else if (model.includes('Qwen') || model.includes('microsoft') || model.includes('google/gemma')) {
       // 🚀 Hugging Face for additional models (Qwen, Phi, Gemma)
       const response = await hfClient.post('/chat/completions', {
         model: model,
@@ -561,13 +561,13 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
       
       // Ultra-budget model pricing
       let cost = 0;
-      if (model.includes('72b') || model.includes('70b')) {
+      if (model.includes('72B') || model.includes('70B')) {
         cost = promptTokens * 0.000008 + completionTokens * 0.000012; // Large Qwen models
-      } else if (model.includes('32b') || model.includes('27b')) {
+      } else if (model.includes('32B') || model.includes('27B')) {
         cost = promptTokens * 0.000003 + completionTokens * 0.000006; // Mid Qwen/Gemma models
-      } else if (model.includes('14b') || model.includes('9b')) {
+      } else if (model.includes('14B') || model.includes('9B')) {
         cost = promptTokens * 0.000001 + completionTokens * 0.000002; // Small models
-      } else if (model.includes('7b') || model.includes('3b')) {
+      } else if (model.includes('7B') || model.includes('3B')) {
         cost = promptTokens * 0.0000003 + completionTokens * 0.0000008; // Tiny models
       } else if (model.includes('mini')) {
         cost = promptTokens * 0.0000001 + completionTokens * 0.0000003; // Phi-3-mini ultra-cheap
@@ -874,38 +874,36 @@ async function processNextBatch(): Promise<void> {
           'gpt-4o',                       // $0.006 - Multimodal model supporting text, image, and audio
           
           // ⚖️ MID-TIER ($0.005-$0.015) - Balanced performance/cost
-          'llama-3.1-70b-instruct',       // ~$0.012 - Meta's large workhorse
-          'qwen-2.5-72b-instruct',        // ~$0.010 - Premium Chinese model
-          'mixtral-8x22b-instruct',       // ~$0.009 - Larger mixture model
+          'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',  // ~$0.012 - Meta's large workhorse
+          'Qwen/Qwen2.5-72B-Instruct',    // ~$0.010 - Premium Chinese model
+          'mistralai/Mixtral-8x22B-Instruct-v0.1',  // ~$0.009 - Larger mixture model
           'claude-3-opus-20240229',       // $0.049 - Claude 3 Opus - legacy flagship
           'deepseek-chat',                // $0.004 - DeepSeek V3 - Advanced reasoning & coding
           'deepseek-coder',               // $0.006 - DeepSeek Coder - Specialized coding model
           
           // 💰 BUDGET TIER ($0.001-$0.005) - Efficient workhorses  
           'mistral-small-2402',           // $0.004 - Mistral Small - Cost-effective
-          'llama-3.1-8b-instruct',        // ~$0.003 - Meta's efficient model
-          'mixtral-8x7b-instruct',        // ~$0.0025 - Mixture of experts
-          'qwen-2.5-14b-instruct',        // ~$0.002 - Mid-size reasoning
+          'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',   // ~$0.003 - Meta's efficient model
+          'mistralai/Mixtral-8x7B-Instruct-v0.1',  // ~$0.0025 - Mixture of experts
+          'Qwen/Qwen2.5-14B-Instruct',    // ~$0.002 - Mid-size reasoning
           'gpt-3.5-turbo',                // $0.001 - Widely used model for general-purpose tasks
           'claude-3-haiku-20240307',      // $0.0005 - Claude 3 Haiku - fast and efficient
           'gpt-4o-mini',                  // $0.0013 - Smaller, cost-effective multimodal model
           
           // 🏃 ULTRA-BUDGET TIER ($0.0001-$0.001) - Maximum efficiency
-          'llama-3.2-3b-instruct',        // ~$0.0008 - Tiny but capable
-          'qwen-2.5-7b-instruct',         // ~$0.0005 - Efficient Chinese model  
-          'mistral-7b-instruct',          // ~$0.0004 - Baseline Mistral
-          'phi-3-mini',                   // ~$0.0003 - Microsoft's efficient model
-          'gemma-2-9b',                   // ~$0.0002 - Google's efficient model
+          'meta-llama/Meta-Llama-3.2-3B-Instruct-Turbo',   // ~$0.0008 - Tiny but capable
+          'Qwen/Qwen2.5-7B-Instruct',     // ~$0.0005 - Efficient Chinese model  
+          'mistralai/Mistral-7B-Instruct-v0.3',  // ~$0.0004 - Baseline Mistral
+          'microsoft/Phi-3-mini-4k-instruct',  // ~$0.0003 - Microsoft's efficient model
+          'google/gemma-2-9b-it',          // ~$0.0002 - Google's efficient model
           'gemini-1.5-flash',             // $0.0006 - Gemini 1.5 Flash - Fast and efficient
-          'codellama-7b-instruct',        // ~$0.0003 - Specialized coding model
-          'yi-34b-chat',                  // ~$0.0008 - Strong open model
+          'meta-llama/CodeLlama-7b-Instruct-hf',  // ~$0.0003 - Specialized coding model
+          'NousResearch/Nous-Hermes-2-Yi-34B',  // ~$0.0008 - Strong open model
           
           // 🚀 EXPERIMENTAL TIER - Latest releases (varies)
           'gpt-4.5',                      // TBD - Orion research preview
           'gemini-1.5-pro',              // TBD - Gemini 1.5 Pro - Multimodal powerhouse
-          'llama-3.3-70b-instruct',      // ~$0.008 - Latest Meta release
-          'qwen-2.5-coder-32b',          // ~$0.005 - Specialized coding model
-          'gemma-3-27b'                   // ~$0.004 - Latest Google model
+          'meta-llama/Meta-Llama-3.3-70B-Instruct',  // ~$0.008 - Latest Meta release
         ];
         const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'] as const;
         
