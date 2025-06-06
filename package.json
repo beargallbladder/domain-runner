@@ -1,0 +1,28 @@
+{
+  "name": "raw-capture-runner",
+  "version": "1.0.0",
+  "description": "Raw LLM response capture runner for multiple models",
+  "main": "dist/runner.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/runner.js",
+    "dev": "ts-node src/runner.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.18.0",
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "openai": "^4.104.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.9.36",
+    "@types/node": "^20.19.0",
+    "@types/pg": "^8.15.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
