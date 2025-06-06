@@ -7,7 +7,9 @@
     "build": "./scripts/build.sh",
     "start": "node dist/migrations/run-migrations.js && node dist/runner.js",
     "dev": "ts-node src/runner.ts",
-    "migrate": "node dist/migrations/run-migrations.js"
+    "migrate": "node dist/migrations/run-migrations.js",
+    "test-db": "ts-node src/test-db.ts",
+    "seed": "ts-node src/scripts/seed-domains.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.18.0",
