@@ -75,6 +75,22 @@ const mistralClient = axios_1.default.create({
         'Content-Type': 'application/json'
     }
 });
+// Together AI client for open-source models (Llama, Mixtral, etc.)
+const togetherClient = axios_1.default.create({
+    baseURL: 'https://api.together.xyz/v1',
+    headers: {
+        'Authorization': `Bearer ${process.env.TOGETHER_API_KEY}`,
+        'Content-Type': 'application/json'
+    }
+});
+// Hugging Face client for additional models
+const hfClient = axios_1.default.create({
+    baseURL: 'https://api.endpoints.huggingface.co/v2',
+    headers: {
+        'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+        'Content-Type': 'application/json'
+    }
+});
 // Real prompt templates for domain analysis
 const PROMPT_TEMPLATES = {
     business_analysis: (domain) => `
@@ -491,6 +507,84 @@ async function callLLM(model, prompt, domain) {
             else if (model.includes('small')) {
                 cost = promptTokens * 0.000002 + completionTokens * 0.000006; // Mistral Small pricing
             }
+            else if (model.includes('7b')) {
+                cost = promptTokens * 0.0000002 + completionTokens * 0.0000005; // Mistral 7B ultra-budget
+            }
+            return {
+                response: response.data.choices[0]?.message?.content || 'No response',
+                tokenUsage: usage,
+                cost: cost,
+                latency: latency
+            };
+        }
+        else if (model.includes('llama') || model.includes('mixtral') || model.includes('yi-') || model.includes('codellama')) {
+            // 🦙 Together AI for open-source models (Llama, Mixtral, etc.)
+            const response = await togetherClient.post('/chat/completions', {
+                model: model,
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 1000,
+                temperature: 0.7
+            });
+            const latency = Date.now() - startTime;
+            const usage = response.data.usage || {};
+            const promptTokens = usage.prompt_tokens || 0;
+            const completionTokens = usage.completion_tokens || 0;
+            // Budget model pricing (extremely competitive)
+            let cost = 0;
+            if (model.includes('70b') || model.includes('72b')) {
+                cost = promptTokens * 0.000008 + completionTokens * 0.000015; // Large models
+            }
+            else if (model.includes('34b') || model.includes('22b')) {
+                cost = promptTokens * 0.000005 + completionTokens * 0.000010; // Mid-size models
+            }
+            else if (model.includes('8b') || model.includes('7b') || model.includes('9b')) {
+                cost = promptTokens * 0.0000015 + completionTokens * 0.000003; // Small models
+            }
+            else if (model.includes('3b')) {
+                cost = promptTokens * 0.0000008 + completionTokens * 0.000001; // Tiny models
+            }
+            else {
+                cost = promptTokens * 0.000002 + completionTokens * 0.000004; // Default budget pricing
+            }
+            return {
+                response: response.data.choices[0]?.message?.content || 'No response',
+                tokenUsage: usage,
+                cost: cost,
+                latency: latency
+            };
+        }
+        else if (model.includes('qwen') || model.includes('phi-') || model.includes('gemma')) {
+            // 🚀 Hugging Face for additional models (Qwen, Phi, Gemma)
+            const response = await hfClient.post('/chat/completions', {
+                model: model,
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 1000,
+                temperature: 0.7
+            });
+            const latency = Date.now() - startTime;
+            const usage = response.data.usage || {};
+            const promptTokens = usage.prompt_tokens || 0;
+            const completionTokens = usage.completion_tokens || 0;
+            // Ultra-budget model pricing
+            let cost = 0;
+            if (model.includes('72b') || model.includes('70b')) {
+                cost = promptTokens * 0.000008 + completionTokens * 0.000012; // Large Qwen models
+            }
+            else if (model.includes('32b') || model.includes('27b')) {
+                cost = promptTokens * 0.000003 + completionTokens * 0.000006; // Mid Qwen/Gemma models
+            }
+            else if (model.includes('14b') || model.includes('9b')) {
+                cost = promptTokens * 0.000001 + completionTokens * 0.000002; // Small models
+            }
+            else if (model.includes('7b') || model.includes('3b')) {
+                cost = promptTokens * 0.0000003 + completionTokens * 0.0000008; // Tiny models
+            }
+            else if (model.includes('mini')) {
+                cost = promptTokens * 0.0000001 + completionTokens * 0.0000003; // Phi-3-mini ultra-cheap
+            }
+            else {
+                cost = promptTokens * 0.0000005 + completionTokens * 0.000001; // Default ultra-budget
+            }
             return {
                 response: response.data.choices[0]?.message?.content || 'No response',
                 tokenUsage: usage,
@@ -544,8 +638,8 @@ app.post('/seed', async (req, res) => {
                 completed: parseInt(stats.rows[0].completed_domains)
             },
             estimated_time: `~${Math.ceil(parseInt(stats.rows[0].pending_domains) / 60)} hours for complete 2025 tensor analysis`,
-            processing_rate: '1 domain per minute, 60 responses per domain (20 models × 3 prompts)',
-            tensor_upgrade: '🚀 ULTIMATE UPGRADE: 20 models - GPT-4.1/4.5, Claude 4, DeepSeek V3, Gemini 1.5, Mistral!'
+            processing_rate: '1 domain per minute, 105 responses per domain (35 models × 3 prompts)',
+            tensor_upgrade: '🚀 ULTIMATE COST SPECTRUM: 35 models - $0.0001 to $0.15 - Complete budget to flagship coverage!'
         };
         console.log('🎉 Seeding complete!', response);
         res.json(response);
@@ -752,37 +846,54 @@ async function processNextBatch() {
             try {
                 // Real LLM processing with multiple models
                 console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
-                // Define ALL 20 models for ULTIMATE 2025 tensor analysis 🚀🔥
+                // Define ALL 35 models for COMPLETE COST SPECTRUM 2025 tensor analysis 🚀💰
                 const models = [
-                    // 🤖 Latest OpenAI Models (2025)
-                    'gpt-4.1', // Enhanced coding and reasoning capabilities
-                    'gpt-4.1-mini', // Faster and more efficient variant
-                    'gpt-4.1-nano', // Optimized for low-latency tasks
-                    'gpt-4.5', // Orion research preview with improved performance
-                    'gpt-4o', // Multimodal model supporting text, image, and audio
-                    'gpt-4o-mini', // Smaller, cost-effective multimodal model
-                    'gpt-3.5-turbo', // Widely used model for general-purpose tasks
-                    // 🧠 Latest Claude Models (2025)
-                    'claude-opus-4-20250514', // Claude 4 Opus - most powerful
-                    'claude-sonnet-4-20250514', // Claude 4 Sonnet - balanced
-                    'claude-3-7-sonnet-20250219', // Claude 3.7 Sonnet - enhanced
-                    'claude-3-opus-20240229', // Claude 3 Opus - legacy flagship
-                    'claude-3-sonnet-20240229', // Claude 3 Sonnet - legacy balanced
-                    'claude-3-haiku-20240307', // Claude 3 Haiku - fast and efficient
-                    // 🔬 DeepSeek Models (2025) - Llama & Advanced Reasoning
-                    'deepseek-chat', // DeepSeek V3 - Advanced reasoning & coding
-                    'deepseek-coder', // DeepSeek Coder - Specialized coding model
-                    // 🌟 Google Gemini Models (2025)
-                    'gemini-1.5-pro', // Gemini 1.5 Pro - Multimodal powerhouse
-                    'gemini-1.5-flash', // Gemini 1.5 Flash - Fast and efficient
-                    // 🔮 Mistral Models (2025) 
-                    'mistral-large-2407', // Mistral Large - Flagship model
-                    'mistral-small-2402' // Mistral Small - Cost-effective
+                    // 💎 FLAGSHIP TIER ($0.05-$0.15) - Premium powerhouses
+                    'gpt-4.1', // $0.11 - Enhanced coding and reasoning capabilities
+                    'claude-opus-4-20250514', // $0.087 - Claude 4 Opus - most powerful
+                    'claude-sonnet-4-20250514', // $0.047 - Claude 4 Sonnet - balanced
+                    'gpt-4.1-mini', // $0.051 - Faster and more efficient variant
+                    // 🔥 PREMIUM TIER ($0.015-$0.05) - High-end models
+                    'claude-3-7-sonnet-20250219', // $0.026 - Claude 3.7 Sonnet - enhanced
+                    'gpt-4.1-nano', // $0.013 - Optimized for low-latency tasks
+                    'mistral-large-2407', // $0.010 - Mistral Large - Flagship model
+                    'claude-3-5-sonnet-20241022', // $0.009 - Claude 3.5 Sonnet
+                    'gpt-4o', // $0.006 - Multimodal model supporting text, image, and audio
+                    // ⚖️ MID-TIER ($0.005-$0.015) - Balanced performance/cost
+                    'llama-3.1-70b-instruct', // ~$0.012 - Meta's large workhorse
+                    'qwen-2.5-72b-instruct', // ~$0.010 - Premium Chinese model
+                    'mixtral-8x22b-instruct', // ~$0.009 - Larger mixture model
+                    'claude-3-opus-20240229', // $0.049 - Claude 3 Opus - legacy flagship
+                    'deepseek-chat', // $0.004 - DeepSeek V3 - Advanced reasoning & coding
+                    'deepseek-coder', // $0.006 - DeepSeek Coder - Specialized coding model
+                    // 💰 BUDGET TIER ($0.001-$0.005) - Efficient workhorses  
+                    'mistral-small-2402', // $0.004 - Mistral Small - Cost-effective
+                    'llama-3.1-8b-instruct', // ~$0.003 - Meta's efficient model
+                    'mixtral-8x7b-instruct', // ~$0.0025 - Mixture of experts
+                    'qwen-2.5-14b-instruct', // ~$0.002 - Mid-size reasoning
+                    'gpt-3.5-turbo', // $0.001 - Widely used model for general-purpose tasks
+                    'claude-3-haiku-20240307', // $0.0005 - Claude 3 Haiku - fast and efficient
+                    'gpt-4o-mini', // $0.0013 - Smaller, cost-effective multimodal model
+                    // 🏃 ULTRA-BUDGET TIER ($0.0001-$0.001) - Maximum efficiency
+                    'llama-3.2-3b-instruct', // ~$0.0008 - Tiny but capable
+                    'qwen-2.5-7b-instruct', // ~$0.0005 - Efficient Chinese model  
+                    'mistral-7b-instruct', // ~$0.0004 - Baseline Mistral
+                    'phi-3-mini', // ~$0.0003 - Microsoft's efficient model
+                    'gemma-2-9b', // ~$0.0002 - Google's efficient model
+                    'gemini-1.5-flash', // $0.0006 - Gemini 1.5 Flash - Fast and efficient
+                    'codellama-7b-instruct', // ~$0.0003 - Specialized coding model
+                    'yi-34b-chat', // ~$0.0008 - Strong open model
+                    // 🚀 EXPERIMENTAL TIER - Latest releases (varies)
+                    'gpt-4.5', // TBD - Orion research preview
+                    'gemini-1.5-pro', // TBD - Gemini 1.5 Pro - Multimodal powerhouse
+                    'llama-3.3-70b-instruct', // ~$0.008 - Latest Meta release
+                    'qwen-2.5-coder-32b', // ~$0.005 - Specialized coding model
+                    'gemma-3-27b' // ~$0.004 - Latest Google model
                 ];
                 const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'];
-                // ⚡ PARALLEL PROCESSING - 5X SPEED BOOST WITH 20 MODELS!
+                // ⚡ PARALLEL PROCESSING - ULTIMATE COST SPECTRUM WITH 35 MODELS!
                 for (const promptType of promptTypes) {
-                    console.log(`🚀 PARALLEL processing ${promptType} across ALL 20 MODELS (ULTIMATE 2025 LINEUP) for ${domain.domain}`);
+                    console.log(`🚀 PARALLEL processing ${promptType} across ALL 35 MODELS (COMPLETE COST SPECTRUM 2025) for ${domain.domain}`);
                     // Create parallel promises for all models
                     const modelPromises = models.map(async (model) => {
                         try {
@@ -836,7 +947,7 @@ async function processNextBatch() {
                     // Execute all models in parallel
                     const results = await Promise.all(modelPromises);
                     const successful = results.filter(r => r.success).length;
-                    console.log(`🎯 ${promptType} completed: ${successful}/${models.length} models successful (2025 LATEST LINEUP!)`);
+                    console.log(`🎯 ${promptType} completed: ${successful}/${models.length} models successful (COMPLETE COST SPECTRUM!)`);
                     // Brief pause between prompt types to be respectful to APIs
                     await new Promise(resolve => setTimeout(resolve, 2000));
                 }
