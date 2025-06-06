@@ -1,122 +1,52 @@
-import { OpenAI } from 'openai';
-import { Anthropic } from '@anthropic-ai/sdk';
-import axios from 'axios';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { LLMConfig, PromptTemplate } from './types';
-import { saveRawResponse, getDomains, cleanup } from './db';
+import * as dotenv from 'dotenv';
+import { saveDomain, saveResponse, getDomains, cleanup } from './db';
+import http from 'http';
 
-// Load configs
-const llmConfig: Record<string, LLMConfig> = JSON.parse(
-  readFileSync(join(__dirname, '../models/llm-config.json'), 'utf-8')
-);
+dotenv.config();
 
-const promptTemplates: { prompts: PromptTemplate[] } = JSON.parse(
-  readFileSync(join(__dirname, '../prompts/triad-001.json'), 'utf-8')
-);
+const PORT = process.env.PORT || 10000;
 
-// API clients
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-// Rate limiting settings (in milliseconds)
-const RATE_LIMITS: Record<string, number> = {
-  'openai': 1000,      // 1 request per second
-  'anthropic': 1000,   // 1 request per second
-  'deepseek': 1000,    // 1 request per second
-  'google': 1000,      // 1 request per second
-  'mistral': 1000,     // 1 request per second
-  'cohere': 1000       // 1 request per second
-};
-
-// Sleep helper
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function getRawLLMResponse(model: string, config: LLMConfig, prompt: string): Promise<string> {
+async function processDomain(domain: string) {
   try {
-    switch (config.provider) {
-      case 'openai':
-        const openaiResponse = await openai.chat.completions.create({
-          model: config.model,
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: config.max_tokens
-        });
-        return openaiResponse.choices[0].message.content || '';
-
-      case 'anthropic':
-        const anthropicResponse = await anthropic.messages.create({
-          model: config.model,
-          max_tokens: config.max_tokens,
-          messages: [{ role: 'user', content: prompt }]
-        });
-        return anthropicResponse.content[0].text;
-
-      default:
-        const apiResponse = await axios.post(
-          config.endpoint,
-          {
-            model: config.model,
-            prompt: prompt,
-            max_tokens: config.max_tokens
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${process.env[config.env_key]}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        const data = apiResponse.data as any;
-        return data.choices?.[0]?.text || data.generations?.[0]?.text || '';
-    }
+    await saveDomain(domain);
+    
+    // Example response capture
+    await saveResponse({
+      domain_id: 1, // This should be the actual domain ID from the database
+      model_name: 'test-model',
+      prompt_type: 'what-is',
+      raw_response: 'Test response',
+      token_count: 100
+    });
+    
+    console.log(`Processed domain: ${domain}`);
   } catch (error) {
-    console.error(`Error calling ${model}:`, error);
-    return `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-  }
-}
-
-async function captureDomain(domain: string) {
-  for (const [model, config] of Object.entries(llmConfig)) {
-    for (const promptTemplate of promptTemplates.prompts) {
-      const prompt = promptTemplate.template.replace('{domain}', domain);
-      console.log(`Capturing ${domain} with ${model} using ${promptTemplate.id}`);
-      
-      const startTime = Date.now();
-      const response = await getRawLLMResponse(model, config, prompt);
-      const latencyMs = Date.now() - startTime;
-
-      await saveRawResponse({
-        domain,
-        model,
-        prompt_template_id: promptTemplate.id,
-        interpolated_prompt: prompt,
-        response,
-        latency_ms: latencyMs,
-        token_usage: {}, // Store empty object, downstream can parse if needed
-        cost_estimate: 0 // Removed cost calculation
-      });
-
-      // Rate limit based on provider
-      const delay = RATE_LIMITS[config.provider] || 1000;
-      await sleep(delay);
-    }
+    console.error(`Error processing domain ${domain}:`, error);
   }
 }
 
 async function main() {
   try {
     const domains = await getDomains();
+    console.log(`Found ${domains.length} domains to process`);
+    
     for (const domain of domains) {
-      await captureDomain(domain.domain);
-      // Add a small delay between domains
-      await sleep(500);
+      await processDomain(domain.domain);
     }
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in main:', error);
   } finally {
     await cleanup();
   }
 }
 
-main(); 
+// Create HTTP server to keep the service running
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Raw Capture Runner is running\n');
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  main().catch(console.error);
+}); 

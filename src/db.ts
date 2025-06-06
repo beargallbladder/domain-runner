@@ -8,38 +8,41 @@ const pool = new Pool({
   }
 });
 
-export async function saveDomain(domain: Omit<Domain, 'id' | 'added_at'>): Promise<void> {
+export async function saveDomain(domain: string): Promise<void> {
   const query = `
-    INSERT INTO domains (domain, source)
-    VALUES ($1, $2)
+    INSERT INTO domains (domain)
+    VALUES ($1)
     ON CONFLICT (domain) DO NOTHING
   `;
-  await pool.query(query, [domain.domain, domain.source]);
+  await pool.query(query, [domain]);
 }
 
-export async function saveRawResponse(response: Omit<RawResponse, 'captured_at'>): Promise<void> {
+export async function saveResponse(response: {
+  domain_id: number;
+  model_name: string;
+  prompt_type: string;
+  raw_response: string;
+  token_count?: number;
+}): Promise<void> {
   const query = `
-    INSERT INTO raw_responses (
-      domain, model, prompt_template_id, interpolated_prompt,
-      response, latency_ms, token_usage, cost_estimate, captured_at
+    INSERT INTO responses (
+      domain_id, model_name, prompt_type, raw_response, 
+      token_count, created_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
   `;
   
   await pool.query(query, [
-    response.domain,
-    response.model,
-    response.prompt_template_id,
-    response.interpolated_prompt,
-    response.response,
-    response.latency_ms,
-    response.token_usage,
-    response.cost_estimate
+    response.domain_id,
+    response.model_name,
+    response.prompt_type,
+    response.raw_response,
+    response.token_count || null
   ]);
 }
 
 export async function getDomains(): Promise<Domain[]> {
-  const result = await pool.query('SELECT * FROM domains ORDER BY added_at DESC');
+  const result = await pool.query('SELECT * FROM domains ORDER BY created_at DESC');
   return result.rows;
 }
 

@@ -30,8 +30,18 @@ export interface RawResponse {
 }
 
 export interface Domain {
-  id: string;
+  id: number;
   domain: string;
-  source?: string;
-  added_at: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface Response {
+  id: number;
+  domain_id: number;
+  model_name: string;
+  prompt_type: string;
+  raw_response: string;
+  token_count?: number;
+  created_at: Date;
 } 
