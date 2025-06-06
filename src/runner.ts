@@ -19,6 +19,19 @@ const promptTemplates: { prompts: PromptTemplate[] } = JSON.parse(
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// Rate limiting settings (in milliseconds)
+const RATE_LIMITS: Record<string, number> = {
+  'openai': 1000,      // 1 request per second
+  'anthropic': 1000,   // 1 request per second
+  'deepseek': 1000,    // 1 request per second
+  'google': 1000,      // 1 request per second
+  'mistral': 1000,     // 1 request per second
+  'cohere': 1000       // 1 request per second
+};
+
+// Sleep helper
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function getRawLLMResponse(model: string, config: LLMConfig, prompt: string): Promise<string> {
   try {
     switch (config.provider) {
@@ -83,6 +96,10 @@ async function captureDomain(domain: string) {
         token_usage: {}, // Store empty object, downstream can parse if needed
         cost_estimate: 0 // Removed cost calculation
       });
+
+      // Rate limit based on provider
+      const delay = RATE_LIMITS[config.provider] || 1000;
+      await sleep(delay);
     }
   }
 }
@@ -92,6 +109,8 @@ async function main() {
     const domains = await getDomains();
     for (const domain of domains) {
       await captureDomain(domain.domain);
+      // Add a small delay between domains
+      await sleep(500);
     }
   } catch (error) {
     console.error('Error:', error);
