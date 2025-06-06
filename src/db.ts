@@ -1,11 +1,14 @@
 import { Pool } from 'pg';
 import { Domain, Response } from './types';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
+  connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/raw_capture_test',
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false
-  }
+  } : false
 });
 
 export async function saveDomain(domain: string): Promise<number> {
@@ -25,19 +28,20 @@ export async function saveResponse(response: {
   model_name: string;
   prompt_type: string;
   raw_response: string;
-  token_count?: number;
+  token_count: number;
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_cost_usd?: number;
+  latency_ms?: number;
 }): Promise<void> {
+  const startTime = Date.now();
   const query = `
     INSERT INTO responses (
       domain_id, model_name, prompt_type, raw_response, 
-      token_count, created_at
+      token_count, prompt_tokens, completion_tokens,
+      total_cost_usd, latency_ms, captured_at
     )
-    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-    ON CONFLICT (domain_id, model_name, prompt_type) 
-    DO UPDATE SET 
-      raw_response = $4,
-      token_count = $5,
-      created_at = CURRENT_TIMESTAMP
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
   `;
   
   await pool.query(query, [
@@ -45,8 +49,43 @@ export async function saveResponse(response: {
     response.model_name,
     response.prompt_type,
     response.raw_response,
-    response.token_count || null
+    response.token_count,
+    response.prompt_tokens || null,
+    response.completion_tokens || null,
+    response.total_cost_usd || null,
+    response.latency_ms || (Date.now() - startTime)
   ]);
+}
+
+export async function getResponsesInTimeRange(
+  domain_id: number,
+  start_time: Date,
+  end_time: Date
+): Promise<Response[]> {
+  const query = `
+    SELECT * FROM responses 
+    WHERE domain_id = $1 
+    AND captured_at BETWEEN $2 AND $3
+    ORDER BY captured_at DESC
+  `;
+  const result = await pool.query(query, [domain_id, start_time, end_time]);
+  return result.rows;
+}
+
+export async function getLatestResponses(domain_id: number): Promise<Response[]> {
+  const query = `
+    WITH latest_responses AS (
+      SELECT DISTINCT ON (domain_id, model_name, prompt_type)
+        *
+      FROM responses
+      WHERE domain_id = $1
+      ORDER BY domain_id, model_name, prompt_type, captured_at DESC
+    )
+    SELECT * FROM latest_responses
+    ORDER BY captured_at DESC
+  `;
+  const result = await pool.query(query, [domain_id]);
+  return result.rows;
 }
 
 export async function getDomains(): Promise<Domain[]> {

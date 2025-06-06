@@ -4,6 +4,7 @@ import { getOpenAIResponse } from './services/openai';
 import { TRIAD_001_PROMPTS } from './prompts';
 import http from 'http';
 
+// Load environment variables
 dotenv.config();
 
 const PORT = process.env.PORT || 10000;

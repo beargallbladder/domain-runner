@@ -1,29 +1,37 @@
 {
   "name": "raw-capture-runner",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "description": "Raw LLM response capture runner for multiple models",
   "main": "dist/runner.js",
   "scripts": {
-    "build": "./scripts/build.sh",
-    "start": "node dist/migrations/run-migrations.js && node dist/scripts/seed-domains.js && node dist/runner.js",
-    "dev": "ts-node src/runner.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn src/index.ts",
     "migrate": "node dist/migrations/run-migrations.js",
     "test-db": "ts-node src/test-db.ts",
-    "seed": "ts-node src/scripts/seed-domains.ts"
+    "seed": "ts-node src/scripts/seed-domains.ts",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.18.0",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.24",
+    "@types/pg": "^8.11.2",
     "axios": "^1.9.0",
-    "dotenv": "^16.5.0",
-    "openai": "^4.104.0",
-    "pg": "^8.16.0"
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "openai": "^4.28.4",
+    "pg": "^8.11.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "typescript": "^5.3.3"
   },
   "devDependencies": {
     "@types/axios": "^0.9.36",
-    "@types/node": "^20.19.0",
-    "@types/pg": "^8.15.4",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "ts-node-dev": "^2.0.0"
   },
   "keywords": [],
   "author": "",

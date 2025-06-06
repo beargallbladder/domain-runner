@@ -42,6 +42,10 @@ export interface Response {
   model_name: string;
   prompt_type: string;
   raw_response: string;
-  token_count?: number;
-  created_at: Date;
+  token_count: number;
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
+  total_cost_usd: number | null;
+  latency_ms: number | null;
+  captured_at: Date;
 } 

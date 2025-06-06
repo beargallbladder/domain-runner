@@ -1,13 +1,17 @@
 import { Pool } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 async function runMigrations() {
     const pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: {
+        connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/raw_capture_test',
+        ssl: process.env.NODE_ENV === 'production' ? {
             rejectUnauthorized: false
-        }
+        } : false
     });
 
     try {

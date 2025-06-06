@@ -12,10 +12,10 @@ const TEST_DOMAINS = [
 ];
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
+  connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/raw_capture_test',
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false
-  }
+  } : false
 });
 
 async function seedDomains() {
@@ -51,14 +51,14 @@ async function seedDomains() {
 
   } catch (error) {
     console.error('❌ Error seeding domains:', error);
-    throw error; // Re-throw to ensure process fails if seeding fails
+    throw error;
   } finally {
     await pool.end();
     console.log('\nSeeding complete.');
   }
 }
 
-// Run the seeding
+// Run seeding
 seedDomains().catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
