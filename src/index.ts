@@ -297,12 +297,18 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
       const latency = Date.now() - startTime;
       const usage = completion.usage || {};
       
-      // Approximate cost calculation (adjust rates as needed)
+      // Comprehensive cost calculation for all models
       const promptTokens = (usage as any)?.prompt_tokens || 0;
       const completionTokens = (usage as any)?.completion_tokens || 0;
-      const cost = model === 'gpt-4' 
-        ? promptTokens * 0.00003 + completionTokens * 0.00006
-        : promptTokens * 0.0000015 + completionTokens * 0.000002;
+      
+      let cost = 0;
+      if (model === 'gpt-4' || model === 'gpt-4-turbo') {
+        cost = promptTokens * 0.00003 + completionTokens * 0.00006;
+      } else if (model === 'gpt-3.5-turbo') {
+        cost = promptTokens * 0.000001 + completionTokens * 0.000002;
+      } else { // gpt-4o-mini
+        cost = promptTokens * 0.0000015 + completionTokens * 0.000002;
+      }
       
       return {
         response: completion.choices[0]?.message?.content || 'No response',
@@ -323,10 +329,18 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
       const latency = Date.now() - startTime;
       const usage = message.usage || {};
       
-      // Approximate cost calculation for Claude
+      // Comprehensive cost calculation for all Claude models
       const inputTokens = (usage as any)?.input_tokens || 0;
       const outputTokens = (usage as any)?.output_tokens || 0;
-      const cost = inputTokens * 0.000008 + outputTokens * 0.000024;
+      
+      let cost = 0;
+      if (model.includes('opus')) {
+        cost = inputTokens * 0.000015 + outputTokens * 0.000075; // Claude Opus
+      } else if (model.includes('sonnet')) {
+        cost = inputTokens * 0.000003 + outputTokens * 0.000015; // Claude Sonnet
+      } else { // Haiku
+        cost = inputTokens * 0.00000025 + outputTokens * 0.00000125; // Claude Haiku
+      }
       
       return {
         response: message.content[0]?.type === 'text' ? message.content[0].text : 'No response',
@@ -609,8 +623,17 @@ async function processNextBatch(): Promise<void> {
         // Real LLM processing with multiple models
         console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
         
-        // Define models to test against each domain
-        const models = ['gpt-4o-mini', 'gpt-4', 'claude-3-haiku-20240307'];
+        // Define ALL 8 models for comprehensive tensor analysis
+        const models = [
+          'gpt-4o-mini',
+          'gpt-4', 
+          'gpt-3.5-turbo',
+          'claude-3-haiku-20240307',
+          'claude-3-sonnet-20240229',
+          'claude-3-opus-20240229',
+          'claude-3-5-sonnet-20241022',
+          'gpt-4-turbo'
+        ];
         const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'] as const;
         
         for (const model of models) {
