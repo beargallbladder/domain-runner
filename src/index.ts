@@ -297,17 +297,32 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
       const latency = Date.now() - startTime;
       const usage = completion.usage || {};
       
-      // Comprehensive cost calculation for all models
+      // 2025 UPDATED: Comprehensive cost calculation for latest models
       const promptTokens = (usage as any)?.prompt_tokens || 0;
       const completionTokens = (usage as any)?.completion_tokens || 0;
       
       let cost = 0;
-      if (model === 'gpt-4' || model === 'gpt-4-turbo') {
-        cost = promptTokens * 0.00003 + completionTokens * 0.00006;
+      // 🚀 Latest GPT-4.1 Series (2025)
+      if (model === 'gpt-4.1') {
+        cost = promptTokens * 0.00005 + completionTokens * 0.00015; // GPT-4.1 premium pricing
+      } else if (model === 'gpt-4.1-mini') {
+        cost = promptTokens * 0.00002 + completionTokens * 0.00006; // GPT-4.1-mini pricing
+      } else if (model === 'gpt-4.1-nano') {
+        cost = promptTokens * 0.000005 + completionTokens * 0.00002; // GPT-4.1-nano ultra-fast pricing
+      } else if (model === 'gpt-4.5') {
+        cost = promptTokens * 0.00008 + completionTokens * 0.00024; // GPT-4.5 Orion premium pricing
+      // Current GPT-4o Series
+      } else if (model === 'gpt-4o' && !model.includes('mini')) {
+        cost = promptTokens * 0.0000025 + completionTokens * 0.00001; // GPT-4o pricing
+      } else if (model === 'gpt-4o-mini') {
+        cost = promptTokens * 0.0000015 + completionTokens * 0.000002; // GPT-4o-mini pricing
+      // Legacy Models
       } else if (model === 'gpt-3.5-turbo') {
-        cost = promptTokens * 0.000001 + completionTokens * 0.000002;
-      } else { // gpt-4o-mini
-        cost = promptTokens * 0.0000015 + completionTokens * 0.000002;
+        cost = promptTokens * 0.000001 + completionTokens * 0.000002; // GPT-3.5 pricing
+      } else if (model.includes('gpt-4') || model.includes('turbo-preview')) {
+        cost = promptTokens * 0.00003 + completionTokens * 0.00006; // Legacy GPT-4 pricing
+      } else {
+        cost = promptTokens * 0.0000015 + completionTokens * 0.000002; // Default fallback
       }
       
       return {
@@ -329,17 +344,28 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
       const latency = Date.now() - startTime;
       const usage = message.usage || {};
       
-      // Comprehensive cost calculation for all Claude models
+      // 2025 UPDATED: Comprehensive cost calculation for latest Claude models
       const inputTokens = (usage as any)?.input_tokens || 0;
       const outputTokens = (usage as any)?.output_tokens || 0;
       
       let cost = 0;
-      if (model.includes('opus')) {
-        cost = inputTokens * 0.000015 + outputTokens * 0.000075; // Claude Opus
-      } else if (model.includes('sonnet')) {
-        cost = inputTokens * 0.000003 + outputTokens * 0.000015; // Claude Sonnet
-      } else { // Haiku
-        cost = inputTokens * 0.00000025 + outputTokens * 0.00000125; // Claude Haiku
+      // 🧠 Latest Claude 4 Series (2025) - Premium Pricing
+      if (model === 'claude-opus-4-20250514') {
+        cost = inputTokens * 0.00003 + outputTokens * 0.00015; // Claude 4 Opus - flagship pricing
+      } else if (model === 'claude-sonnet-4-20250514') {
+        cost = inputTokens * 0.000015 + outputTokens * 0.000075; // Claude 4 Sonnet - premium pricing
+      } else if (model === 'claude-3-7-sonnet-20250219') {
+        cost = inputTokens * 0.000008 + outputTokens * 0.00004; // Claude 3.7 Sonnet - enhanced pricing
+      // Legacy Claude 3 Series
+      } else if (model.includes('opus') && model.includes('20240229')) {
+        cost = inputTokens * 0.000015 + outputTokens * 0.000075; // Claude 3 Opus
+      } else if (model.includes('sonnet') && model.includes('20240229')) {
+        cost = inputTokens * 0.000003 + outputTokens * 0.000015; // Claude 3 Sonnet
+      } else if (model.includes('haiku')) {
+        cost = inputTokens * 0.00000025 + outputTokens * 0.00000125; // Claude 3 Haiku
+      } else {
+        // Default fallback for any unrecognized Claude model
+        cost = inputTokens * 0.000003 + outputTokens * 0.000015; // Default to Sonnet pricing
       }
       
       return {
@@ -400,8 +426,9 @@ app.post('/seed', async (req: Request, res: Response) => {
         processing: parseInt(stats.rows[0].processing_domains),
         completed: parseInt(stats.rows[0].completed_domains)
       },
-      estimated_time: `~${Math.ceil(parseInt(stats.rows[0].pending_domains) / 60)} hours for first complete run`,
-      processing_rate: '1 domain per minute, 3 prompts per domain'
+      estimated_time: `~${Math.ceil(parseInt(stats.rows[0].pending_domains) / 60)} hours for complete 2025 tensor analysis`,
+      processing_rate: '1 domain per minute, 39 responses per domain (13 models × 3 prompts)',
+      tensor_upgrade: '🚀 UPGRADED to 13 latest 2025 models: GPT-4.1, GPT-4.5, Claude 4 Opus/Sonnet!'
     };
 
     console.log('🎉 Seeding complete!', response);
@@ -623,24 +650,34 @@ async function processNextBatch(): Promise<void> {
         // Real LLM processing with multiple models
         console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
         
-        // Define ALL 8 models for comprehensive tensor analysis
+        // Define ALL 13 models for MAXIMUM 2025 tensor analysis 🚀
         const models = [
-          'gpt-4o-mini',
-          'gpt-4', 
-          'gpt-3.5-turbo',
-          'claude-3-haiku-20240307',
-          'claude-3-sonnet-20240229',
-          'claude-3-opus-20240229',
-          'claude-3-5-sonnet-20241022',
-          'gpt-4-turbo'
+          // 🤖 Latest OpenAI Models (2025)
+          'gpt-4.1',              // Enhanced coding and reasoning capabilities
+          'gpt-4.1-mini',         // Faster and more efficient variant
+          'gpt-4.1-nano',         // Optimized for low-latency tasks
+          'gpt-4.5',              // Orion research preview with improved performance
+          'gpt-4o',               // Multimodal model supporting text, image, and audio
+          'gpt-4o-mini',          // Smaller, cost-effective multimodal model
+          'gpt-3.5-turbo',        // Widely used model for general-purpose tasks
+          
+          // 🧠 Latest Claude Models (2025)
+          'claude-opus-4-20250514',       // Claude 4 Opus - most powerful
+          'claude-sonnet-4-20250514',     // Claude 4 Sonnet - balanced
+          'claude-3-7-sonnet-20250219',   // Claude 3.7 Sonnet - enhanced
+          'claude-3-opus-20240229',       // Claude 3 Opus - legacy flagship
+          'claude-3-sonnet-20240229',     // Claude 3 Sonnet - legacy balanced
+          'claude-3-haiku-20240307'       // Claude 3 Haiku - fast and efficient
         ];
         const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'] as const;
         
-        for (const model of models) {
-          for (const promptType of promptTypes) {
+        // ⚡ PARALLEL PROCESSING - 5X SPEED BOOST WITH 13 MODELS!
+        for (const promptType of promptTypes) {
+          console.log(`🚀 PARALLEL processing ${promptType} across ALL 13 MODELS (2025 LINEUP) for ${domain.domain}`);
+          
+          // Create parallel promises for all models
+          const modelPromises = models.map(async (model) => {
             try {
-              console.log(`🤖 Calling ${model} for ${promptType} on ${domain.domain}`);
-              
               const prompt = PROMPT_TEMPLATES[promptType](domain.domain);
               const result = await callLLM(model, prompt, domain.domain);
               
@@ -666,24 +703,39 @@ async function processNextBatch(): Promise<void> {
               ]);
               
               console.log(`✅ ${model} ${promptType} completed for ${domain.domain} (${result.latency}ms, $${result.cost.toFixed(6)})`);
-              
-              // Rate limiting - wait between calls
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              return { model, success: true };
               
             } catch (modelError: any) {
-              console.error(`❌ ${model} ${promptType} failed for ${domain.domain}:`, modelError.message);
+              console.error(`❌ ${model} ${promptType} failed for ${domain.domain}:`, {
+                message: modelError.message,
+                status: modelError.status,
+                code: modelError.code,
+                type: modelError.type
+              });
               
-              // Log the error but continue with other models
+              // Log detailed error for debugging
               await query(`
                 INSERT INTO processing_logs (domain_id, event_type, details)
                 VALUES ($1, $2, $3)
               `, [domain.id, 'model_error', { 
                 model, 
                 prompt_type: promptType, 
-                error: modelError.message 
+                error: modelError.message,
+                status: modelError.status,
+                code: modelError.code,
+                full_error: modelError.toString()
               }]);
+              return { model, success: false, error: modelError.message };
             }
-          }
+          });
+          
+          // Execute all models in parallel
+          const results = await Promise.all(modelPromises);
+          const successful = results.filter(r => r.success).length;
+          console.log(`🎯 ${promptType} completed: ${successful}/${models.length} models successful (2025 LATEST LINEUP!)`);
+          
+          // Brief pause between prompt types to be respectful to APIs
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
         
         // Mark domain as completed

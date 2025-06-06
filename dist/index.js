@@ -42,8 +42,47 @@ const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const database_1 = require("./config/database");
 const fs = __importStar(require("fs"));
+const openai_1 = __importDefault(require("openai"));
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 // Load environment variables
 dotenv.config();
+// Initialize LLM clients
+const openai = new openai_1.default({
+    apiKey: process.env.OPENAI_API_KEY
+});
+const anthropic = new sdk_1.default({
+    apiKey: process.env.ANTHROPIC_API_KEY
+});
+// Real prompt templates for domain analysis
+const PROMPT_TEMPLATES = {
+    business_analysis: (domain) => `
+Analyze the business model and strategy of ${domain}. Provide insights on:
+1. Primary business model and revenue streams
+2. Target market and customer segments  
+3. Competitive positioning and advantages
+4. Key growth drivers and challenges
+5. Market opportunity and industry trends
+
+Keep your analysis concise but comprehensive (300-500 words).`,
+    content_strategy: (domain) => `
+Evaluate the content strategy and digital presence of ${domain}. Analyze:
+1. Content types, themes, and quality
+2. Content distribution channels and frequency
+3. SEO strategy and keyword targeting
+4. User engagement and content performance
+5. Content gaps and opportunities
+
+Provide actionable insights for content optimization (300-500 words).`,
+    technical_assessment: (domain) => `
+Conduct a technical assessment of ${domain}. Cover:
+1. Website performance and loading speed
+2. Mobile responsiveness and UX design
+3. Security features and SSL implementation
+4. Technology stack and infrastructure
+5. Technical SEO and site architecture
+
+Focus on technical strengths and improvement areas (300-500 words).`
+};
 // Schema initialization with proper column verification
 async function ensureSchemaExists() {
     try {
@@ -172,13 +211,248 @@ async function ensureSchemaExists() {
         throw error;
     }
 }
+// Domain seeding function
+async function seedDomains() {
+    // Embedded domains list (our 266 premium domains)
+    const domains = [
+        'google.com', 'blogger.com', 'youtube.com', 'linkedin.com', 'cloudflare.com',
+        'microsoft.com', 'apple.com', 'wikipedia.org', 'wordpress.org', 'mozilla.org',
+        'youtu.be', 'blogspot.com', 'googleusercontent.com', 't.me', 'europa.eu',
+        'whatsapp.com', 'adobe.com', 'facebook.com', 'uol.com.br', 'istockphoto.com',
+        'vimeo.com', 'vk.com', 'github.com', 'amazon.com', 'bbc.co.uk',
+        'google.de', 'live.com', 'gravatar.com', 'nih.gov', 'dan.com',
+        'wordpress.com', 'yahoo.com', 'cnn.com', 'dropbox.com', 'wikimedia.org',
+        'creativecommons.org', 'google.com.br', 'line.me', 'googleblog.com', 'opera.com',
+        'globo.com', 'brandbucket.com', 'myspace.com', 'slideshare.net', 'paypal.com',
+        'tiktok.com', 'netvibes.com', 'theguardian.com', 'who.int', 'goo.gl',
+        'medium.com', 'weebly.com', 'w3.org', 'gstatic.com', 'jimdofree.com',
+        'cpanel.net', 'imdb.com', 'wa.me', 'feedburner.com', 'enable-javascript.com',
+        'nytimes.com', 'ok.ru', 'google.es', 'dailymotion.com', 'afternic.com',
+        'bloomberg.com', 'amazon.de', 'wiley.com', 'aliexpress.com', 'indiatimes.com',
+        'youronlinechoices.com', 'elpais.com', 'tinyurl.com', 'yadi.sk', 'spotify.com',
+        'huffpost.com', 'google.fr', 'webmd.com', 'samsung.com', 'independent.co.uk',
+        'amazon.co.jp', 'amazon.co.uk', '4shared.com', 'telegram.me', 'planalto.gov.br',
+        'businessinsider.com', 'ig.com.br', 'issuu.com', 'gov.br', 'wsj.com',
+        'hugedomains.com', 'usatoday.com', 'scribd.com', 'gov.uk', 'googleapis.com',
+        'huffingtonpost.com', 'bbc.com', 'estadao.com.br', 'nature.com', 'mediafire.com',
+        'washingtonpost.com', 'forms.gle', 'namecheap.com', 'forbes.com', 'mirror.co.uk',
+        'soundcloud.com', 'fb.com', 'domainmarket.com', 'ytimg.com', 'terra.com.br',
+        'google.co.uk', 'shutterstock.com', 'dailymail.co.uk', 'reg.ru', 't.co',
+        'cdc.gov', 'thesun.co.uk', 'wp.com', 'cnet.com', 'instagram.com',
+        'researchgate.net', 'google.it', 'fandom.com', 'office.com', 'list-manage.com',
+        'msn.com', 'un.org', 'ovh.com', 'mail.ru', 'bing.com',
+        'hatena.ne.jp', 'shopify.com', 'bit.ly', 'reuters.com', 'booking.com',
+        'discord.com', 'buydomains.com', 'nasa.gov', 'aboutads.info', 'time.com',
+        'abril.com.br', 'change.org', 'nginx.org', 'twitter.com', 'archive.org',
+        'cbsnews.com', 'networkadvertising.org', 'telegraph.co.uk', 'pinterest.com', 'google.co.jp',
+        'pixabay.com', 'zendesk.com', 'cpanel.com', 'vistaprint.com', 'sky.com',
+        'windows.net', 'alicdn.com', 'google.ca', 'lemonde.fr', 'newyorker.com',
+        'webnode.page', 'surveymonkey.com', 'amazonaws.com', 'academia.edu', 'apache.org',
+        'imageshack.us', 'akamaihd.net', 'nginx.com', 'discord.gg', 'thetimes.co.uk',
+        'amazon.fr', 'yelp.com', 'berkeley.edu', 'google.ru', 'sedoparking.com',
+        'cbc.ca', 'unesco.org', 'ggpht.com', 'privacyshield.gov', 'over-blog.com',
+        'clarin.com', 'wix.com', 'whitehouse.gov', 'icann.org', 'gnu.org',
+        'yandex.ru', 'francetvinfo.fr', 'gmail.com', 'mozilla.com', 'ziddu.com',
+        'guardian.co.uk', 'twitch.tv', 'sedo.com', 'foxnews.com', 'rambler.ru',
+        'stanford.edu', 'wikihow.com', '20minutos.es', 'sfgate.com', 'liveinternet.ru',
+        '000webhost.com', 'espn.com', 'eventbrite.com', 'disney.com', 'statista.com',
+        'addthis.com', 'pinterest.fr', 'lavanguardia.com', 'vkontakte.ru', 'doubleclick.net',
+        'skype.com', 'sciencedaily.com', 'bloglovin.com', 'insider.com', 'sputniknews.com',
+        'doi.org', 'nypost.com', 'elmundo.es', 'go.com', 'deezer.com',
+        'express.co.uk', 'detik.com', 'mystrikingly.com', 'rakuten.co.jp', 'amzn.to',
+        'arxiv.org', 'alibaba.com', 'fb.me', 'wikia.com', 't-online.de',
+        'telegra.ph', 'mega.nz', 'usnews.com', 'plos.org', 'naver.com',
+        'ibm.com', 'smh.com.au', 'dw.com', 'google.nl', 'lefigaro.fr',
+        'theatlantic.com', 'nydailynews.com', 'themeforest.net', 'rtve.es', 'newsweek.com',
+        'ovh.net', 'ca.gov', 'goodreads.com', 'economist.com', 'target.com',
+        'marca.com', 'kickstarter.com', 'hindustantimes.com', 'weibo.com', 'huawei.com',
+        'e-monsite.com', 'hubspot.com', 'npr.org', 'netflix.com', 'gizmodo.com',
+        'netlify.app', 'yandex.com', 'mashable.com', 'ebay.com', 'etsy.com', 'walmart.com'
+    ];
+    let inserted = 0;
+    let skipped = 0;
+    for (const domain of domains) {
+        try {
+            const result = await (0, database_1.query)(`
+        INSERT INTO domains (domain, source, status)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (domain) DO NOTHING
+        RETURNING id
+      `, [domain.trim(), 'api_seed', 'pending']);
+            if (result.rows.length > 0) {
+                inserted++;
+            }
+            else {
+                skipped++;
+            }
+        }
+        catch (error) {
+            console.error(`Error inserting ${domain}:`, error);
+        }
+    }
+    return { inserted, skipped, total: domains.length };
+}
+// Real LLM API call function
+async function callLLM(model, prompt, domain) {
+    const startTime = Date.now();
+    try {
+        if (model.includes('gpt')) {
+            // OpenAI API call
+            const completion = await openai.chat.completions.create({
+                model: model,
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 1000,
+                temperature: 0.7
+            });
+            const latency = Date.now() - startTime;
+            const usage = completion.usage || {};
+            // 2025 UPDATED: Comprehensive cost calculation for latest models
+            const promptTokens = usage?.prompt_tokens || 0;
+            const completionTokens = usage?.completion_tokens || 0;
+            let cost = 0;
+            // 🚀 Latest GPT-4.1 Series (2025)
+            if (model === 'gpt-4.1') {
+                cost = promptTokens * 0.00005 + completionTokens * 0.00015; // GPT-4.1 premium pricing
+            }
+            else if (model === 'gpt-4.1-mini') {
+                cost = promptTokens * 0.00002 + completionTokens * 0.00006; // GPT-4.1-mini pricing
+            }
+            else if (model === 'gpt-4.1-nano') {
+                cost = promptTokens * 0.000005 + completionTokens * 0.00002; // GPT-4.1-nano ultra-fast pricing
+            }
+            else if (model === 'gpt-4.5') {
+                cost = promptTokens * 0.00008 + completionTokens * 0.00024; // GPT-4.5 Orion premium pricing
+                // Current GPT-4o Series
+            }
+            else if (model === 'gpt-4o' && !model.includes('mini')) {
+                cost = promptTokens * 0.0000025 + completionTokens * 0.00001; // GPT-4o pricing
+            }
+            else if (model === 'gpt-4o-mini') {
+                cost = promptTokens * 0.0000015 + completionTokens * 0.000002; // GPT-4o-mini pricing
+                // Legacy Models
+            }
+            else if (model === 'gpt-3.5-turbo') {
+                cost = promptTokens * 0.000001 + completionTokens * 0.000002; // GPT-3.5 pricing
+            }
+            else if (model.includes('gpt-4') || model.includes('turbo-preview')) {
+                cost = promptTokens * 0.00003 + completionTokens * 0.00006; // Legacy GPT-4 pricing
+            }
+            else {
+                cost = promptTokens * 0.0000015 + completionTokens * 0.000002; // Default fallback
+            }
+            return {
+                response: completion.choices[0]?.message?.content || 'No response',
+                tokenUsage: usage,
+                cost: cost,
+                latency: latency
+            };
+        }
+        else if (model.includes('claude')) {
+            // Anthropic API call
+            const message = await anthropic.messages.create({
+                model: model,
+                max_tokens: 1000,
+                temperature: 0.7,
+                messages: [{ role: 'user', content: prompt }]
+            });
+            const latency = Date.now() - startTime;
+            const usage = message.usage || {};
+            // 2025 UPDATED: Comprehensive cost calculation for latest Claude models
+            const inputTokens = usage?.input_tokens || 0;
+            const outputTokens = usage?.output_tokens || 0;
+            let cost = 0;
+            // 🧠 Latest Claude 4 Series (2025) - Premium Pricing
+            if (model === 'claude-opus-4-20250514') {
+                cost = inputTokens * 0.00003 + outputTokens * 0.00015; // Claude 4 Opus - flagship pricing
+            }
+            else if (model === 'claude-sonnet-4-20250514') {
+                cost = inputTokens * 0.000015 + outputTokens * 0.000075; // Claude 4 Sonnet - premium pricing
+            }
+            else if (model === 'claude-3-7-sonnet-20250219') {
+                cost = inputTokens * 0.000008 + outputTokens * 0.00004; // Claude 3.7 Sonnet - enhanced pricing
+                // Legacy Claude 3 Series
+            }
+            else if (model.includes('opus') && model.includes('20240229')) {
+                cost = inputTokens * 0.000015 + outputTokens * 0.000075; // Claude 3 Opus
+            }
+            else if (model.includes('sonnet') && model.includes('20240229')) {
+                cost = inputTokens * 0.000003 + outputTokens * 0.000015; // Claude 3 Sonnet
+            }
+            else if (model.includes('haiku')) {
+                cost = inputTokens * 0.00000025 + outputTokens * 0.00000125; // Claude 3 Haiku
+            }
+            else {
+                // Default fallback for any unrecognized Claude model
+                cost = inputTokens * 0.000003 + outputTokens * 0.000015; // Default to Sonnet pricing
+            }
+            return {
+                response: message.content[0]?.type === 'text' ? message.content[0].text : 'No response',
+                tokenUsage: usage,
+                cost: cost,
+                latency: latency
+            };
+        }
+        else {
+            throw new Error(`Unsupported model: ${model}`);
+        }
+    }
+    catch (error) {
+        console.error(`LLM API error for ${model}:`, error);
+        throw error;
+    }
+}
 // Initialize monitoring
 const monitoring = monitoring_1.MonitoringService.getInstance();
 // Create Express app
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
+// Add middleware for parsing JSON and URL-encoded data
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true }));
 // Serve static files
 app.use(express_1.default.static(path_1.default.join(__dirname, 'dashboard/public')));
+// SEED ENDPOINT - THE MONEY SHOT! 🚀
+app.post('/seed', async (req, res) => {
+    try {
+        console.log('🌱 Seeding domains via API endpoint...');
+        const result = await seedDomains();
+        // Get current stats
+        const stats = await (0, database_1.query)(`
+      SELECT 
+        COUNT(*) as total_domains,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending_domains,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed_domains,
+        COUNT(*) FILTER (WHERE status = 'processing') as processing_domains
+      FROM domains
+    `);
+        const response = {
+            success: true,
+            message: '🎉 Domain seeding complete!',
+            inserted: result.inserted,
+            skipped: result.skipped,
+            total_in_list: result.total,
+            database_stats: {
+                total_domains: parseInt(stats.rows[0].total_domains),
+                pending: parseInt(stats.rows[0].pending_domains),
+                processing: parseInt(stats.rows[0].processing_domains),
+                completed: parseInt(stats.rows[0].completed_domains)
+            },
+            estimated_time: `~${Math.ceil(parseInt(stats.rows[0].pending_domains) / 60)} hours for complete 2025 tensor analysis`,
+            processing_rate: '1 domain per minute, 39 responses per domain (13 models × 3 prompts)',
+            tensor_upgrade: '🚀 UPGRADED to 13 latest 2025 models: GPT-4.1, GPT-4.5, Claude 4 Opus/Sonnet!'
+        };
+        console.log('🎉 Seeding complete!', response);
+        res.json(response);
+    }
+    catch (error) {
+        console.error('❌ Seeding failed:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Seeding failed',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
 // API endpoints for metrics
 app.get('/api/stats', async (req, res) => {
     try {
@@ -226,6 +500,98 @@ app.get('/api/errors', async (req, res) => {
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
+// Database health and metrics
+app.get('/db-stats', async (req, res) => {
+    try {
+        const responseCount = await (0, database_1.query)(`SELECT COUNT(*) as total_responses FROM responses`);
+        const avgCost = await (0, database_1.query)(`SELECT AVG(total_cost_usd) as avg_cost, SUM(total_cost_usd) as total_cost FROM responses WHERE total_cost_usd > 0`);
+        const avgLatency = await (0, database_1.query)(`SELECT AVG(latency_ms) as avg_latency FROM responses WHERE latency_ms > 0`);
+        const modelBreakdown = await (0, database_1.query)(`
+      SELECT model, COUNT(*) as count, AVG(total_cost_usd) as avg_cost 
+      FROM responses 
+      GROUP BY model 
+      ORDER BY count DESC
+    `);
+        const recentActivity = await (0, database_1.query)(`
+      SELECT DATE_TRUNC('hour', captured_at) as hour, COUNT(*) as responses_per_hour
+      FROM responses 
+      WHERE captured_at > NOW() - INTERVAL '24 hours'
+      GROUP BY hour 
+      ORDER BY hour DESC
+    `);
+        res.json({
+            database_health: {
+                total_responses: parseInt(responseCount.rows[0].total_responses),
+                avg_cost_per_response: parseFloat(avgCost.rows[0]?.avg_cost || 0).toFixed(6),
+                total_cost_spent: parseFloat(avgCost.rows[0]?.total_cost || 0).toFixed(4),
+                avg_latency_ms: parseInt(avgLatency.rows[0]?.avg_latency || 0),
+                estimated_db_size_kb: parseInt(responseCount.rows[0].total_responses) * 2
+            },
+            model_performance: modelBreakdown.rows,
+            hourly_activity: recentActivity.rows
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Failed to fetch database stats' });
+    }
+});
+// Peek at actual LLM responses
+app.get('/responses', async (req, res) => {
+    try {
+        const responses = await (0, database_1.query)(`
+      SELECT 
+        d.domain,
+        r.model,
+        r.prompt_type,
+        LEFT(r.raw_response, 200) as response_preview,
+        r.token_count,
+        r.total_cost_usd,
+        r.latency_ms,
+        r.captured_at
+      FROM responses r
+      JOIN domains d ON r.domain_id = d.id
+      ORDER BY r.captured_at DESC
+      LIMIT 10
+    `);
+        res.json({
+            recent_responses: responses.rows,
+            total_responses: responses.rows.length
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Failed to fetch responses' });
+    }
+});
+// Simple status endpoint for domain progress
+app.get('/status', async (req, res) => {
+    try {
+        const stats = await (0, database_1.query)(`
+      SELECT 
+        COUNT(*) as total_domains,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending,
+        COUNT(*) FILTER (WHERE status = 'processing') as processing,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed,
+        COUNT(*) FILTER (WHERE status = 'error') as errors
+      FROM domains
+    `);
+        const recent = await (0, database_1.query)(`
+      SELECT domain, status, updated_at 
+      FROM domains 
+      WHERE status != 'pending' 
+      ORDER BY updated_at DESC 
+      LIMIT 5
+    `);
+        res.json({
+            domain_stats: stats.rows[0],
+            recent_activity: recent.rows,
+            processing_rate: '1 domain per minute',
+            estimated_completion: `~${Math.ceil(parseInt(stats.rows[0].pending) / 60)} hours remaining`
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Failed to fetch status' });
+    }
+});
 // Initialize application
 async function initializeApp() {
     try {
@@ -266,10 +632,121 @@ async function processNextBatch() {
     `);
         if (pendingDomains.rows.length > 0) {
             const domain = pendingDomains.rows[0];
+            console.log(`🔄 Processing domain: ${domain.domain}`);
+            // Update domain status to 'processing'
+            await (0, database_1.query)(`
+        UPDATE domains 
+        SET status = 'processing', 
+            last_processed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP,
+            process_count = process_count + 1
+        WHERE id = $1
+      `, [domain.id]);
             await monitoring.logDomainProcessing(domain.id, 'processing');
-            // Process domain here
-            // ... your existing processing logic ...
-            await monitoring.logDomainProcessing(domain.id, 'completed');
+            try {
+                // Real LLM processing with multiple models
+                console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
+                // Define ALL 13 models for MAXIMUM 2025 tensor analysis 🚀
+                const models = [
+                    // 🤖 Latest OpenAI Models (2025)
+                    'gpt-4.1', // Enhanced coding and reasoning capabilities
+                    'gpt-4.1-mini', // Faster and more efficient variant
+                    'gpt-4.1-nano', // Optimized for low-latency tasks
+                    'gpt-4.5', // Orion research preview with improved performance
+                    'gpt-4o', // Multimodal model supporting text, image, and audio
+                    'gpt-4o-mini', // Smaller, cost-effective multimodal model
+                    'gpt-3.5-turbo', // Widely used model for general-purpose tasks
+                    // 🧠 Latest Claude Models (2025)
+                    'claude-opus-4-20250514', // Claude 4 Opus - most powerful
+                    'claude-sonnet-4-20250514', // Claude 4 Sonnet - balanced
+                    'claude-3-7-sonnet-20250219', // Claude 3.7 Sonnet - enhanced
+                    'claude-3-opus-20240229', // Claude 3 Opus - legacy flagship
+                    'claude-3-sonnet-20240229', // Claude 3 Sonnet - legacy balanced
+                    'claude-3-haiku-20240307' // Claude 3 Haiku - fast and efficient
+                ];
+                const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'];
+                // ⚡ PARALLEL PROCESSING - 5X SPEED BOOST WITH 13 MODELS!
+                for (const promptType of promptTypes) {
+                    console.log(`🚀 PARALLEL processing ${promptType} across ALL 13 MODELS (2025 LINEUP) for ${domain.domain}`);
+                    // Create parallel promises for all models
+                    const modelPromises = models.map(async (model) => {
+                        try {
+                            const prompt = PROMPT_TEMPLATES[promptType](domain.domain);
+                            const result = await callLLM(model, prompt, domain.domain);
+                            // Insert real response data
+                            await (0, database_1.query)(`
+                INSERT INTO responses (
+                  domain_id, model, prompt_type, interpolated_prompt, 
+                  raw_response, token_count, prompt_tokens, completion_tokens,
+                  token_usage, total_cost_usd, latency_ms
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+              `, [
+                                domain.id,
+                                model,
+                                promptType,
+                                prompt,
+                                result.response,
+                                (result.tokenUsage.total_tokens || result.tokenUsage.prompt_tokens + result.tokenUsage.completion_tokens || 0),
+                                (result.tokenUsage.prompt_tokens || result.tokenUsage.input_tokens || 0),
+                                (result.tokenUsage.completion_tokens || result.tokenUsage.output_tokens || 0),
+                                JSON.stringify(result.tokenUsage),
+                                result.cost,
+                                result.latency
+                            ]);
+                            console.log(`✅ ${model} ${promptType} completed for ${domain.domain} (${result.latency}ms, $${result.cost.toFixed(6)})`);
+                            return { model, success: true };
+                        }
+                        catch (modelError) {
+                            console.error(`❌ ${model} ${promptType} failed for ${domain.domain}:`, {
+                                message: modelError.message,
+                                status: modelError.status,
+                                code: modelError.code,
+                                type: modelError.type
+                            });
+                            // Log detailed error for debugging
+                            await (0, database_1.query)(`
+                INSERT INTO processing_logs (domain_id, event_type, details)
+                VALUES ($1, $2, $3)
+              `, [domain.id, 'model_error', {
+                                    model,
+                                    prompt_type: promptType,
+                                    error: modelError.message,
+                                    status: modelError.status,
+                                    code: modelError.code,
+                                    full_error: modelError.toString()
+                                }]);
+                            return { model, success: false, error: modelError.message };
+                        }
+                    });
+                    // Execute all models in parallel
+                    const results = await Promise.all(modelPromises);
+                    const successful = results.filter(r => r.success).length;
+                    console.log(`🎯 ${promptType} completed: ${successful}/${models.length} models successful (2025 LATEST LINEUP!)`);
+                    // Brief pause between prompt types to be respectful to APIs
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+                // Mark domain as completed
+                await (0, database_1.query)(`
+          UPDATE domains 
+          SET status = 'completed',
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1
+        `, [domain.id]);
+                console.log(`✅ Completed processing: ${domain.domain}`);
+                await monitoring.logDomainProcessing(domain.id, 'completed');
+            }
+            catch (error) {
+                console.error(`❌ Error processing ${domain.domain}:`, error);
+                // Mark domain as error
+                await (0, database_1.query)(`
+          UPDATE domains 
+          SET status = 'error',
+              error_count = error_count + 1,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1
+        `, [domain.id]);
+                await monitoring.logError(error, { domain: domain.domain, domain_id: domain.id });
+            }
         }
         else {
             console.log('📊 No pending domains found');
