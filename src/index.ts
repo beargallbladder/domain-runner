@@ -26,14 +26,102 @@ async function ensureSchemaExists(): Promise<void> {
       console.log(`📦 Schema issue detected (${error.code}): ${error.message}`);
       console.log('🔨 Initializing/fixing database schema...');
       
-      // Force schema recreation
-      const schemaPath = path.join(__dirname, '..', 'schemas', 'schema.sql');
+      // Try multiple possible schema file locations
+      const possiblePaths = [
+        path.join(__dirname, '..', 'schemas', 'schema.sql'),
+        path.join(__dirname, '..', '..', 'schemas', 'schema.sql'),
+        path.join(process.cwd(), 'schemas', 'schema.sql'),
+        path.join('/opt/render/project/src', 'schemas', 'schema.sql'),
+        path.join('/opt/render/project', 'schemas', 'schema.sql')
+      ];
       
-      if (!fs.existsSync(schemaPath)) {
-        throw new Error(`Schema file not found at: ${schemaPath}`);
+      let schemaContent: string | null = null;
+      let foundPath: string | null = null;
+      
+      for (const schemaPath of possiblePaths) {
+        console.log(`🔍 Trying schema path: ${schemaPath}`);
+        if (fs.existsSync(schemaPath)) {
+          schemaContent = fs.readFileSync(schemaPath, 'utf8');
+          foundPath = schemaPath;
+          console.log(`✅ Found schema at: ${foundPath}`);
+          break;
+        }
       }
       
-      const schema = fs.readFileSync(schemaPath, 'utf8');
+      if (!schemaContent) {
+        console.log('⚠️ Schema file not found, using embedded schema...');
+        // Embedded schema as fallback
+        schemaContent = `
+          -- Enable UUID extension
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          
+          -- Create domains table with full temporal tracking
+          CREATE TABLE IF NOT EXISTS domains (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            domain TEXT NOT NULL UNIQUE,
+            status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'error')),
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            last_processed_at TIMESTAMP WITH TIME ZONE,
+            process_count INTEGER DEFAULT 0,
+            error_count INTEGER DEFAULT 0,
+            source TEXT
+          );
+          
+          -- Create responses table with full temporal and cost tracking
+          CREATE TABLE IF NOT EXISTS responses (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            domain_id UUID REFERENCES domains(id),
+            model TEXT NOT NULL,
+            prompt_type TEXT NOT NULL,
+            interpolated_prompt TEXT NOT NULL,
+            raw_response TEXT NOT NULL,
+            token_count INTEGER,
+            prompt_tokens INTEGER,
+            completion_tokens INTEGER,
+            token_usage JSONB,
+            total_cost_usd DECIMAL(10,6),
+            latency_ms INTEGER,
+            captured_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          );
+          
+          -- Create processing_logs table for detailed temporal monitoring
+          CREATE TABLE IF NOT EXISTS processing_logs (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            domain_id UUID REFERENCES domains(id),
+            event_type TEXT NOT NULL,
+            details JSONB,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          );
+          
+          -- Create rate_limits table for temporal API usage tracking
+          CREATE TABLE IF NOT EXISTS rate_limits (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            model TEXT NOT NULL,
+            requests_per_minute INTEGER NOT NULL,
+            requests_per_hour INTEGER NOT NULL,
+            requests_per_day INTEGER NOT NULL,
+            current_minute_count INTEGER DEFAULT 0,
+            current_hour_count INTEGER DEFAULT 0,
+            current_day_count INTEGER DEFAULT 0,
+            last_reset_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            window_start TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (model)
+          );
+          
+          -- Create prompt_templates table for template management
+          CREATE TABLE IF NOT EXISTS prompt_templates (
+            id TEXT PRIMARY KEY,
+            template TEXT NOT NULL,
+            category TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          );
+        `;
+      }
       
       // Drop existing tables if they exist with wrong structure
       console.log('🗑️ Dropping existing incompatible tables...');
@@ -44,7 +132,7 @@ async function ensureSchemaExists(): Promise<void> {
       await query(`DROP TABLE IF EXISTS domains CASCADE`);
       
       console.log('🔨 Creating fresh schema...');
-      await query(schema);
+      await query(schemaContent);
       
       // Verify schema was created correctly
       await query(`SELECT status, last_processed_at, process_count FROM domains LIMIT 1`);
