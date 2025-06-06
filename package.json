@@ -4,10 +4,10 @@
   "description": "Raw LLM response capture runner for multiple models",
   "main": "dist/runner.js",
   "scripts": {
-    "build": "tsc",
-    "start": "npm run migrate && node dist/runner.js",
+    "build": "./scripts/build.sh",
+    "start": "node dist/migrations/run-migrations.js && node dist/runner.js",
     "dev": "ts-node src/runner.ts",
-    "migrate": "ts-node src/migrations/run-migrations.ts"
+    "migrate": "node dist/migrations/run-migrations.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.18.0",

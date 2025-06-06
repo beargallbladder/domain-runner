@@ -13,9 +13,15 @@ async function runMigrations() {
     try {
         console.log('Running database migrations...');
         
+        // Ensure migrations directory exists in dist
+        const migrationsDir = path.join(__dirname);
+        if (!fs.existsSync(migrationsDir)) {
+            fs.mkdirSync(migrationsDir, { recursive: true });
+        }
+        
         // Read and execute the migration SQL
         const migrationSQL = fs.readFileSync(
-            path.join(__dirname, 'init.sql'),
+            path.join(migrationsDir, 'init.sql'),
             'utf8'
         );
         
