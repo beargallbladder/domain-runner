@@ -1,7 +1,7 @@
 services:
   - type: web
     name: raw-capture-runner
-    env: node
+    runtime: node
     buildCommand: npm install && npm run build
     startCommand: node dist/index.js
     envVars:
@@ -16,4 +16,4 @@ services:
 
 databases:
   - name: raw-capture-db
-    plan: starter 
+    plan: basic-1gb 
