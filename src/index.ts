@@ -414,12 +414,77 @@ async function processNextBatch(): Promise<void> {
 
     if (pendingDomains.rows.length > 0) {
       const domain = pendingDomains.rows[0];
+      console.log(`🔄 Processing domain: ${domain.domain}`);
+      
+      // Update domain status to 'processing'
+      await query(`
+        UPDATE domains 
+        SET status = 'processing', 
+            last_processed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP,
+            process_count = process_count + 1
+        WHERE id = $1
+      `, [domain.id]);
+      
       await monitoring.logDomainProcessing(domain.id, 'processing');
       
-      // Process domain here
-      // ... your existing processing logic ...
-
-      await monitoring.logDomainProcessing(domain.id, 'completed');
+      try {
+        // Mock LLM processing for now (replace with actual LLM calls later)
+        console.log(`📝 Simulating LLM processing for ${domain.domain}...`);
+        
+        // Simulate 3 prompts per domain
+        const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
+        
+        for (const promptType of prompts) {
+          // Simulate API call delay
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Insert mock response
+          await query(`
+            INSERT INTO responses (
+              domain_id, model, prompt_type, interpolated_prompt, 
+              raw_response, token_count, prompt_tokens, completion_tokens,
+              total_cost_usd, latency_ms
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          `, [
+            domain.id,
+            'gpt-4o-mini', // mock model
+            promptType,
+            `Analyze ${domain.domain} for ${promptType}`,
+            `Mock response for ${domain.domain} ${promptType} analysis`, // mock response
+            150, // mock token count
+            50, // mock prompt tokens  
+            100, // mock completion tokens
+            0.001, // mock cost
+            2000 // mock latency
+          ]);
+        }
+        
+        // Mark domain as completed
+        await query(`
+          UPDATE domains 
+          SET status = 'completed',
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1
+        `, [domain.id]);
+        
+        console.log(`✅ Completed processing: ${domain.domain}`);
+        await monitoring.logDomainProcessing(domain.id, 'completed');
+        
+      } catch (error: any) {
+        console.error(`❌ Error processing ${domain.domain}:`, error);
+        
+        // Mark domain as error
+        await query(`
+          UPDATE domains 
+          SET status = 'error',
+              error_count = error_count + 1,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1
+        `, [domain.id]);
+        
+        await monitoring.logError(error, { domain: domain.domain, domain_id: domain.id });
+      }
     } else {
       console.log('📊 No pending domains found');
     }
