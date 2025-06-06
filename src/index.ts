@@ -450,6 +450,42 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
+// Database health and metrics
+app.get('/db-stats', async (req: Request, res: Response) => {
+  try {
+    const responseCount = await query(`SELECT COUNT(*) as total_responses FROM responses`);
+    const avgCost = await query(`SELECT AVG(total_cost_usd) as avg_cost, SUM(total_cost_usd) as total_cost FROM responses WHERE total_cost_usd > 0`);
+    const avgLatency = await query(`SELECT AVG(latency_ms) as avg_latency FROM responses WHERE latency_ms > 0`);
+    const modelBreakdown = await query(`
+      SELECT model, COUNT(*) as count, AVG(total_cost_usd) as avg_cost 
+      FROM responses 
+      GROUP BY model 
+      ORDER BY count DESC
+    `);
+    const recentActivity = await query(`
+      SELECT DATE_TRUNC('hour', captured_at) as hour, COUNT(*) as responses_per_hour
+      FROM responses 
+      WHERE captured_at > NOW() - INTERVAL '24 hours'
+      GROUP BY hour 
+      ORDER BY hour DESC
+    `);
+
+    res.json({
+      database_health: {
+        total_responses: parseInt(responseCount.rows[0].total_responses),
+        avg_cost_per_response: parseFloat(avgCost.rows[0]?.avg_cost || 0).toFixed(6),
+        total_cost_spent: parseFloat(avgCost.rows[0]?.total_cost || 0).toFixed(4),
+        avg_latency_ms: parseInt(avgLatency.rows[0]?.avg_latency || 0),
+        estimated_db_size_kb: parseInt(responseCount.rows[0].total_responses) * 2
+      },
+      model_performance: modelBreakdown.rows,
+      hourly_activity: recentActivity.rows
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch database stats' });
+  }
+});
+
 // Peek at actual LLM responses
 app.get('/responses', async (req: Request, res: Response) => {
   try {
