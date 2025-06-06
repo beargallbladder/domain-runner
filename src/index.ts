@@ -238,6 +238,10 @@ const monitoring = MonitoringService.getInstance();
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Add middleware for parsing JSON and URL-encoded data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'dashboard/public')));
 
