@@ -5,9 +5,53 @@ import path from 'path';
 import { query, testConnection } from './config/database';
 import { Pool } from 'pg';
 import * as fs from 'fs';
+import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
 // Load environment variables
 dotenv.config();
+
+// Initialize LLM clients
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY
+});
+
+// Real prompt templates for domain analysis
+const PROMPT_TEMPLATES = {
+  business_analysis: (domain: string) => `
+Analyze the business model and strategy of ${domain}. Provide insights on:
+1. Primary business model and revenue streams
+2. Target market and customer segments  
+3. Competitive positioning and advantages
+4. Key growth drivers and challenges
+5. Market opportunity and industry trends
+
+Keep your analysis concise but comprehensive (300-500 words).`,
+
+  content_strategy: (domain: string) => `
+Evaluate the content strategy and digital presence of ${domain}. Analyze:
+1. Content types, themes, and quality
+2. Content distribution channels and frequency
+3. SEO strategy and keyword targeting
+4. User engagement and content performance
+5. Content gaps and opportunities
+
+Provide actionable insights for content optimization (300-500 words).`,
+
+  technical_assessment: (domain: string) => `
+Conduct a technical assessment of ${domain}. Cover:
+1. Website performance and loading speed
+2. Mobile responsiveness and UX design
+3. Security features and SSL implementation
+4. Technology stack and infrastructure
+5. Technical SEO and site architecture
+
+Focus on technical strengths and improvement areas (300-500 words).`
+};
 
 // Schema initialization with proper column verification
 async function ensureSchemaExists(): Promise<void> {
@@ -231,6 +275,75 @@ async function seedDomains(): Promise<{ inserted: number; skipped: number; total
   return { inserted, skipped, total: domains.length };
 }
 
+// Real LLM API call function
+async function callLLM(model: string, prompt: string, domain: string): Promise<{
+  response: string;
+  tokenUsage: any;
+  cost: number;
+  latency: number;
+}> {
+  const startTime = Date.now();
+  
+  try {
+    if (model.includes('gpt')) {
+      // OpenAI API call
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1000,
+        temperature: 0.7
+      });
+      
+      const latency = Date.now() - startTime;
+      const usage = completion.usage || {};
+      
+      // Approximate cost calculation (adjust rates as needed)
+      const promptTokens = (usage as any)?.prompt_tokens || 0;
+      const completionTokens = (usage as any)?.completion_tokens || 0;
+      const cost = model === 'gpt-4' 
+        ? promptTokens * 0.00003 + completionTokens * 0.00006
+        : promptTokens * 0.0000015 + completionTokens * 0.000002;
+      
+      return {
+        response: completion.choices[0]?.message?.content || 'No response',
+        tokenUsage: usage,
+        cost: cost,
+        latency: latency
+      };
+      
+    } else if (model.includes('claude')) {
+      // Anthropic API call
+      const message = await anthropic.messages.create({
+        model: model,
+        max_tokens: 1000,
+        temperature: 0.7,
+        messages: [{ role: 'user', content: prompt }]
+      });
+      
+      const latency = Date.now() - startTime;
+      const usage = message.usage || {};
+      
+      // Approximate cost calculation for Claude
+      const inputTokens = (usage as any)?.input_tokens || 0;
+      const outputTokens = (usage as any)?.output_tokens || 0;
+      const cost = inputTokens * 0.000008 + outputTokens * 0.000024;
+      
+      return {
+        response: message.content[0]?.type === 'text' ? message.content[0].text : 'No response',
+        tokenUsage: usage,
+        cost: cost,
+        latency: latency
+      };
+    } else {
+      throw new Error(`Unsupported model: ${model}`);
+    }
+    
+  } catch (error) {
+    console.error(`LLM API error for ${model}:`, error);
+    throw error;
+  }
+}
+
 // Initialize monitoring
 const monitoring = MonitoringService.getInstance();
 
@@ -429,35 +542,61 @@ async function processNextBatch(): Promise<void> {
       await monitoring.logDomainProcessing(domain.id, 'processing');
       
       try {
-        // Mock LLM processing for now (replace with actual LLM calls later)
-        console.log(`📝 Simulating LLM processing for ${domain.domain}...`);
+        // Real LLM processing with multiple models
+        console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
         
-        // Simulate 3 prompts per domain
-        const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
+        // Define models to test against each domain
+        const models = ['gpt-4o-mini', 'gpt-4', 'claude-3-haiku-20240307'];
+        const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'] as const;
         
-        for (const promptType of prompts) {
-          // Simulate API call delay
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Insert mock response
-          await query(`
-            INSERT INTO responses (
-              domain_id, model, prompt_type, interpolated_prompt, 
-              raw_response, token_count, prompt_tokens, completion_tokens,
-              total_cost_usd, latency_ms
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-          `, [
-            domain.id,
-            'gpt-4o-mini', // mock model
-            promptType,
-            `Analyze ${domain.domain} for ${promptType}`,
-            `Mock response for ${domain.domain} ${promptType} analysis`, // mock response
-            150, // mock token count
-            50, // mock prompt tokens  
-            100, // mock completion tokens
-            0.001, // mock cost
-            2000 // mock latency
-          ]);
+        for (const model of models) {
+          for (const promptType of promptTypes) {
+            try {
+              console.log(`🤖 Calling ${model} for ${promptType} on ${domain.domain}`);
+              
+              const prompt = PROMPT_TEMPLATES[promptType](domain.domain);
+              const result = await callLLM(model, prompt, domain.domain);
+              
+              // Insert real response data
+              await query(`
+                INSERT INTO responses (
+                  domain_id, model, prompt_type, interpolated_prompt, 
+                  raw_response, token_count, prompt_tokens, completion_tokens,
+                  token_usage, total_cost_usd, latency_ms
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+              `, [
+                domain.id,
+                model,
+                promptType,
+                prompt,
+                result.response,
+                (result.tokenUsage.total_tokens || result.tokenUsage.prompt_tokens + result.tokenUsage.completion_tokens || 0),
+                (result.tokenUsage.prompt_tokens || result.tokenUsage.input_tokens || 0),
+                (result.tokenUsage.completion_tokens || result.tokenUsage.output_tokens || 0),
+                JSON.stringify(result.tokenUsage),
+                result.cost,
+                result.latency
+              ]);
+              
+              console.log(`✅ ${model} ${promptType} completed for ${domain.domain} (${result.latency}ms, $${result.cost.toFixed(6)})`);
+              
+              // Rate limiting - wait between calls
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+            } catch (modelError: any) {
+              console.error(`❌ ${model} ${promptType} failed for ${domain.domain}:`, modelError.message);
+              
+              // Log the error but continue with other models
+              await query(`
+                INSERT INTO processing_logs (domain_id, event_type, details)
+                VALUES ($1, $2, $3)
+              `, [domain.id, 'model_error', { 
+                model, 
+                prompt_type: promptType, 
+                error: modelError.message 
+              }]);
+            }
+          }
         }
         
         // Mark domain as completed
