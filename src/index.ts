@@ -9,35 +9,53 @@ import * as fs from 'fs';
 // Load environment variables
 dotenv.config();
 
-// Schema initialization fallback
+// Schema initialization with proper column verification
 async function ensureSchemaExists(): Promise<void> {
   try {
     console.log('🔍 Checking if database schema exists...');
     
-    // Test if tables exist by checking for the domains table
-    await query('SELECT 1 FROM domains LIMIT 1');
-    console.log('✅ Database schema already exists');
-    
-  } catch (error: any) {
-    if (error.code === '42P01') { // Table does not exist
-      console.log('📦 Database schema not found, initializing...');
+    // Check if domains table has the correct structure
+    try {
+      await query(`SELECT status, last_processed_at, process_count FROM domains LIMIT 1`);
+      // Check if processing_logs table exists
+      await query(`SELECT event_type FROM processing_logs LIMIT 1`);
+      console.log('✅ Database schema already exists with correct structure');
+      return;
       
-      try {
-        const schemaPath = path.join(__dirname, '..', 'schemas', 'schema.sql');
-        const schema = fs.readFileSync(schemaPath, 'utf8');
-        
-        console.log('🔨 Executing schema SQL...');
-        await query(schema);
-        console.log('✅ Database schema initialized successfully!');
-        
-      } catch (schemaError) {
-        console.error('❌ Failed to initialize schema:', schemaError);
-        throw schemaError;
+    } catch (error: any) {
+      console.log(`📦 Schema issue detected (${error.code}): ${error.message}`);
+      console.log('🔨 Initializing/fixing database schema...');
+      
+      // Force schema recreation
+      const schemaPath = path.join(__dirname, '..', 'schemas', 'schema.sql');
+      
+      if (!fs.existsSync(schemaPath)) {
+        throw new Error(`Schema file not found at: ${schemaPath}`);
       }
-    } else {
-      console.error('❌ Database connection error:', error);
-      throw error;
+      
+      const schema = fs.readFileSync(schemaPath, 'utf8');
+      
+      // Drop existing tables if they exist with wrong structure
+      console.log('🗑️ Dropping existing incompatible tables...');
+      await query(`DROP TABLE IF EXISTS processing_logs CASCADE`);
+      await query(`DROP TABLE IF EXISTS responses CASCADE`); 
+      await query(`DROP TABLE IF EXISTS rate_limits CASCADE`);
+      await query(`DROP TABLE IF EXISTS prompt_templates CASCADE`);
+      await query(`DROP TABLE IF EXISTS domains CASCADE`);
+      
+      console.log('🔨 Creating fresh schema...');
+      await query(schema);
+      
+      // Verify schema was created correctly
+      await query(`SELECT status, last_processed_at, process_count FROM domains LIMIT 1`);
+      await query(`SELECT event_type FROM processing_logs LIMIT 1`);
+      
+      console.log('✅ Database schema initialized successfully!');
     }
+    
+  } catch (error) {
+    console.error('❌ Schema initialization failed:', error);
+    throw error;
   }
 }
 
@@ -109,7 +127,7 @@ async function initializeApp(): Promise<void> {
       throw new Error('Database connection failed');
     }
     
-    // Ensure schema exists
+    // Ensure schema exists with proper structure
     await ensureSchemaExists();
     
     // Start the server
@@ -150,6 +168,8 @@ async function processNextBatch(): Promise<void> {
       // ... your existing processing logic ...
 
       await monitoring.logDomainProcessing(domain.id, 'completed');
+    } else {
+      console.log('📊 No pending domains found');
     }
   } catch (error: unknown) {
     const err = error as Error;

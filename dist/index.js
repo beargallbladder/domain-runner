@@ -44,33 +44,45 @@ const database_1 = require("./config/database");
 const fs = __importStar(require("fs"));
 // Load environment variables
 dotenv.config();
-// Schema initialization fallback
+// Schema initialization with proper column verification
 async function ensureSchemaExists() {
     try {
         console.log('🔍 Checking if database schema exists...');
-        // Test if tables exist by checking for the domains table
-        await (0, database_1.query)('SELECT 1 FROM domains LIMIT 1');
-        console.log('✅ Database schema already exists');
+        // Check if domains table has the correct structure
+        try {
+            await (0, database_1.query)(`SELECT status, last_processed_at, process_count FROM domains LIMIT 1`);
+            // Check if processing_logs table exists
+            await (0, database_1.query)(`SELECT event_type FROM processing_logs LIMIT 1`);
+            console.log('✅ Database schema already exists with correct structure');
+            return;
+        }
+        catch (error) {
+            console.log(`📦 Schema issue detected (${error.code}): ${error.message}`);
+            console.log('🔨 Initializing/fixing database schema...');
+            // Force schema recreation
+            const schemaPath = path_1.default.join(__dirname, '..', 'schemas', 'schema.sql');
+            if (!fs.existsSync(schemaPath)) {
+                throw new Error(`Schema file not found at: ${schemaPath}`);
+            }
+            const schema = fs.readFileSync(schemaPath, 'utf8');
+            // Drop existing tables if they exist with wrong structure
+            console.log('🗑️ Dropping existing incompatible tables...');
+            await (0, database_1.query)(`DROP TABLE IF EXISTS processing_logs CASCADE`);
+            await (0, database_1.query)(`DROP TABLE IF EXISTS responses CASCADE`);
+            await (0, database_1.query)(`DROP TABLE IF EXISTS rate_limits CASCADE`);
+            await (0, database_1.query)(`DROP TABLE IF EXISTS prompt_templates CASCADE`);
+            await (0, database_1.query)(`DROP TABLE IF EXISTS domains CASCADE`);
+            console.log('🔨 Creating fresh schema...');
+            await (0, database_1.query)(schema);
+            // Verify schema was created correctly
+            await (0, database_1.query)(`SELECT status, last_processed_at, process_count FROM domains LIMIT 1`);
+            await (0, database_1.query)(`SELECT event_type FROM processing_logs LIMIT 1`);
+            console.log('✅ Database schema initialized successfully!');
+        }
     }
     catch (error) {
-        if (error.code === '42P01') { // Table does not exist
-            console.log('📦 Database schema not found, initializing...');
-            try {
-                const schemaPath = path_1.default.join(__dirname, '..', 'schemas', 'schema.sql');
-                const schema = fs.readFileSync(schemaPath, 'utf8');
-                console.log('🔨 Executing schema SQL...');
-                await (0, database_1.query)(schema);
-                console.log('✅ Database schema initialized successfully!');
-            }
-            catch (schemaError) {
-                console.error('❌ Failed to initialize schema:', schemaError);
-                throw schemaError;
-            }
-        }
-        else {
-            console.error('❌ Database connection error:', error);
-            throw error;
-        }
+        console.error('❌ Schema initialization failed:', error);
+        throw error;
     }
 }
 // Initialize monitoring
@@ -136,7 +148,7 @@ async function initializeApp() {
         if (!connected) {
             throw new Error('Database connection failed');
         }
-        // Ensure schema exists
+        // Ensure schema exists with proper structure
         await ensureSchemaExists();
         // Start the server
         app.listen(port, () => {
@@ -171,6 +183,9 @@ async function processNextBatch() {
             // Process domain here
             // ... your existing processing logic ...
             await monitoring.logDomainProcessing(domain.id, 'completed');
+        }
+        else {
+            console.log('📊 No pending domains found');
         }
     }
     catch (error) {
