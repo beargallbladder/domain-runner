@@ -26,17 +26,70 @@ pool.on('error', (err: Error, client: PoolClient) => {
   console.error('Unexpected error on idle client', err);
 });
 
-// Export helper functions for common database operations
+// Retry helper function
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 5,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry on certain errors (syntax errors, etc.)
+      if (error && typeof error === 'object' && 'code' in error) {
+        const pgError = error as any;
+        if (pgError.code && !['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes(pgError.code)) {
+          throw error;
+        }
+      }
+      
+      if (attempt === maxRetries) {
+        console.error(`Database operation failed after ${maxRetries} attempts:`, lastError);
+        throw lastError;
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      console.log(`Database connection attempt ${attempt} failed, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError!;
+}
+
+// Export helper functions for common database operations with retry logic
 export async function query<T = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
   const start = Date.now();
+  
+  return withRetry(async () => {
+    try {
+      const res = await pool.query<T>(text, params);
+      const duration = Date.now() - start;
+      console.log('Executed query', { text: text.substring(0, 100) + '...', duration, rows: res.rowCount });
+      return res;
+    } catch (error) {
+      console.error('Error executing query', { text: text.substring(0, 100) + '...', error: (error as Error).message });
+      throw error;
+    }
+  });
+}
+
+// Test database connection
+export async function testConnection(): Promise<boolean> {
   try {
-    const res = await pool.query<T>(text, params);
-    const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: res.rowCount });
-    return res;
+    await withRetry(async () => {
+      await pool.query('SELECT 1');
+    });
+    console.log('Database connection successful');
+    return true;
   } catch (error) {
-    console.error('Error executing query', { text, error });
-    throw error;
+    console.error('Failed to connect to database:', error);
+    return false;
   }
 }
 

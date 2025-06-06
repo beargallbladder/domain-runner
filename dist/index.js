@@ -41,8 +41,38 @@ const monitoring_1 = require("./services/monitoring");
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const database_1 = require("./config/database");
+const fs = __importStar(require("fs"));
 // Load environment variables
 dotenv.config();
+// Schema initialization fallback
+async function ensureSchemaExists() {
+    try {
+        console.log('🔍 Checking if database schema exists...');
+        // Test if tables exist by checking for the domains table
+        await (0, database_1.query)('SELECT 1 FROM domains LIMIT 1');
+        console.log('✅ Database schema already exists');
+    }
+    catch (error) {
+        if (error.code === '42P01') { // Table does not exist
+            console.log('📦 Database schema not found, initializing...');
+            try {
+                const schemaPath = path_1.default.join(__dirname, '..', 'schemas', 'schema.sql');
+                const schema = fs.readFileSync(schemaPath, 'utf8');
+                console.log('🔨 Executing schema SQL...');
+                await (0, database_1.query)(schema);
+                console.log('✅ Database schema initialized successfully!');
+            }
+            catch (schemaError) {
+                console.error('❌ Failed to initialize schema:', schemaError);
+                throw schemaError;
+            }
+        }
+        else {
+            console.error('❌ Database connection error:', error);
+            throw error;
+        }
+    }
+}
 // Initialize monitoring
 const monitoring = monitoring_1.MonitoringService.getInstance();
 // Create Express app
@@ -97,10 +127,34 @@ app.get('/api/errors', async (req, res) => {
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
-// Start the server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
+// Initialize application
+async function initializeApp() {
+    try {
+        // Test database connection first
+        console.log('🔍 Testing database connection...');
+        const connected = await (0, database_1.testConnection)();
+        if (!connected) {
+            throw new Error('Database connection failed');
+        }
+        // Ensure schema exists
+        await ensureSchemaExists();
+        // Start the server
+        app.listen(port, () => {
+            console.log(`Server running at http://localhost:${port}`);
+        });
+        // Start processing
+        console.log('🚀 Starting domain processing...');
+        processNextBatch().catch((error) => {
+            const err = error;
+            console.error('Failed to start processing:', err);
+            process.exit(1);
+        });
+    }
+    catch (error) {
+        console.error('❌ Application initialization failed:', error);
+        process.exit(1);
+    }
+}
 // Initialize the processing loop
 async function processNextBatch() {
     try {
@@ -127,9 +181,5 @@ async function processNextBatch() {
     // Schedule next batch
     setTimeout(processNextBatch, 60000); // 1 minute delay
 }
-// Start processing
-processNextBatch().catch((error) => {
-    const err = error;
-    console.error('Failed to start processing:', err);
-    process.exit(1);
-});
+// Start the application
+initializeApp();
