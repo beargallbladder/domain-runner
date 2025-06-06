@@ -4,7 +4,7 @@
   "description": "Raw LLM response capture runner for multiple models",
   "main": "dist/runner.js",
   "scripts": {
-    "build": "npm install --save-dev @types/pg && tsc",
+    "build": "tsc",
     "start": "node dist/runner.js",
     "dev": "ts-node src/runner.ts"
   },
