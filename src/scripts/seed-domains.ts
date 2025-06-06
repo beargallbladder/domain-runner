@@ -22,6 +22,13 @@ async function seedDomains() {
   console.log('Starting domain seeding...');
   
   try {
+    // Check if we already have domains
+    const existingCount = await pool.query('SELECT COUNT(*) FROM domains');
+    if (parseInt(existingCount.rows[0].count) > 0) {
+      console.log('Database already has domains, skipping seeding.');
+      return;
+    }
+
     // Insert domains
     for (const domain of TEST_DOMAINS) {
       const result = await pool.query(
@@ -44,6 +51,7 @@ async function seedDomains() {
 
   } catch (error) {
     console.error('❌ Error seeding domains:', error);
+    throw error; // Re-throw to ensure process fails if seeding fails
   } finally {
     await pool.end();
     console.log('\nSeeding complete.');

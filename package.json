@@ -5,7 +5,7 @@
   "main": "dist/runner.js",
   "scripts": {
     "build": "./scripts/build.sh",
-    "start": "node dist/migrations/run-migrations.js && node dist/runner.js",
+    "start": "node dist/migrations/run-migrations.js && node dist/scripts/seed-domains.js && node dist/runner.js",
     "dev": "ts-node src/runner.ts",
     "migrate": "node dist/migrations/run-migrations.js",
     "test-db": "ts-node src/test-db.ts",

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create dist directory if it doesn't exist
-mkdir -p dist/migrations
+mkdir -p dist/migrations dist/scripts
 
 # Run TypeScript compilation
 tsc
