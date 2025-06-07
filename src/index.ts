@@ -290,7 +290,40 @@ async function seedDomains(): Promise<{ inserted: number; skipped: number; total
     'ovh.net', 'ca.gov', 'goodreads.com', 'economist.com', 'target.com',
     'marca.com', 'kickstarter.com', 'hindustantimes.com', 'weibo.com', 'huawei.com',
     'e-monsite.com', 'hubspot.com', 'npr.org', 'netflix.com', 'gizmodo.com',
-    'netlify.app', 'yandex.com', 'mashable.com', 'ebay.com', 'etsy.com', 'walmart.com'
+    'netlify.app', 'yandex.com', 'mashable.com', 'ebay.com', 'etsy.com', 'walmart.com',
+    
+    // 🔥 WILDFIRE SEO JUICE DOMAINS - 75 NEW DOMAINS FOR MAXIMUM SIGNAL DIVERSITY 🔥
+    
+    // 🚀 AI/LLM POWERHOUSES (Peak discussion, controversy, future-focused)
+    'openai.com', 'anthropic.com', 'huggingface.co', 'midjourney.com', 'stability.ai',
+    'character.ai', 'perplexity.ai', 'replicate.com', 'runwayml.com', 'cohere.com',
+    'together.ai', 'fireworks.ai', 'adept.ai', 'inflection.ai', 'mistral.ai',
+    
+    // 💸 CRYPTO/WEB3 CHAOS (Maximum volatility, extreme opinions)
+    'coinbase.com', 'binance.com', 'opensea.io', 'uniswap.org', 'solana.com',
+    'polygon.technology', 'avalanche.network', 'chainlink.com', 'aave.com', 'compound.finance',
+    'ftx.com', 'celsius.network', 'terra.money', 'algorand.com', 'cardano.org',
+    
+    // 🎮 GAMING/METAVERSE EXPLOSION (Viral content, young demographics)
+    'roblox.com', 'epicgames.com', 'steam.com', 'minecraft.net', 'fortnite.com',
+    'unity.com', 'unrealengine.com', 'oculus.com', 'meta.com', 'sandbox.game',
+    'decentraland.org', 'axieinfinity.com', 'opensea.io', 'enjin.io', 'immutable.com',
+    
+    // 🚗 EV/FUTURE MOBILITY (Rapidly evolving, polarizing)
+    'tesla.com', 'rivian.com', 'lucidmotors.com', 'nio.com', 'xpeng.com',
+    'byd.com', 'waymo.com', 'cruise.com', 'uber.com', 'lyft.com',
+    
+    // 🧬 BIOTECH/LONGEVITY FRONTIER (Cutting-edge science, ethical debates)
+    '23andme.com', 'illumina.com', 'crispr.com', 'modernatx.com', 'biontech.se',
+    '10xgenomics.com', 'calico.com', 'altos.com', 'unity-biotechnology.com', 'grail.com',
+    
+    // 🌶️ CONTROVERSIAL/POLARIZING (Maximum response diversity, training bias reveals)
+    'infowars.com', 'breitbart.com', 'truthsocial.com', 'parler.com', 'gab.com',
+    'rt.com', 'aljazeera.com', '4chan.org', 'wikileaks.org', 'rumble.com',
+    
+    // 📱 SOCIAL/CONTENT ALTERNATIVES (Emerging platforms, cultural shifts)
+    'substack.com', 'clubhouse.com', 'snapchat.com', 'reddit.com', 'quora.com',
+    'signal.org', 'telegram.org', 'mastodon.social', 'bluesky.app', 'threads.net'
   ];
 
   let inserted = 0;
