@@ -863,175 +863,185 @@ async function initializeApp(): Promise<void> {
 // Initialize the processing loop
 async function processNextBatch(): Promise<void> {
   try {
+    // 🚀 5X THROTTLE TEST: Process 5 domains concurrently instead of 1
     const pendingDomains = await query(`
       SELECT id, domain
       FROM domains
       WHERE status = 'pending'
       ORDER BY last_processed_at ASC NULLS FIRST
-      LIMIT 1
+      LIMIT 5
     `);
 
     if (pendingDomains.rows.length > 0) {
-      const domain = pendingDomains.rows[0];
-      console.log(`🔄 Processing domain: ${domain.domain}`);
+      console.log(`🚀 5X THROTTLE: Processing ${pendingDomains.rows.length} domains concurrently!`);
       
-      // Update domain status to 'processing'
-      await query(`
-        UPDATE domains 
-        SET status = 'processing', 
-            last_processed_at = CURRENT_TIMESTAMP,
-            updated_at = CURRENT_TIMESTAMP,
-            process_count = process_count + 1
-        WHERE id = $1
-      `, [domain.id]);
-      
-      await monitoring.logDomainProcessing(domain.id, 'processing');
-      
-      try {
-        // Real LLM processing with multiple models
-        console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
+      // Process all domains in parallel
+      const domainPromises = pendingDomains.rows.map(async (domain: any) => {
+        console.log(`🔄 Processing domain: ${domain.domain}`);
         
-        // Define ALL 35 models for COMPLETE COST SPECTRUM 2025 tensor analysis 🚀💰
-        const models = [
-          // 💎 FLAGSHIP TIER ($0.05-$0.15) - Premium powerhouses
-          'gpt-4.1',                      // $0.11 - Enhanced coding and reasoning capabilities
-          'claude-opus-4-20250514',       // $0.087 - Claude 4 Opus - most powerful
-          'claude-sonnet-4-20250514',     // $0.047 - Claude 4 Sonnet - balanced
-          'gpt-4.1-mini',                 // $0.051 - Faster and more efficient variant
-          
-          // 🔥 PREMIUM TIER ($0.015-$0.05) - High-end models
-          'claude-3-7-sonnet-20250219',   // $0.026 - Claude 3.7 Sonnet - enhanced
-          'gpt-4.1-nano',                 // $0.013 - Optimized for low-latency tasks
-          'mistral-large-2407',           // $0.010 - Mistral Large - Flagship model
-          'claude-3-5-sonnet-20241022',   // $0.009 - Claude 3.5 Sonnet
-          'gpt-4o',                       // $0.006 - Multimodal model supporting text, image, and audio
-          
-          // ⚖️ MID-TIER ($0.005-$0.015) - Balanced performance/cost
-          'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',  // ~$0.012 - Meta's large workhorse
-          'Qwen/Qwen2.5-72B-Instruct',    // ~$0.010 - Premium Chinese model
-          'mistralai/Mixtral-8x22B-Instruct-v0.1',  // ~$0.009 - Larger mixture model
-          'claude-3-opus-20240229',       // $0.049 - Claude 3 Opus - legacy flagship
-          'deepseek-chat',                // $0.004 - DeepSeek V3 - Advanced reasoning & coding
-          'deepseek-coder',               // $0.006 - DeepSeek Coder - Specialized coding model
-          
-          // 💰 BUDGET TIER ($0.001-$0.005) - Efficient workhorses  
-          'mistral-small-2402',           // $0.004 - Mistral Small - Cost-effective
-          'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',   // ~$0.003 - Meta's efficient model
-          'mistralai/Mixtral-8x7B-Instruct-v0.1',  // ~$0.0025 - Mixture of experts
-          'Qwen/Qwen2.5-14B-Instruct',    // ~$0.002 - Mid-size reasoning
-          'gpt-3.5-turbo',                // $0.001 - Widely used model for general-purpose tasks
-          'claude-3-haiku-20240307',      // $0.0005 - Claude 3 Haiku - fast and efficient
-          'gpt-4o-mini',                  // $0.0013 - Smaller, cost-effective multimodal model
-          
-          // 🏃 ULTRA-BUDGET TIER ($0.0001-$0.001) - Maximum efficiency
-          'meta-llama/Meta-Llama-3.2-3B-Instruct-Turbo',   // ~$0.0008 - Tiny but capable
-          'Qwen/Qwen2.5-7B-Instruct',     // ~$0.0005 - Efficient Chinese model  
-          'mistralai/Mistral-7B-Instruct-v0.3',  // ~$0.0004 - Baseline Mistral
-          'microsoft/Phi-3-mini-4k-instruct',  // ~$0.0003 - Microsoft's efficient model
-          'google/gemma-2-9b-it',          // ~$0.0002 - Google's efficient model
-          'gemini-1.5-flash',             // $0.0006 - Gemini 1.5 Flash - Fast and efficient
-          'meta-llama/CodeLlama-7b-Instruct-hf',  // ~$0.0003 - Specialized coding model
-          'NousResearch/Nous-Hermes-2-Yi-34B',  // ~$0.0008 - Strong open model
-          
-          // 🚀 EXPERIMENTAL TIER - Latest releases (varies)
-          'gpt-4.5',                      // TBD - Orion research preview
-          'gemini-1.5-pro',              // TBD - Gemini 1.5 Pro - Multimodal powerhouse
-          'meta-llama/Meta-Llama-3.3-70B-Instruct',  // ~$0.008 - Latest Meta release
-        ];
-        const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'] as const;
+        // Update domain status to 'processing'
+        await query(`
+          UPDATE domains 
+          SET status = 'processing', 
+              last_processed_at = CURRENT_TIMESTAMP,
+              updated_at = CURRENT_TIMESTAMP,
+              process_count = process_count + 1
+          WHERE id = $1
+        `, [domain.id]);
         
-        // ⚡ PARALLEL PROCESSING - ULTIMATE COST SPECTRUM WITH 35 MODELS!
-        for (const promptType of promptTypes) {
-          console.log(`🚀 PARALLEL processing ${promptType} across ALL 35 MODELS (COMPLETE COST SPECTRUM 2025) for ${domain.domain}`);
+        await monitoring.logDomainProcessing(domain.id, 'processing');
+        
+        try {
+          // Real LLM processing with multiple models
+          console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
           
-          // Create parallel promises for all models
-          const modelPromises = models.map(async (model) => {
-            try {
-              const prompt = PROMPT_TEMPLATES[promptType](domain.domain);
-              const result = await callLLM(model, prompt, domain.domain);
-              
-              // Insert real response data
-              await query(`
-                INSERT INTO responses (
-                  domain_id, model, prompt_type, interpolated_prompt, 
-                  raw_response, token_count, prompt_tokens, completion_tokens,
-                  token_usage, total_cost_usd, latency_ms
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-              `, [
-                domain.id,
-                model,
-                promptType,
-                prompt,
-                result.response,
-                (result.tokenUsage.total_tokens || result.tokenUsage.prompt_tokens + result.tokenUsage.completion_tokens || 0),
-                (result.tokenUsage.prompt_tokens || result.tokenUsage.input_tokens || 0),
-                (result.tokenUsage.completion_tokens || result.tokenUsage.output_tokens || 0),
-                JSON.stringify(result.tokenUsage),
-                result.cost,
-                result.latency
-              ]);
-              
-              console.log(`✅ ${model} ${promptType} completed for ${domain.domain} (${result.latency}ms, $${result.cost.toFixed(6)})`);
-              return { model, success: true };
-              
-            } catch (modelError: any) {
-              console.error(`❌ ${model} ${promptType} failed for ${domain.domain}:`, {
-                message: modelError.message,
-                status: modelError.status,
-                code: modelError.code,
-                type: modelError.type
-              });
-              
-              // Log detailed error for debugging
-              await query(`
-                INSERT INTO processing_logs (domain_id, event_type, details)
-                VALUES ($1, $2, $3)
-              `, [domain.id, 'model_error', { 
-                model, 
-                prompt_type: promptType, 
-                error: modelError.message,
-                status: modelError.status,
-                code: modelError.code,
-                full_error: modelError.toString()
-              }]);
-              return { model, success: false, error: modelError.message };
-            }
-          });
+          // Define ALL 35 models for COMPLETE COST SPECTRUM 2025 tensor analysis 🚀💰
+          const models = [
+            // 💎 FLAGSHIP TIER ($0.05-$0.15) - Premium powerhouses
+            'gpt-4.1',                      // $0.11 - Enhanced coding and reasoning capabilities
+            'claude-opus-4-20250514',       // $0.087 - Claude 4 Opus - most powerful
+            'claude-sonnet-4-20250514',     // $0.047 - Claude 4 Sonnet - balanced
+            'gpt-4.1-mini',                 // $0.051 - Faster and more efficient variant
+            
+            // 🔥 PREMIUM TIER ($0.015-$0.05) - High-end models
+            'claude-3-7-sonnet-20250219',   // $0.026 - Claude 3.7 Sonnet - enhanced
+            'gpt-4.1-nano',                 // $0.013 - Optimized for low-latency tasks
+            'mistral-large-2407',           // $0.010 - Mistral Large - Flagship model
+            'claude-3-5-sonnet-20241022',   // $0.009 - Claude 3.5 Sonnet
+            'gpt-4o',                       // $0.006 - Multimodal model supporting text, image, and audio
+            
+            // ⚖️ MID-TIER ($0.005-$0.015) - Balanced performance/cost
+            'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',  // ~$0.012 - Meta's large workhorse
+            'Qwen/Qwen2.5-72B-Instruct',    // ~$0.010 - Premium Chinese model
+            'mistralai/Mixtral-8x22B-Instruct-v0.1',  // ~$0.009 - Larger mixture model
+            'claude-3-opus-20240229',       // $0.049 - Claude 3 Opus - legacy flagship
+            'deepseek-chat',                // $0.004 - DeepSeek V3 - Advanced reasoning & coding
+            'deepseek-coder',               // $0.006 - DeepSeek Coder - Specialized coding model
+            
+            // 💰 BUDGET TIER ($0.001-$0.005) - Efficient workhorses  
+            'mistral-small-2402',           // $0.004 - Mistral Small - Cost-effective
+            'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',   // ~$0.003 - Meta's efficient model
+            'mistralai/Mixtral-8x7B-Instruct-v0.1',  // ~$0.0025 - Mixture of experts
+            'Qwen/Qwen2.5-14B-Instruct',    // ~$0.002 - Mid-size reasoning
+            'gpt-3.5-turbo',                // $0.001 - Widely used model for general-purpose tasks
+            'claude-3-haiku-20240307',      // $0.0005 - Claude 3 Haiku - fast and efficient
+            'gpt-4o-mini',                  // $0.0013 - Smaller, cost-effective multimodal model
+            
+            // 🏃 ULTRA-BUDGET TIER ($0.0001-$0.001) - Maximum efficiency
+            'meta-llama/Meta-Llama-3.2-3B-Instruct-Turbo',   // ~$0.0008 - Tiny but capable
+            'Qwen/Qwen2.5-7B-Instruct',     // ~$0.0005 - Efficient Chinese model  
+            'mistralai/Mistral-7B-Instruct-v0.3',  // ~$0.0004 - Baseline Mistral
+            'microsoft/Phi-3-mini-4k-instruct',  // ~$0.0003 - Microsoft's efficient model
+            'google/gemma-2-9b-it',          // ~$0.0002 - Google's efficient model
+            'gemini-1.5-flash',             // $0.0006 - Gemini 1.5 Flash - Fast and efficient
+            'meta-llama/CodeLlama-7b-Instruct-hf',  // ~$0.0003 - Specialized coding model
+            'NousResearch/Nous-Hermes-2-Yi-34B',  // ~$0.0008 - Strong open model
+            
+            // 🚀 EXPERIMENTAL TIER - Latest releases (varies)
+            'gpt-4.5',                      // TBD - Orion research preview
+            'gemini-1.5-pro',              // TBD - Gemini 1.5 Pro - Multimodal powerhouse
+            'meta-llama/Meta-Llama-3.3-70B-Instruct',  // ~$0.008 - Latest Meta release
+          ];
+          const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'] as const;
           
-          // Execute all models in parallel
-          const results = await Promise.all(modelPromises);
-          const successful = results.filter(r => r.success).length;
-          console.log(`🎯 ${promptType} completed: ${successful}/${models.length} models successful (COMPLETE COST SPECTRUM!)`);
+          // ⚡ PARALLEL PROCESSING - ULTIMATE COST SPECTRUM WITH 35 MODELS!
+          for (const promptType of promptTypes) {
+            console.log(`🚀 PARALLEL processing ${promptType} across ALL 35 MODELS (COMPLETE COST SPECTRUM 2025) for ${domain.domain}`);
+            
+            // Create parallel promises for all models
+            const modelPromises = models.map(async (model) => {
+              try {
+                const prompt = PROMPT_TEMPLATES[promptType](domain.domain);
+                const result = await callLLM(model, prompt, domain.domain);
+                
+                // Insert real response data
+                await query(`
+                  INSERT INTO responses (
+                    domain_id, model, prompt_type, interpolated_prompt, 
+                    raw_response, token_count, prompt_tokens, completion_tokens,
+                    token_usage, total_cost_usd, latency_ms
+                  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                `, [
+                  domain.id,
+                  model,
+                  promptType,
+                  prompt,
+                  result.response,
+                  (result.tokenUsage.total_tokens || result.tokenUsage.prompt_tokens + result.tokenUsage.completion_tokens || 0),
+                  (result.tokenUsage.prompt_tokens || result.tokenUsage.input_tokens || 0),
+                  (result.tokenUsage.completion_tokens || result.tokenUsage.output_tokens || 0),
+                  JSON.stringify(result.tokenUsage),
+                  result.cost,
+                  result.latency
+                ]);
+                
+                console.log(`✅ ${model} ${promptType} completed for ${domain.domain} (${result.latency}ms, $${result.cost.toFixed(6)})`);
+                return { model, success: true };
+                
+              } catch (modelError: any) {
+                console.error(`❌ ${model} ${promptType} failed for ${domain.domain}:`, {
+                  message: modelError.message,
+                  status: modelError.status,
+                  code: modelError.code,
+                  type: modelError.type
+                });
+                
+                // Log detailed error for debugging
+                await query(`
+                  INSERT INTO processing_logs (domain_id, event_type, details)
+                  VALUES ($1, $2, $3)
+                `, [domain.id, 'model_error', { 
+                  model, 
+                  prompt_type: promptType, 
+                  error: modelError.message,
+                  status: modelError.status,
+                  code: modelError.code,
+                  full_error: modelError.toString()
+                }]);
+                return { model, success: false, error: modelError.message };
+              }
+            });
+            
+            // Execute all models in parallel
+            const results = await Promise.all(modelPromises);
+            const successful = results.filter(r => r.success).length;
+            console.log(`🎯 ${promptType} completed: ${successful}/${models.length} models successful (COMPLETE COST SPECTRUM!)`);
+            
+            // Brief pause between prompt types to be respectful to APIs
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
           
-          // Brief pause between prompt types to be respectful to APIs
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Mark domain as completed
+          await query(`
+            UPDATE domains 
+            SET status = 'completed',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+          `, [domain.id]);
+          
+          console.log(`✅ Completed processing: ${domain.domain}`);
+          await monitoring.logDomainProcessing(domain.id, 'completed');
+          
+        } catch (error: any) {
+          console.error(`❌ Error processing ${domain.domain}:`, error);
+          
+          // Mark domain as error
+          await query(`
+            UPDATE domains 
+            SET status = 'error',
+                error_count = error_count + 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+          `, [domain.id]);
+          
+          await monitoring.logError(error, { domain: domain.domain, domain_id: domain.id });
         }
-        
-        // Mark domain as completed
-        await query(`
-          UPDATE domains 
-          SET status = 'completed',
-              updated_at = CURRENT_TIMESTAMP
-          WHERE id = $1
-        `, [domain.id]);
-        
-        console.log(`✅ Completed processing: ${domain.domain}`);
-        await monitoring.logDomainProcessing(domain.id, 'completed');
-        
-      } catch (error: any) {
-        console.error(`❌ Error processing ${domain.domain}:`, error);
-        
-        // Mark domain as error
-        await query(`
-          UPDATE domains 
-          SET status = 'error',
-              error_count = error_count + 1,
-              updated_at = CURRENT_TIMESTAMP
-          WHERE id = $1
-        `, [domain.id]);
-        
-        await monitoring.logError(error, { domain: domain.domain, domain_id: domain.id });
-      }
+      });
+      
+      // Wait for all domains to complete
+      await Promise.all(domainPromises);
+      console.log(`🎉 5X THROTTLE: Completed batch of ${pendingDomains.rows.length} domains!`);
+      
     } else {
       console.log('📊 No pending domains found');
     }
@@ -1041,8 +1051,8 @@ async function processNextBatch(): Promise<void> {
     await monitoring.logError(err, { context: 'batch_processing' });
   }
 
-  // Schedule next batch
-  setTimeout(processNextBatch, 60000); // 1 minute delay
+  // Schedule next batch - reduce delay for 5x speed
+  setTimeout(processNextBatch, 12000); // 12 seconds delay (5x faster than 60 seconds)
 }
 
 // Start the application
