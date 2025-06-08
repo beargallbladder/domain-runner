@@ -163,9 +163,22 @@ def count_responses():
         conn = get_db_connection(use_replica=True)
         cursor = conn.cursor()
         
-        # Count total responses (using the actual table name we discovered)
+        # Count total responses
         cursor.execute("SELECT COUNT(*) FROM responses")
-        total_count = cursor.fetchone()[0]
+        total_responses = cursor.fetchone()[0]
+        
+        # Count total domains and their status
+        cursor.execute("""
+            SELECT status, COUNT(*) as count 
+            FROM domains 
+            GROUP BY status 
+            ORDER BY count DESC
+        """)
+        domain_status = [{"status": row[0], "count": row[1]} for row in cursor.fetchall()]
+        
+        # Count total domains
+        cursor.execute("SELECT COUNT(*) FROM domains")
+        total_domains = cursor.fetchone()[0]
         
         # Get some basic info about the responses table
         cursor.execute("""
@@ -183,9 +196,12 @@ def count_responses():
         return jsonify({
             "status": "success",
             "layer": "layer1_database",
-            "total_responses": total_count,
+            "total_responses": total_responses,
+            "total_domains": total_domains,
+            "domain_status_breakdown": domain_status,
+            "domains_with_responses": len([d for d in domain_status if d["status"] == "completed"]) if domain_status else 0,
             "columns": columns,
-            "message": f"Found {total_count:,} total responses in your dataset! 🎉"
+            "message": f"Found {total_responses:,} responses from {total_domains:,} total domains! 🎉"
         })
     except Exception as e:
         return jsonify({
