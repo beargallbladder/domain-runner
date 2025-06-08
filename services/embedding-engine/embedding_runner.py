@@ -199,7 +199,7 @@ def count_responses():
             "total_responses": total_responses,
             "total_domains": total_domains,
             "domain_status_breakdown": domain_status,
-            "domains_with_responses": len([d for d in domain_status if d["status"] == "completed"]) if domain_status else 0,
+            "domains_with_responses": next((d["count"] for d in domain_status if d["status"] == "completed"), 0),
             "columns": columns,
             "message": f"Found {total_responses:,} responses from {total_domains:,} total domains! 🎉"
         })
