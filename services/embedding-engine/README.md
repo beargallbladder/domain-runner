@@ -33,4 +33,4 @@ python test_offline.py  # Run offline tests with synthetic data
 
 ## Database Tables
 - **Reads from:** `raw_responses` (via read replica)
-- **Writes to:** `drift_scores` (new table for results) 
+- **Writes to:** `drift_scores` (new table for results) # Force rebuild comment
