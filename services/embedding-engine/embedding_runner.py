@@ -105,16 +105,26 @@ def count_responses():
         conn = get_db_connection(use_replica=True)
         cursor = conn.cursor()
         
-        # Count total responses
-        cursor.execute("SELECT COUNT(*) FROM llm_responses")
+        # Count total responses (using the actual table name we discovered)
+        cursor.execute("SELECT COUNT(*) FROM responses")
         total_count = cursor.fetchone()[0]
+        
+        # Get some basic info about the responses table
+        cursor.execute("""
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'responses' 
+            ORDER BY ordinal_position
+            LIMIT 10
+        """)
+        columns = [{"name": row[0], "type": row[1]} for row in cursor.fetchall()]
         
         # Count by status if status column exists
         try:
-            cursor.execute("SELECT status, COUNT(*) FROM llm_responses GROUP BY status")
+            cursor.execute("SELECT status, COUNT(*) FROM responses GROUP BY status")
             status_counts = dict(cursor.fetchall())
         except:
-            status_counts = {"status_column_not_found": "table may use different schema"}
+            status_counts = {"note": "status column not found or different schema"}
         
         cursor.close()
         conn.close()
@@ -123,7 +133,8 @@ def count_responses():
             "status": "success",
             "total_responses": total_count,
             "status_breakdown": status_counts,
-            "message": f"Found {total_count:,} total responses in your dataset"
+            "columns": columns,
+            "message": f"Found {total_count:,} total responses in your dataset! 🎉"
         })
     except Exception as e:
         return jsonify({
