@@ -437,7 +437,7 @@ def analyze_drift():
         
         # Drift detection
         drift_threshold = 0.85  # Configurable threshold
-        has_drift = bool(centroid_shift < drift_threshold)
+        has_drift = bool(float(centroid_shift) < drift_threshold)
         
         return jsonify({
             "status": "success",
@@ -454,7 +454,7 @@ def analyze_drift():
             "drift_detection": {
                 "has_drift": has_drift,
                 "drift_severity": "high" if float(centroid_shift) < 0.7 else "medium" if float(centroid_shift) < 0.85 else "low",
-                "threshold_used": drift_threshold
+                "threshold_used": float(drift_threshold)
             },
             "interpretation": {
                 "centroid_shift": "Lower values indicate more drift between groups",
