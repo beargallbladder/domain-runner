@@ -980,6 +980,55 @@ def compare_segments():
             "error": str(e)
         }), 500
 
+@app.route('/debug/response-breakdown')
+def debug_response_breakdown():
+    """Debug: Show response counts by domain status"""
+    try:
+        conn = get_db_connection(use_replica=True)
+        cursor = conn.cursor()
+        
+        # Total responses without any filter
+        cursor.execute("SELECT COUNT(*) FROM responses")
+        total_all_responses = cursor.fetchone()[0]
+        
+        # Responses by domain status
+        cursor.execute("""
+            SELECT d.status, COUNT(r.id) as response_count
+            FROM responses r
+            JOIN domains d ON r.domain_id = d.id
+            GROUP BY d.status
+            ORDER BY response_count DESC
+        """)
+        by_status = [{"status": row[0], "response_count": row[1]} for row in cursor.fetchall()]
+        
+        # Responses from completed domains only (current filter)
+        cursor.execute("""
+            SELECT COUNT(r.id) as completed_responses
+            FROM responses r
+            JOIN domains d ON r.domain_id = d.id
+            WHERE d.status = 'completed'
+        """)
+        completed_responses = cursor.fetchone()[0]
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "status": "success",
+            "debug_info": {
+                "total_responses_all": total_all_responses,
+                "completed_responses_only": completed_responses,
+                "missing_responses": total_all_responses - completed_responses,
+                "breakdown_by_status": by_status
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     print(f"🚀 ULTRA-DEEP-FIX-V3 Multi-Layer Embedding Engine on port {port}")
