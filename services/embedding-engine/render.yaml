@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: embedding-engine
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python embedding_runner.py"
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.9"
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: raw-capture-db
+          property: connectionString
+      - key: READ_REPLICA_URL
+        fromService:
+          type: pserv
+          name: raw-capture-db
+          property: connectionString
+      - key: ENVIRONMENT
+        value: production 
