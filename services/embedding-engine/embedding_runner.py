@@ -452,6 +452,7 @@ def analyze_drift():
             "status": "success",
             "layer": "layer3_analysis",
             "analysis_type": "drift_detection",
+            "debug_version": "ultra_deep_fix_v3",
             "baseline_count": int(len(baseline_texts)),
             "comparison_count": int(len(comparison_texts)),
             "drift_metrics": {
