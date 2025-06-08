@@ -55,8 +55,8 @@ def cosine_similarity(a, b):
     norm_a = np.linalg.norm(a)
     norm_b = np.linalg.norm(b)
     if norm_a == 0 or norm_b == 0:
-        return 0
-    return dot_product / (norm_a * norm_b)
+        return 0.0
+    return float(dot_product / (norm_a * norm_b))
 
 @app.route('/')
 def root():
@@ -432,8 +432,8 @@ def analyze_drift():
             for j in range(i + 1, len(comparison_embeddings)):
                 comparison_sim_scores.append(cosine_similarity(comparison_embeddings[i], comparison_embeddings[j]))
         
-        baseline_cohesion = np.mean(baseline_sim_scores) if baseline_sim_scores else 0
-        comparison_cohesion = np.mean(comparison_sim_scores) if comparison_sim_scores else 0
+        baseline_cohesion = float(np.mean(baseline_sim_scores)) if baseline_sim_scores else 0.0
+        comparison_cohesion = float(np.mean(comparison_sim_scores)) if comparison_sim_scores else 0.0
         
         # Drift detection
         drift_threshold = 0.85  # Configurable threshold
@@ -542,7 +542,7 @@ def analyze_clusters():
                 for i in range(len(cluster["embeddings"])):
                     for j in range(i + 1, len(cluster["embeddings"])):
                         sims.append(cosine_similarity(cluster["embeddings"][i], cluster["embeddings"][j]))
-                avg_similarity = np.mean(sims) if sims else 1.0
+                avg_similarity = float(np.mean(sims)) if sims else 1.0
             else:
                 avg_similarity = 1.0
             
