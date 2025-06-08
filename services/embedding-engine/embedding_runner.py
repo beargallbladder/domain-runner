@@ -1029,6 +1029,106 @@ def debug_response_breakdown():
             "error": str(e)
         }), 500
 
+@app.route('/admin/generate-cache', methods=['POST'])
+def admin_generate_cache():
+    """Admin endpoint to trigger cache generation for public API"""
+    try:
+        # Import the cache generation function
+        import sys
+        import os
+        cache_gen_path = os.path.join(os.path.dirname(__file__), 'cache_generator.py')
+        
+        # Simple execution approach - run the cache generator
+        import subprocess
+        result = subprocess.run([
+            'python3', cache_gen_path
+        ], capture_output=True, text=True, timeout=600)  # 10 minute timeout
+        
+        if result.returncode == 0:
+            return jsonify({
+                "status": "success",
+                "message": "Cache generation completed successfully",
+                "output": result.stdout[-500:] if len(result.stdout) > 500 else result.stdout,
+                "action": "public_domain_cache updated"
+            })
+        else:
+            return jsonify({
+                "status": "error", 
+                "message": "Cache generation failed",
+                "error": result.stderr,
+                "output": result.stdout
+            }), 500
+            
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            "status": "timeout",
+            "message": "Cache generation timed out (>10 minutes)",
+            "suggestion": "Try generating cache for fewer domains or optimize the process"
+        }), 504
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": "Failed to trigger cache generation",
+            "error": str(e)
+        }), 500
+
+@app.route('/admin/cache-status')
+def admin_cache_status():
+    """Check status of public domain cache"""
+    try:
+        conn = get_db_connection(use_replica=True)
+        cursor = conn.cursor()
+        
+        # Check if cache table exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'public_domain_cache'
+            )
+        """)
+        table_exists = cursor.fetchone()[0]
+        
+        if table_exists:
+            # Get cache statistics
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total_cached,
+                    COUNT(*) FILTER (WHERE updated_at > NOW() - INTERVAL '6 hours') as fresh_cache,
+                    MIN(updated_at) as oldest_entry,
+                    MAX(updated_at) as newest_entry
+                FROM public_domain_cache
+            """)
+            stats = cursor.fetchone()
+            
+            cursor.close()
+            conn.close()
+            
+            return jsonify({
+                "status": "success",
+                "cache_table_exists": True,
+                "total_cached_domains": stats[0],
+                "fresh_entries_6h": stats[1],
+                "oldest_entry": stats[2].isoformat() + 'Z' if stats[2] else None,
+                "newest_entry": stats[3].isoformat() + 'Z' if stats[3] else None,
+                "cache_health": "good" if stats[1] > 0 else "stale"
+            })
+        else:
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "status": "success",
+                "cache_table_exists": False,
+                "message": "Public domain cache table not created yet",
+                "action_needed": "Run cache generation to create and populate table"
+            })
+            
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     print(f"🚀 ULTRA-DEEP-FIX-V3 Multi-Layer Embedding Engine on port {port}")
