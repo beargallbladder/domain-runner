@@ -96,10 +96,10 @@ class DatabaseManager:
         
         if domains:
             placeholders = ','.join(['%s'] * len(domains))
-            query += f" AND r.domain IN ({placeholders})"
+            query += f" AND r.domain_id IN ({placeholders})"
             params.extend(domains)
         
-        query += " ORDER BY r.domain, r.model_name, r.prompt_type"
+        query += " ORDER BY r.domain_id, r.model, r.prompt_type"
         
         if limit:
             query += " LIMIT %s"
