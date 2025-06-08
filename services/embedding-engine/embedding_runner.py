@@ -68,6 +68,36 @@ def test_connection():
             "read_replica_url_present": bool(READ_REPLICA_URL)
         }), 500
 
+@app.route('/data/tables')
+def list_tables():
+    """List all tables in the database to discover the schema"""
+    try:
+        conn = get_db_connection(use_replica=True)
+        cursor = conn.cursor()
+        
+        # List all tables
+        cursor.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            ORDER BY table_name
+        """)
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "status": "success",
+            "tables": tables,
+            "message": f"Found {len(tables)} tables in database"
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
 @app.route('/data/count')
 def count_responses():
     """Count total responses in your dataset"""
