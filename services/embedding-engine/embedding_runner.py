@@ -977,7 +977,8 @@ def compare_segments():
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    print(f"🚀 Starting Multi-Layer Embedding Engine on port {port}")
+    print(f"🚀 ULTRA-DEEP-FIX-V3 Multi-Layer Embedding Engine on port {port}")
     print(f"📊 Layer 1 (Database): {'✅ Ready' if DATABASE_URL else '❌ No DB URL'}")
     print(f"🧠 Layer 2 (Embeddings): {'✅ Ready' if model_loaded else '❌ ' + str(embedding_error)[:50]}")
+    print("🔧 DEPLOYMENT: Ultra-deep numpy bool fix v3 - ALL SCALAR TYPES CONVERTED")
     app.run(host='0.0.0.0', port=port) 
