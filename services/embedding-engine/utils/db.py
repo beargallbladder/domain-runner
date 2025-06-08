@@ -78,18 +78,18 @@ class DatabaseManager:
         query = """
         SELECT 
             r.id,
-            r.domain,
-            r.model_name,
+            r.domain_id,
+            r.model,
             r.prompt_type,
-            r.response_text,
+            r.raw_response as response_text,
             r.created_at,
             r.token_count,
-            r.cost
+            r.total_cost_usd as cost
         FROM responses r
-        JOIN domains d ON r.domain = d.domain
+        JOIN domains d ON r.domain_id = d.id
         WHERE d.status = 'completed'
-        AND r.response_text IS NOT NULL
-        AND LENGTH(r.response_text) > 10
+        AND r.raw_response IS NOT NULL
+        AND LENGTH(r.raw_response) > 10
         """
         
         params = []
