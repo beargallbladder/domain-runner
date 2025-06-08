@@ -439,21 +439,30 @@ def analyze_drift():
         drift_threshold = 0.85  # Configurable threshold
         has_drift = bool(float(centroid_shift) < drift_threshold)
         
+        # Pre-compute drift severity with explicit type conversion
+        centroid_shift_float = float(centroid_shift)
+        if centroid_shift_float < 0.7:
+            drift_severity = "high"
+        elif centroid_shift_float < 0.85:
+            drift_severity = "medium"
+        else:
+            drift_severity = "low"
+        
         return jsonify({
             "status": "success",
             "layer": "layer3_analysis",
             "analysis_type": "drift_detection",
-            "baseline_count": len(baseline_texts),
-            "comparison_count": len(comparison_texts),
+            "baseline_count": int(len(baseline_texts)),
+            "comparison_count": int(len(comparison_texts)),
             "drift_metrics": {
                 "centroid_similarity": float(centroid_shift),
                 "baseline_cohesion": float(baseline_cohesion),
                 "comparison_cohesion": float(comparison_cohesion),
-                "cohesion_change": float(comparison_cohesion - baseline_cohesion)
+                "cohesion_change": float(float(comparison_cohesion) - float(baseline_cohesion))
             },
             "drift_detection": {
                 "has_drift": has_drift,
-                "drift_severity": "high" if float(centroid_shift) < 0.7 else "medium" if float(centroid_shift) < 0.85 else "low",
+                "drift_severity": drift_severity,
                 "threshold_used": float(drift_threshold)
             },
             "interpretation": {
