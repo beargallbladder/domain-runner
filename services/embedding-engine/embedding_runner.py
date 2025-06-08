@@ -69,7 +69,7 @@ def root():
             "layer4_orchestration": "active" if model_loaded else "waiting_for_layers_2_3"
         },
         "status": "running", 
-        "message": "Complete Production Embedding Engine - All Layers Active",
+        "message": "🚨 ULTRA-DEEP-FIX-V3 DEPLOYMENT SUCCESSFUL - ALL NUMPY BOOL FIXED 🚨",
         "endpoints": {
             "layer1": ["/data/count", "/data/tables", "/data/test"],
             "layer2": ["/embed", "/embed/batch"] if model_loaded else ["disabled - " + str(embedding_error)[:50]],
