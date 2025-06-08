@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
 Multi-Layer Embedding Engine
-Layer 1: Database Service - Connect to 36K responses
+Layer 1: Database Service - Connect to 17K responses
 Layer 2: Embedding Service - Text to vectors  
-Layer 3: Analysis Service - Drift detection (coming soon)
+Layer 3: Analysis Service - Drift detection & similarity analysis
+Layer 4: API Orchestration - Real data analysis & insights
 """
 
 import os
 import psycopg2
 from flask import Flask, request, jsonify
 from datetime import datetime
+import numpy as np
+from collections import defaultdict
+import random
 
 app = Flask(__name__)
 
@@ -45,21 +49,34 @@ def get_db_connection(use_replica=True):
         raise Exception("No database URL configured")
     return psycopg2.connect(url)
 
+def cosine_similarity(a, b):
+    """Calculate cosine similarity between two vectors"""
+    dot_product = np.dot(a, b)
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+    if norm_a == 0 or norm_b == 0:
+        return 0
+    return dot_product / (norm_a * norm_b)
+
 @app.route('/')
 def root():
     return jsonify({
-        "service": "multi-layer-embedding-engine",
+        "service": "complete-embedding-engine",
         "layers": {
             "layer1_database": "active",
             "layer2_embeddings": "active" if model_loaded else "failed",
-            "layer3_analysis": "coming_soon"
+            "layer3_analysis": "active" if model_loaded else "waiting_for_layer2",
+            "layer4_orchestration": "active" if model_loaded else "waiting_for_layers_2_3"
         },
         "status": "running", 
-        "message": "Modular Embedding Engine - Database + ML capabilities",
+        "message": "Complete Production Embedding Engine - All Layers Active",
         "endpoints": {
             "layer1": ["/data/count", "/data/tables", "/data/test"],
-            "layer2": ["/embed", "/embed/batch"] if model_loaded else ["disabled - " + str(embedding_error)[:50]]
+            "layer2": ["/embed", "/embed/batch"] if model_loaded else ["disabled - " + str(embedding_error)[:50]],
+            "layer3": ["/analyze/similarity", "/analyze/drift", "/analyze/clusters"] if model_loaded else ["waiting_for_layer2"],
+            "layer4": ["/insights/models", "/insights/domains", "/insights/compare"] if model_loaded else ["waiting_for_layers_2_3"]
         },
+        "data_status": "17,722 responses ready for analysis",
         "timestamp": datetime.now().isoformat()
     })
 
@@ -277,6 +294,662 @@ def create_batch_embeddings():
         return jsonify({
             "status": "error",
             "layer": "layer2_embeddings",
+            "error": str(e)
+        }), 500
+
+# =============================================================================
+# LAYER 3: ANALYSIS ENDPOINTS
+# =============================================================================
+
+@app.route('/analyze/similarity', methods=['POST'])
+def analyze_similarity():
+    """Analyze similarity between texts using three-tier framework"""
+    if not model_loaded:
+        return jsonify({
+            "status": "error",
+            "layer": "layer3_analysis",
+            "error": f"Analysis requires embedding model: {embedding_error}"
+        }), 503
+    
+    try:
+        data = request.get_json()
+        if not data or 'texts' not in data:
+            return jsonify({
+                "status": "error",
+                "layer": "layer3_analysis",
+                "error": "Missing 'texts' field (array of strings)"
+            }), 400
+        
+        texts = data['texts']
+        if not isinstance(texts, list) or len(texts) < 2:
+            return jsonify({
+                "status": "error",
+                "layer": "layer3_analysis",
+                "error": "Need at least 2 texts to analyze similarity"
+            }), 400
+        
+        # Generate embeddings for all texts
+        embeddings = embedding_model.encode(texts)
+        
+        # Calculate pairwise similarities
+        similarities = []
+        for i in range(len(texts)):
+            for j in range(i + 1, len(texts)):
+                sim = cosine_similarity(embeddings[i], embeddings[j])
+                similarities.append({
+                    "text1_index": i,
+                    "text2_index": j,
+                    "text1_preview": texts[i][:50] + "..." if len(texts[i]) > 50 else texts[i],
+                    "text2_preview": texts[j][:50] + "..." if len(texts[j]) > 50 else texts[j],
+                    "similarity_score": float(sim),
+                    "similarity_category": "high" if sim > 0.8 else "medium" if sim > 0.5 else "low"
+                })
+        
+        # Sort by similarity score
+        similarities.sort(key=lambda x: x['similarity_score'], reverse=True)
+        
+        return jsonify({
+            "status": "success",
+            "layer": "layer3_analysis",
+            "analysis_type": "similarity_matrix",
+            "input_count": len(texts),
+            "similarity_pairs": len(similarities),
+            "similarities": similarities,
+            "summary": {
+                "highest_similarity": similarities[0]['similarity_score'] if similarities else 0,
+                "lowest_similarity": similarities[-1]['similarity_score'] if similarities else 0,
+                "average_similarity": sum(s['similarity_score'] for s in similarities) / len(similarities) if similarities else 0
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "layer": "layer3_analysis",
+            "error": str(e)
+        }), 500
+
+@app.route('/analyze/drift', methods=['POST'])
+def analyze_drift():
+    """Detect drift patterns in model responses"""
+    if not model_loaded:
+        return jsonify({
+            "status": "error",
+            "layer": "layer3_analysis",
+            "error": f"Drift analysis requires embedding model: {embedding_error}"
+        }), 503
+    
+    try:
+        data = request.get_json()
+        if not data or 'baseline_texts' not in data or 'comparison_texts' not in data:
+            return jsonify({
+                "status": "error",
+                "layer": "layer3_analysis",
+                "error": "Missing 'baseline_texts' and 'comparison_texts' fields"
+            }), 400
+        
+        baseline_texts = data['baseline_texts']
+        comparison_texts = data['comparison_texts']
+        
+        if not isinstance(baseline_texts, list) or not isinstance(comparison_texts, list):
+            return jsonify({
+                "status": "error",
+                "layer": "layer3_analysis",
+                "error": "Both baseline_texts and comparison_texts must be arrays"
+            }), 400
+        
+        # Generate embeddings
+        baseline_embeddings = embedding_model.encode(baseline_texts)
+        comparison_embeddings = embedding_model.encode(comparison_texts)
+        
+        # Calculate centroids
+        baseline_centroid = np.mean(baseline_embeddings, axis=0)
+        comparison_centroid = np.mean(comparison_embeddings, axis=0)
+        
+        # Calculate drift metrics
+        centroid_shift = cosine_similarity(baseline_centroid, comparison_centroid)
+        
+        # Calculate average intra-group similarity
+        baseline_sim_scores = []
+        for i in range(len(baseline_embeddings)):
+            for j in range(i + 1, len(baseline_embeddings)):
+                baseline_sim_scores.append(cosine_similarity(baseline_embeddings[i], baseline_embeddings[j]))
+        
+        comparison_sim_scores = []
+        for i in range(len(comparison_embeddings)):
+            for j in range(i + 1, len(comparison_embeddings)):
+                comparison_sim_scores.append(cosine_similarity(comparison_embeddings[i], comparison_embeddings[j]))
+        
+        baseline_cohesion = np.mean(baseline_sim_scores) if baseline_sim_scores else 0
+        comparison_cohesion = np.mean(comparison_sim_scores) if comparison_sim_scores else 0
+        
+        # Drift detection
+        drift_threshold = 0.85  # Configurable threshold
+        has_drift = centroid_shift < drift_threshold
+        
+        return jsonify({
+            "status": "success",
+            "layer": "layer3_analysis",
+            "analysis_type": "drift_detection",
+            "baseline_count": len(baseline_texts),
+            "comparison_count": len(comparison_texts),
+            "drift_metrics": {
+                "centroid_similarity": float(centroid_shift),
+                "baseline_cohesion": float(baseline_cohesion),
+                "comparison_cohesion": float(comparison_cohesion),
+                "cohesion_change": float(comparison_cohesion - baseline_cohesion)
+            },
+            "drift_detection": {
+                "has_drift": has_drift,
+                "drift_severity": "high" if centroid_shift < 0.7 else "medium" if centroid_shift < 0.85 else "low",
+                "threshold_used": drift_threshold
+            },
+            "interpretation": {
+                "centroid_shift": "Lower values indicate more drift between groups",
+                "cohesion_change": "Positive means comparison group is more cohesive"
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "layer": "layer3_analysis",
+            "error": str(e)
+        }), 500
+
+@app.route('/analyze/clusters', methods=['POST'])
+def analyze_clusters():
+    """Find natural clusters in text data"""
+    if not model_loaded:
+        return jsonify({
+            "status": "error",
+            "layer": "layer3_analysis",
+            "error": f"Cluster analysis requires embedding model: {embedding_error}"
+        }), 503
+    
+    try:
+        data = request.get_json()
+        if not data or 'texts' not in data:
+            return jsonify({
+                "status": "error",
+                "layer": "layer3_analysis",
+                "error": "Missing 'texts' field"
+            }), 400
+        
+        texts = data['texts']
+        similarity_threshold = data.get('similarity_threshold', 0.7)
+        
+        if not isinstance(texts, list) or len(texts) < 2:
+            return jsonify({
+                "status": "error",
+                "layer": "layer3_analysis",
+                "error": "Need at least 2 texts for clustering"
+            }), 400
+        
+        # Generate embeddings
+        embeddings = embedding_model.encode(texts)
+        
+        # Simple clustering based on similarity threshold
+        clusters = []
+        assigned = set()
+        
+        for i, text in enumerate(texts):
+            if i in assigned:
+                continue
+                
+            # Start new cluster
+            cluster = {
+                "cluster_id": len(clusters),
+                "texts": [{"index": i, "text": text[:100] + "..." if len(text) > 100 else text}],
+                "embeddings": [embeddings[i]]
+            }
+            assigned.add(i)
+            
+            # Find similar texts
+            for j, other_text in enumerate(texts):
+                if j in assigned or i == j:
+                    continue
+                    
+                similarity = cosine_similarity(embeddings[i], embeddings[j])
+                if similarity >= similarity_threshold:
+                    cluster["texts"].append({
+                        "index": j, 
+                        "text": other_text[:100] + "..." if len(other_text) > 100 else other_text
+                    })
+                    cluster["embeddings"].append(embeddings[j])
+                    assigned.add(j)
+            
+            clusters.append(cluster)
+        
+        # Calculate cluster statistics
+        cluster_stats = []
+        for cluster in clusters:
+            if len(cluster["embeddings"]) > 1:
+                # Calculate intra-cluster similarity
+                sims = []
+                for i in range(len(cluster["embeddings"])):
+                    for j in range(i + 1, len(cluster["embeddings"])):
+                        sims.append(cosine_similarity(cluster["embeddings"][i], cluster["embeddings"][j]))
+                avg_similarity = np.mean(sims) if sims else 1.0
+            else:
+                avg_similarity = 1.0
+            
+            cluster_stats.append({
+                "cluster_id": cluster["cluster_id"],
+                "size": len(cluster["texts"]),
+                "texts": cluster["texts"],
+                "average_similarity": float(avg_similarity),
+                "centroid": np.mean(cluster["embeddings"], axis=0).tolist() if cluster["embeddings"] else []
+            })
+        
+        return jsonify({
+            "status": "success",
+            "layer": "layer3_analysis",
+            "analysis_type": "clustering",
+            "input_count": len(texts),
+            "cluster_count": len(clusters),
+            "similarity_threshold": similarity_threshold,
+            "clusters": cluster_stats,
+            "summary": {
+                "largest_cluster": max(cluster_stats, key=lambda x: x['size'])['size'] if cluster_stats else 0,
+                "average_cluster_size": sum(c['size'] for c in cluster_stats) / len(cluster_stats) if cluster_stats else 0
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "layer": "layer3_analysis",
+            "error": str(e)
+        }), 500
+
+# =============================================================================
+# LAYER 4: API ORCHESTRATION - REAL DATA INSIGHTS
+# =============================================================================
+
+@app.route('/insights/models', methods=['GET'])
+def analyze_models():
+    """Analyze patterns across different models in the dataset"""
+    if not model_loaded:
+        return jsonify({
+            "status": "error",
+            "layer": "layer4_orchestration",
+            "error": f"Model analysis requires embedding capabilities: {embedding_error}"
+        }), 503
+    
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        limit = min(limit, 500)  # Safety limit
+        
+        conn = get_db_connection(use_replica=True)
+        cursor = conn.cursor()
+        
+        # Get model distribution
+        cursor.execute("""
+            SELECT model, COUNT(*) as response_count
+            FROM responses 
+            GROUP BY model 
+            ORDER BY response_count DESC
+        """)
+        model_stats = [{"model": row[0], "count": row[1]} for row in cursor.fetchall()]
+        
+        # Sample responses from top models for analysis
+        cursor.execute("""
+            SELECT model, raw_response, domain_id, prompt_type
+            FROM responses 
+            WHERE model IN (
+                SELECT model FROM responses 
+                GROUP BY model 
+                ORDER BY COUNT(*) DESC 
+                LIMIT 5
+            )
+            ORDER BY RANDOM() 
+            LIMIT %s
+        """, (limit,))
+        
+        sample_responses = []
+        model_samples = defaultdict(list)
+        
+        for row in cursor.fetchall():
+            model, response, domain_id, prompt_type = row
+            sample_responses.append({
+                "model": model,
+                "response": response[:200] + "..." if len(response) > 200 else response,
+                "domain_id": str(domain_id),
+                "prompt_type": prompt_type
+            })
+            model_samples[model].append(response)
+        
+        cursor.close()
+        conn.close()
+        
+        # Analyze response patterns if we have samples
+        analysis_results = {}
+        if sample_responses and len(model_samples) >= 2:
+            # Pick top 2 models with most samples
+            top_models = sorted(model_samples.keys(), key=lambda m: len(model_samples[m]), reverse=True)[:2]
+            
+            if len(model_samples[top_models[0]]) >= 2 and len(model_samples[top_models[1]]) >= 2:
+                # Generate embeddings for comparison
+                model1_texts = model_samples[top_models[0]][:10]  # Limit for performance
+                model2_texts = model_samples[top_models[1]][:10]
+                
+                embeddings1 = embedding_model.encode(model1_texts)
+                embeddings2 = embedding_model.encode(model2_texts)
+                
+                # Calculate model-specific cohesion
+                cohesion1 = []
+                for i in range(len(embeddings1)):
+                    for j in range(i + 1, len(embeddings1)):
+                        cohesion1.append(cosine_similarity(embeddings1[i], embeddings1[j]))
+                
+                cohesion2 = []
+                for i in range(len(embeddings2)):
+                    for j in range(i + 1, len(embeddings2)):
+                        cohesion2.append(cosine_similarity(embeddings2[i], embeddings2[j]))
+                
+                # Cross-model similarity
+                cross_similarities = []
+                for emb1 in embeddings1:
+                    for emb2 in embeddings2:
+                        cross_similarities.append(cosine_similarity(emb1, emb2))
+                
+                analysis_results = {
+                    "model_comparison": {
+                        "model1": top_models[0],
+                        "model1_cohesion": float(np.mean(cohesion1)) if cohesion1 else 0,
+                        "model2": top_models[1], 
+                        "model2_cohesion": float(np.mean(cohesion2)) if cohesion2 else 0,
+                        "cross_model_similarity": float(np.mean(cross_similarities)) if cross_similarities else 0
+                    }
+                }
+        
+        return jsonify({
+            "status": "success",
+            "layer": "layer4_orchestration",
+            "analysis_type": "model_insights",
+            "dataset_size": sum(stat["count"] for stat in model_stats),
+            "unique_models": len(model_stats),
+            "model_distribution": model_stats,
+            "sample_analysis": analysis_results,
+            "samples_analyzed": len(sample_responses),
+            "methodology": "Random sampling with embedding-based similarity analysis"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "layer": "layer4_orchestration", 
+            "error": str(e)
+        }), 500
+
+@app.route('/insights/domains', methods=['GET'])
+def analyze_domains():
+    """Analyze response patterns across different domains"""
+    if not model_loaded:
+        return jsonify({
+            "status": "error",
+            "layer": "layer4_orchestration",
+            "error": f"Domain analysis requires embedding capabilities: {embedding_error}"
+        }), 503
+    
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        limit = min(limit, 500)
+        
+        conn = get_db_connection(use_replica=True)
+        cursor = conn.cursor()
+        
+        # Get domain distribution
+        cursor.execute("""
+            SELECT domain_id, COUNT(*) as response_count,
+                   COUNT(DISTINCT model) as unique_models
+            FROM responses 
+            GROUP BY domain_id 
+            ORDER BY response_count DESC
+            LIMIT 20
+        """)
+        domain_stats = []
+        for row in cursor.fetchall():
+            domain_stats.append({
+                "domain_id": str(row[0]),
+                "response_count": row[1],
+                "unique_models": row[2]
+            })
+        
+        # Sample responses across domains
+        cursor.execute("""
+            SELECT domain_id, raw_response, model, prompt_type
+            FROM responses 
+            WHERE domain_id IN (
+                SELECT domain_id FROM responses 
+                GROUP BY domain_id 
+                ORDER BY COUNT(*) DESC 
+                LIMIT 10
+            )
+            ORDER BY RANDOM() 
+            LIMIT %s
+        """, (limit,))
+        
+        domain_samples = defaultdict(list)
+        sample_data = []
+        
+        for row in cursor.fetchall():
+            domain_id, response, model, prompt_type = row
+            domain_key = str(domain_id)
+            domain_samples[domain_key].append(response)
+            sample_data.append({
+                "domain_id": domain_key,
+                "response_preview": response[:150] + "..." if len(response) > 150 else response,
+                "model": model,
+                "prompt_type": prompt_type
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        # Domain similarity analysis
+        domain_analysis = {}
+        if len(domain_samples) >= 2:
+            # Analyze top domains with sufficient samples
+            top_domains = sorted(domain_samples.keys(), key=lambda d: len(domain_samples[d]), reverse=True)[:3]
+            
+            domain_cohesions = {}
+            for domain in top_domains:
+                if len(domain_samples[domain]) >= 3:
+                    # Sample for performance
+                    sample_texts = domain_samples[domain][:8]
+                    embeddings = embedding_model.encode(sample_texts)
+                    
+                    similarities = []
+                    for i in range(len(embeddings)):
+                        for j in range(i + 1, len(embeddings)):
+                            similarities.append(cosine_similarity(embeddings[i], embeddings[j]))
+                    
+                    domain_cohesions[domain] = {
+                        "avg_similarity": float(np.mean(similarities)) if similarities else 0,
+                        "sample_size": len(sample_texts)
+                    }
+            
+            domain_analysis = {"cohesion_by_domain": domain_cohesions}
+        
+        return jsonify({
+            "status": "success",
+            "layer": "layer4_orchestration",
+            "analysis_type": "domain_insights",
+            "total_domains": len(domain_stats),
+            "domain_distribution": domain_stats,
+            "domain_analysis": domain_analysis,
+            "samples_analyzed": len(sample_data),
+            "methodology": "Domain-based cohesion analysis using embeddings"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "layer": "layer4_orchestration",
+            "error": str(e)
+        }), 500
+
+@app.route('/insights/compare', methods=['POST'])
+def compare_segments():
+    """Compare specific segments of the dataset"""
+    if not model_loaded:
+        return jsonify({
+            "status": "error",
+            "layer": "layer4_orchestration",
+            "error": f"Comparison analysis requires embedding capabilities: {embedding_error}"
+        }), 503
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                "status": "error",
+                "layer": "layer4_orchestration",
+                "error": "Request body required with comparison criteria"
+            }), 400
+        
+        # Parse comparison criteria
+        model_filter = data.get('model')
+        domain_filter = data.get('domain_id') 
+        prompt_filter = data.get('prompt_type')
+        comparison_type = data.get('comparison_type', 'model')  # 'model', 'domain', or 'prompt'
+        
+        conn = get_db_connection(use_replica=True)
+        cursor = conn.cursor()
+        
+        # Build dynamic query based on comparison type
+        if comparison_type == 'model' and model_filter:
+            # Compare this model vs others
+            cursor.execute("""
+                SELECT model, raw_response, domain_id, prompt_type
+                FROM responses 
+                WHERE model = %s OR model != %s
+                ORDER BY RANDOM()
+                LIMIT 100
+            """, (model_filter, model_filter))
+            
+        elif comparison_type == 'domain' and domain_filter:
+            # Compare this domain vs others  
+            cursor.execute("""
+                SELECT domain_id, raw_response, model, prompt_type
+                FROM responses 
+                WHERE domain_id = %s OR domain_id != %s
+                ORDER BY RANDOM()
+                LIMIT 100
+            """, (domain_filter, domain_filter))
+            
+        else:
+            # Default: random comparison
+            cursor.execute("""
+                SELECT model, raw_response, domain_id, prompt_type
+                FROM responses 
+                ORDER BY RANDOM()
+                LIMIT 100
+            """)
+        
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        if not rows:
+            return jsonify({
+                "status": "error",
+                "layer": "layer4_orchestration",
+                "error": "No data found matching criteria"
+            }), 404
+        
+        # Segment the data for comparison
+        target_group = []
+        comparison_group = []
+        
+        for row in rows:
+            if comparison_type == 'model' and model_filter:
+                if row[0] == model_filter:  # model field
+                    target_group.append(row[1])  # raw_response
+                else:
+                    comparison_group.append(row[1])
+                    
+            elif comparison_type == 'domain' and domain_filter:
+                if str(row[2]) == str(domain_filter):  # domain_id field
+                    target_group.append(row[1])  # raw_response
+                else:
+                    comparison_group.append(row[1])
+            else:
+                # Split randomly for general comparison
+                if len(target_group) < len(rows) // 2:
+                    target_group.append(row[1])
+                else:
+                    comparison_group.append(row[1])
+        
+        # Ensure we have data for both groups
+        if len(target_group) < 2 or len(comparison_group) < 2:
+            return jsonify({
+                "status": "error",
+                "layer": "layer4_orchestration",
+                "error": "Insufficient data in one or both comparison groups"
+            }), 400
+        
+        # Limit for performance
+        target_group = target_group[:20]
+        comparison_group = comparison_group[:20]
+        
+        # Generate embeddings and analyze
+        target_embeddings = embedding_model.encode(target_group)
+        comparison_embeddings = embedding_model.encode(comparison_group)
+        
+        # Calculate group cohesions
+        target_sims = []
+        for i in range(len(target_embeddings)):
+            for j in range(i + 1, len(target_embeddings)):
+                target_sims.append(cosine_similarity(target_embeddings[i], target_embeddings[j]))
+        
+        comparison_sims = []
+        for i in range(len(comparison_embeddings)):
+            for j in range(i + 1, len(comparison_embeddings)):
+                comparison_sims.append(cosine_similarity(comparison_embeddings[i], comparison_embeddings[j]))
+        
+        # Cross-group similarity
+        cross_sims = []
+        for t_emb in target_embeddings:
+            for c_emb in comparison_embeddings:
+                cross_sims.append(cosine_similarity(t_emb, c_emb))
+        
+        # Calculate centroids and drift
+        target_centroid = np.mean(target_embeddings, axis=0)
+        comparison_centroid = np.mean(comparison_embeddings, axis=0)
+        centroid_similarity = cosine_similarity(target_centroid, comparison_centroid)
+        
+        return jsonify({
+            "status": "success",
+            "layer": "layer4_orchestration",
+            "analysis_type": "segment_comparison",
+            "comparison_criteria": {
+                "type": comparison_type,
+                "filter_value": model_filter or domain_filter or prompt_filter or "random"
+            },
+            "group_sizes": {
+                "target_group": len(target_group),
+                "comparison_group": len(comparison_group)
+            },
+            "similarity_analysis": {
+                "target_group_cohesion": float(np.mean(target_sims)) if target_sims else 0,
+                "comparison_group_cohesion": float(np.mean(comparison_sims)) if comparison_sims else 0,
+                "cross_group_similarity": float(np.mean(cross_sims)) if cross_sims else 0,
+                "centroid_similarity": float(centroid_similarity)
+            },
+            "insights": {
+                "groups_are_similar": centroid_similarity > 0.8,
+                "target_more_cohesive": (np.mean(target_sims) if target_sims else 0) > (np.mean(comparison_sims) if comparison_sims else 0),
+                "significant_difference": centroid_similarity < 0.7
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "layer": "layer4_orchestration",
             "error": str(e)
         }), 500
 
