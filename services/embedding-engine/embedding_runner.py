@@ -91,6 +91,18 @@ def health():
         "timestamp": datetime.now().isoformat()
     })
 
+@app.route('/health')
+def health():
+    """Health check endpoint for monitoring"""
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "layers": {
+            "database": bool(DATABASE_URL),
+            "embeddings": model_loaded
+        }
+    })
+
 # =============================================================================
 # LAYER 1: DATABASE ENDPOINTS
 # =============================================================================
@@ -425,7 +437,7 @@ def analyze_drift():
         
         # Drift detection
         drift_threshold = 0.85  # Configurable threshold
-        has_drift = centroid_shift < drift_threshold
+        has_drift = bool(centroid_shift < drift_threshold)
         
         return jsonify({
             "status": "success",
@@ -441,7 +453,7 @@ def analyze_drift():
             },
             "drift_detection": {
                 "has_drift": has_drift,
-                "drift_severity": "high" if centroid_shift < 0.7 else "medium" if centroid_shift < 0.85 else "low",
+                "drift_severity": "high" if float(centroid_shift) < 0.7 else "medium" if float(centroid_shift) < 0.85 else "low",
                 "threshold_used": drift_threshold
             },
             "interpretation": {
@@ -940,9 +952,9 @@ def compare_segments():
                 "centroid_similarity": float(centroid_similarity)
             },
             "insights": {
-                "groups_are_similar": centroid_similarity > 0.8,
-                "target_more_cohesive": (np.mean(target_sims) if target_sims else 0) > (np.mean(comparison_sims) if comparison_sims else 0),
-                "significant_difference": centroid_similarity < 0.7
+                "groups_are_similar": bool(centroid_similarity > 0.8),
+                "target_more_cohesive": bool((np.mean(target_sims) if target_sims else 0) > (np.mean(comparison_sims) if comparison_sims else 0)),
+                "significant_difference": bool(centroid_similarity < 0.7)
             }
         })
         
