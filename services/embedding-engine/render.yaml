@@ -7,20 +7,10 @@ services:
     plan: starter
     healthCheckPath: /health
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.9"
       - key: ENVIRONMENT
         value: production
-      # READ REPLICA CONFIGURATION
-      # Option 1: If you have a read replica, use its URL here
+      # Database configuration using direct URLs
       - key: READ_REPLICA_URL
-        fromService:
-          type: pserv
-          name: raw-capture-db-replica  # Your read replica service name
-          property: connectionString
-      # Option 2: If no read replica, this will fallback to main database
+        value: "postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-b/raw_capture_db"
       - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: raw-capture-db  # Your main database service name
-          property: connectionString 
+        value: "postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db" 
