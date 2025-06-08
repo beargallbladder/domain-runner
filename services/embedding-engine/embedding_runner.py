@@ -1073,6 +1073,37 @@ def admin_generate_cache():
             "error": str(e)
         }), 500
 
+@app.route('/admin/generate-cache-batch', methods=['POST'])
+def admin_generate_cache_batch():
+    """Generate cache in small batches to avoid timeouts"""
+    try:
+        data = request.get_json() or {}
+        batch_size = min(data.get('batch_size', 5), 20)  # Max 20 domains per batch
+        start_offset = data.get('start_offset', 0)
+        
+        # Import batch function
+        import sys
+        import os
+        sys.path.append(os.path.dirname(__file__))
+        from cache_generator_batch import update_cache_batch
+        
+        # Process batch
+        result = update_cache_batch(batch_size=batch_size, start_offset=start_offset)
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Batch processing complete",
+            "batch_result": result,
+            "suggestion": f"Next call: POST /admin/generate-cache-batch with start_offset={result.get('next_offset', 0)}" if result.get('has_more') else "All batches complete!"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": "Batch cache generation failed",
+            "error": str(e)
+        }), 500
+
 @app.route('/admin/cache-status')
 def admin_cache_status():
     """Check status of public domain cache"""
