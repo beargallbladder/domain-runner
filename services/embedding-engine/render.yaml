@@ -9,15 +9,18 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.9"
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: raw-capture-db
-          property: connectionString
+      - key: ENVIRONMENT
+        value: production
+      # READ REPLICA CONFIGURATION
+      # Option 1: If you have a read replica, use its URL here
       - key: READ_REPLICA_URL
         fromService:
           type: pserv
-          name: raw-capture-db
+          name: raw-capture-db-replica  # Your read replica service name
           property: connectionString
-      - key: ENVIRONMENT
-        value: production 
+      # Option 2: If no read replica, this will fallback to main database
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: raw-capture-db  # Your main database service name
+          property: connectionString 

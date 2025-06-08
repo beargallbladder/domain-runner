@@ -1,35 +1,201 @@
+"""
+Database utilities for embedding engine
+Handles read-only access to raw capture data via read replica
+"""
+
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import List, Dict, Any, Optional
+import logging
 
-class EmbeddingDB:
+logger = logging.getLogger(__name__)
+
+class DatabaseManager:
     def __init__(self):
-        # Use read replica for data access
-        self.read_conn_string = os.getenv('READ_REPLICA_URL') or os.getenv('DATABASE_URL')
-        # Use primary for writes
-        self.write_conn_string = os.getenv('DATABASE_URL')
+        """Initialize database connections for read-only access"""
+        # Read replica for data analysis (preferred)
+        self.read_replica_url = os.getenv('READ_REPLICA_URL')
         
-        if not self.read_conn_string or not self.write_conn_string:
-            raise ValueError("Database connection strings not found in environment")
+        # Fallback to main database if no read replica
+        self.main_db_url = os.getenv('DATABASE_URL')
+        
+        # Use read replica if available, otherwise main database
+        self.read_url = self.read_replica_url or self.main_db_url
+        
+        # Write database for drift scores (separate table)
+        self.write_url = self.main_db_url
+        
+        logger.info(f"🔍 Read source: {'Read Replica' if self.read_replica_url else 'Main Database'}")
+        logger.info(f"💾 Write target: Main Database")
+        
+        # Test connections
+        self._test_connections()
     
+    def _test_connections(self):
+        """Test database connections"""
+        try:
+            # Test read connection
+            with psycopg2.connect(self.read_url) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1")
+                    logger.info("✅ Read connection successful")
+            
+            # Test write connection
+            with psycopg2.connect(self.write_url) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1")
+                    logger.info("✅ Write connection successful")
+                    
+        except Exception as e:
+            logger.error(f"❌ Database connection failed: {e}")
+            raise
+
     def get_read_connection(self):
-        """Get connection to read replica for data access"""
+        """Get read-only connection (from replica if available)"""
         return psycopg2.connect(
-            self.read_conn_string,
-            cursor_factory=RealDictCursor
+            self.read_url,
+            cursor_factory=RealDictCursor,
+            # Read-only optimizations
+            options="-c default_transaction_isolation=serializable -c default_transaction_read_only=on"
         )
     
     def get_write_connection(self):
-        """Get connection to primary database for writes"""
+        """Get write connection (to main database)"""
         return psycopg2.connect(
-            self.write_conn_string,
+            self.write_url,
             cursor_factory=RealDictCursor
         )
+
+    def get_responses_for_analysis(self, limit: Optional[int] = None, domains: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """
+        Get responses from read replica for analysis
+        
+        Args:
+            limit: Maximum number of responses to fetch
+            domains: Specific domains to analyze (None for all)
+        """
+        query = """
+        SELECT 
+            r.id,
+            r.domain,
+            r.model_name,
+            r.prompt_type,
+            r.response_text,
+            r.created_at,
+            r.token_count,
+            r.cost
+        FROM responses r
+        JOIN domains d ON r.domain = d.domain
+        WHERE d.status = 'completed'
+        AND r.response_text IS NOT NULL
+        AND LENGTH(r.response_text) > 10
+        """
+        
+        params = []
+        
+        if domains:
+            placeholders = ','.join(['%s'] * len(domains))
+            query += f" AND r.domain IN ({placeholders})"
+            params.extend(domains)
+        
+        query += " ORDER BY r.domain, r.model_name, r.prompt_type"
+        
+        if limit:
+            query += " LIMIT %s"
+            params.append(limit)
+        
+        with self.get_read_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, params)
+                results = cur.fetchall()
+                return [dict(row) for row in results]
+
+    def save_drift_score(self, domain: str, model_name: str, prompt_type: str, 
+                        self_similarity: float, peer_similarity: float, 
+                        canonical_similarity: float, drift_score: float):
+        """Save drift analysis results to main database"""
+        
+        # Create table if it doesn't exist
+        create_table_query = """
+        CREATE TABLE IF NOT EXISTS drift_scores (
+            id SERIAL PRIMARY KEY,
+            domain VARCHAR(255) NOT NULL,
+            model_name VARCHAR(255) NOT NULL,
+            prompt_type VARCHAR(50) NOT NULL,
+            self_similarity DECIMAL(5,4) NOT NULL,
+            peer_similarity DECIMAL(5,4) NOT NULL,
+            canonical_similarity DECIMAL(5,4) NOT NULL,
+            drift_score DECIMAL(5,4) NOT NULL,
+            analysis_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(domain, model_name, prompt_type)
+        );
+        """
+        
+        # Insert or update drift score
+        upsert_query = """
+        INSERT INTO drift_scores 
+            (domain, model_name, prompt_type, self_similarity, peer_similarity, canonical_similarity, drift_score)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (domain, model_name, prompt_type) 
+        DO UPDATE SET 
+            self_similarity = EXCLUDED.self_similarity,
+            peer_similarity = EXCLUDED.peer_similarity,
+            canonical_similarity = EXCLUDED.canonical_similarity,
+            drift_score = EXCLUDED.drift_score,
+            analysis_date = CURRENT_TIMESTAMP;
+        """
+        
+        with self.get_write_connection() as conn:
+            with conn.cursor() as cur:
+                # Create table
+                cur.execute(create_table_query)
+                
+                # Insert/update data
+                cur.execute(upsert_query, (
+                    domain, model_name, prompt_type,
+                    self_similarity, peer_similarity, canonical_similarity, drift_score
+                ))
+                
+            conn.commit()
+
+    def get_drift_scores(self, domain: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get existing drift scores from database"""
+        query = """
+        SELECT domain, model_name, prompt_type, 
+               self_similarity, peer_similarity, canonical_similarity, drift_score,
+               analysis_date
+        FROM drift_scores
+        """
+        
+        params = []
+        if domain:
+            query += " WHERE domain = %s"
+            params.append(domain)
+        
+        query += " ORDER BY drift_score DESC, domain, model_name"
+        
+        with self.get_read_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, params)
+                results = cur.fetchall()
+                return [dict(row) for row in results]
+
+# Legacy compatibility class
+class EmbeddingDB:
+    """Legacy wrapper for backward compatibility"""
+    def __init__(self):
+        self.manager = DatabaseManager()
     
+    def get_responses_for_analysis(self, limit=None):
+        return self.manager.get_responses_for_analysis(limit=limit)
+    
+    def save_drift_score(self, domain, model_name, prompt_type, self_similarity, peer_similarity, canonical_similarity, drift_score):
+        return self.manager.save_drift_score(domain, model_name, prompt_type, self_similarity, peer_similarity, canonical_similarity, drift_score)
+
     def create_drift_scores_table(self):
         """Create the drift_scores table if it doesn't exist"""
-        with self.get_write_connection() as conn:
+        with self.manager.get_write_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS drift_scores (
@@ -62,57 +228,10 @@ class EmbeddingDB:
                 
                 conn.commit()
     
-    def get_responses_for_analysis(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
-        """Get responses from read replica for analysis"""
-        with self.get_read_connection() as conn:
-            with conn.cursor() as cursor:
-                query = """
-                    SELECT 
-                        r.id,
-                        r.domain,
-                        r.model_name,
-                        r.prompt_type,
-                        r.response_text,
-                        r.created_at
-                    FROM raw_responses r
-                    WHERE r.response_text IS NOT NULL 
-                    AND r.response_text != ''
-                    ORDER BY r.created_at DESC
-                """
-                
-                if limit:
-                    query += f" LIMIT {limit}"
-                
-                cursor.execute(query)
-                return cursor.fetchall()
-    
-    def save_drift_score(self, domain: str, model_name: str, prompt_type: str, 
-                        self_similarity: float, peer_similarity: float, 
-                        canonical_similarity: float, drift_score: float):
-        """Save drift score to database"""
-        with self.get_write_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO drift_scores 
-                    (domain, model_name, prompt_type, self_similarity, 
-                     peer_similarity, canonical_similarity, drift_score)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (domain, model_name, prompt_type)
-                    DO UPDATE SET
-                        self_similarity = EXCLUDED.self_similarity,
-                        peer_similarity = EXCLUDED.peer_similarity,
-                        canonical_similarity = EXCLUDED.canonical_similarity,
-                        drift_score = EXCLUDED.drift_score,
-                        calculated_at = CURRENT_TIMESTAMP
-                """, (domain, model_name, prompt_type, self_similarity, 
-                      peer_similarity, canonical_similarity, drift_score))
-                
-                conn.commit()
-    
     def get_drift_scores(self, domain: Optional[str] = None, 
                         model_name: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get drift scores with optional filtering"""
-        with self.get_read_connection() as conn:
+        with self.manager.get_read_connection() as conn:
             with conn.cursor() as cursor:
                 query = "SELECT * FROM drift_scores WHERE 1=1"
                 params = []

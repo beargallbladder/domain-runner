@@ -5,7 +5,7 @@
 ### 1. Create New Web Service
 - Go to [Render Dashboard](https://dashboard.render.com)
 - Click **"New +"** → **"Web Service"**
-- Connect your GitHub repository
+- Connect your GitHub repository: `https://github.com/beargallbladder/domain-runner`
 - Set **Root Directory**: `services/embedding-engine`
 
 ### 2. Service Configuration
@@ -21,14 +21,30 @@ Plan: Starter ($7/month)
 Set these in Render dashboard:
 ```
 ENVIRONMENT=production
-DATABASE_URL=[Your PostgreSQL connection string]
-READ_REPLICA_URL=[Your read replica connection string]
 PYTHON_VERSION=3.9
+
+# PRIMARY DATABASE (for writes)
+DATABASE_URL=postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db
+
+# READ REPLICA (for analysis queries)
+READ_REPLICA_URL=postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-b/raw_capture_db
 ```
 
 ### 4. Health Check
 - Health Check Path: `/health`
 - The service will respond at: `https://your-service.onrender.com/health`
+
+## Database Strategy
+
+✅ **READ OPERATIONS** → Read Replica (`-b` endpoint)
+- Analyzing 36,120+ responses
+- No impact on your raw-capture-runner
+- Optimized for large queries
+
+✅ **WRITE OPERATIONS** → Primary Database (`-a` endpoint)  
+- Only writes to `drift_scores` table
+- Separate from your core data
+- No interference with collection
 
 ## API Endpoints
 
@@ -67,6 +83,7 @@ curl https://your-embedding-engine.onrender.com/status
 - Service logs available in Render dashboard
 - Health endpoint for uptime monitoring
 - Status endpoint for analysis progress
+- Read replica prevents performance impact on data collection
 
 ## Cost Estimate
 
@@ -78,5 +95,5 @@ curl https://your-embedding-engine.onrender.com/status
 
 1. Deploy service ✅
 2. Test health endpoint ✅
-3. Trigger first analysis run ✅
+3. Trigger first analysis ✅
 4. Monitor logs and performance ✅ 
