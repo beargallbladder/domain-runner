@@ -82,17 +82,6 @@ def root():
 
 @app.route('/health')
 def health():
-    return jsonify({
-        "status": "healthy",
-        "service": "multi-layer-embedding-engine",
-        "layer1_database": "active",
-        "layer2_embeddings": "active" if model_loaded else "failed",
-        "database_connected": bool(DATABASE_URL),
-        "timestamp": datetime.now().isoformat()
-    })
-
-@app.route('/health')
-def health():
     """Health check endpoint for monitoring"""
     return jsonify({
         "status": "healthy",
