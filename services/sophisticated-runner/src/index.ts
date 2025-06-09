@@ -496,6 +496,53 @@ Focus on actionable business intelligence for investment and partnership decisio
       return { error: (error as Error).message };
     }
   }
+
+  // 🚀 Main processing loop (FIXED: NO INFINITE MONEY BURNING!)
+  public async startProcessing(): Promise<void> {
+    console.log('🚀 Starting sophisticated LLM processing loop...');
+    
+    const processLoop = async (): Promise<void> => {
+      try {
+        await this.processNextBatch();
+        
+        // 🔍 Check if more domains remain BEFORE scheduling next iteration
+        const pendingCheck = await pool.query(`SELECT COUNT(*) as count FROM domains WHERE status = 'pending'`);
+        const pendingCount = parseInt(pendingCheck.rows[0].count);
+        
+        if (pendingCount > 0) {
+          console.log(`🔄 ${pendingCount} domains remaining - continuing processing...`);
+          setTimeout(processLoop, 10000); // Continue processing
+        } else {
+          console.log('🎉 ALL DOMAINS PROCESSED! No more pending domains - STOPPING INFINITE LOOP!');
+          console.log('💰 Sophisticated processing complete - no more API costs will be incurred');
+          console.log('🏁 Service will remain running for API endpoints, but no more LLM processing');
+          // NO MORE setTimeout - STOP THE LOOP!
+        }
+        
+      } catch (error) {
+        console.error('❌ Processing loop error:', error);
+        
+        // Even on error, check if we should continue
+        try {
+          const pendingCheck = await pool.query(`SELECT COUNT(*) as count FROM domains WHERE status = 'pending'`);
+          const pendingCount = parseInt(pendingCheck.rows[0].count);
+          
+          if (pendingCount > 0) {
+            console.log(`🔄 Error occurred but ${pendingCount} domains remain - retrying in 10 seconds...`);
+            setTimeout(processLoop, 10000);
+          } else {
+            console.log('🛑 No pending domains found after error - STOPPING LOOP');
+          }
+        } catch (checkError) {
+          console.error('❌ Failed to check pending domains after error:', checkError);
+          console.log('🛑 STOPPING LOOP due to database check failure');
+        }
+      }
+    };
+    
+    // Start the (now finite) processing loop
+    processLoop();
+  }
 }
 
 // Express API for health checks and monitoring
@@ -550,10 +597,7 @@ async function main() {
     await runner.seedDomains();
 
     // Start real LLM processing loop
-    console.log('🚀 Starting sophisticated LLM processing loop...');
-    setInterval(async () => {
-      await runner.processNextBatch();
-    }, 10000); // Process every 10 seconds
+    await runner.startProcessing();
 
     app.listen(port, () => {
       console.log(`🌐 Sophisticated Runner running on port ${port}`);

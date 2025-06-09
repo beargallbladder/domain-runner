@@ -1123,18 +1123,30 @@ async function processNextBatch() {
             // Wait for all domains to complete
             await Promise.all(domainPromises);
             console.log(`🎉 5X THROTTLE: Completed batch of ${pendingDomains.rows.length} domains!`);
+            // 🔄 CONTINUE PROCESSING: Schedule next batch if more domains remain
+            console.log('🔄 Checking for more pending domains...');
+            setTimeout(processNextBatch, 12000); // Continue processing
         }
         else {
-            console.log('📊 No pending domains found');
+            console.log('🎉 ALL DOMAINS PROCESSED! No more pending domains - STOPPING INFINITE LOOP!');
+            console.log('💰 Processing complete - no more API costs will be incurred');
+            console.log('🏁 Service will remain running for API endpoints, but no more LLM processing');
+            // NO MORE setTimeout - STOP THE LOOP!
         }
     }
     catch (error) {
         const err = error;
         console.error('Processing error:', err);
         await monitoring.logError(err, { context: 'batch_processing' });
+        // Even on error, stop the loop if no more work
+        const pendingCheck = await (0, database_1.query)(`SELECT COUNT(*) as count FROM domains WHERE status = 'pending'`);
+        if (parseInt(pendingCheck.rows[0].count) === 0) {
+            console.log('🛑 No pending domains found after error - STOPPING LOOP');
+            return; // Stop the infinite loop
+        }
+        // Only retry if there are still pending domains
+        setTimeout(processNextBatch, 12000);
     }
-    // Schedule next batch - reduce delay for 5x speed
-    setTimeout(processNextBatch, 12000); // 12 seconds delay (5x faster than 60 seconds)
 }
 // Start the application
 initializeApp();
