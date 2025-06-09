@@ -1,0 +1,152 @@
+{
+  "premium_domain_analysis": {
+    "total_domains": 90,
+    "categories": {
+      "ai_llm_leaders": [
+        "openai.com",
+        "anthropic.com", 
+        "deepmind.com"
+      ],
+      "ev_automotive": [
+        "tesla.com",
+        "rivian.com",
+        "lucidmotors.com"
+      ],
+      "cloud_infrastructure": [
+        "aws.amazon.com",
+        "azure.microsoft.com",
+        "cloud.google.com"
+      ],
+      "fintech_payments": [
+        "stripe.com",
+        "paypal.com",
+        "squareup.com",
+        "coinbase.com",
+        "binance.com",
+        "kraken.com"
+      ],
+      "ecommerce_platforms": [
+        "shopify.com",
+        "amazon.com"
+      ],
+      "design_productivity": [
+        "canva.com",
+        "figma.com",
+        "adobe.com",
+        "notion.so",
+        "evernote.com",
+        "onenote.com"
+      ],
+      "social_creator_economy": [
+        "tiktok.com",
+        "instagram.com",
+        "youtube.com",
+        "twitch.tv",
+        "kick.com",
+        "patreon.com",
+        "onlyfans.com",
+        "ko-fi.com"
+      ],
+      "publishing_media": [
+        "substack.com",
+        "medium.com",
+        "ghost.org",
+        "nytimes.com",
+        "wsj.com",
+        "cnn.com"
+      ],
+      "health_fitness_tech": [
+        "whoop.com",
+        "ouraring.com",
+        "fitbit.com",
+        "eightsleep.com",
+        "sleepnumber.com"
+      ],
+      "beauty_lifestyle": [
+        "glossier.com",
+        "fentybeauty.com",
+        "rarebeauty.com"
+      ],
+      "consumer_brands": [
+        "coca-cola.com",
+        "pepsi.com",
+        "nike.com",
+        "adidas.com",
+        "puma.com"
+      ],
+      "tech_giants": [
+        "apple.com",
+        "google.com",
+        "samsung.com"
+      ],
+      "search_discovery": [
+        "bing.com",
+        "duckduckgo.com"
+      ],
+      "semiconductor_industry": [
+        "intel.com",
+        "amd.com",
+        "nvidia.com",
+        "qualcomm.com",
+        "broadcom.com",
+        "mediatek.com",
+        "snapdragon.com",
+        "unigroup.com",
+        "huawei.com",
+        "analog.com",
+        "ti.com",
+        "infineon.com",
+        "stmicroelectronics.com",
+        "maximintegrated.com",
+        "microchip.com",
+        "nxp.com",
+        "st.com",
+        "renesas.com",
+        "silabs.com",
+        "vicor.com",
+        "onsemi.com",
+        "rohm.com",
+        "power.com"
+      ],
+      "development_hardware": [
+        "arduino.cc",
+        "raspberrypi.com",
+        "beaglebone.org",
+        "adafruit.com",
+        "sparkfun.com"
+      ],
+      "eda_design_tools": [
+        "altium.com",
+        "kicad.org",
+        "easyeda.com",
+        "autodesk.com",
+        "upverter.com"
+      ],
+      "electronics_distribution": [
+        "digikey.com",
+        "mouser.com",
+        "arrow.com",
+        "avnet.com",
+        "rs-online.com"
+      ]
+    },
+    "analysis_value": {
+      "market_cap_represented": "$10+ trillion combined",
+      "industry_coverage": "15+ major sectors",
+      "strategic_importance": "Industry leaders and trend setters",
+      "ai_training_significance": "High visibility in AI model training data",
+      "business_intelligence_value": "Premium insights for competitive analysis"
+    },
+    "processing_estimates": {
+      "total_domains": 90,
+      "models_per_domain": 15,
+      "prompts_per_model": 3,
+      "total_api_calls": 4050,
+      "estimated_cost_ultra_budget": "$20-60",
+      "estimated_cost_expensive_models": "$800-2000",
+      "cost_savings": "95%+ with ultra-budget fleet",
+      "processing_time_with_fleet": "15-30 minutes",
+      "processing_time_single_key": "8-12 hours"
+    }
+  }
+} 
