@@ -954,10 +954,16 @@ async function initializeApp() {
         }
         // Ensure schema exists with proper structure
         await ensureSchemaExists();
-        // 🚀 ADD DYNAMIC DOMAIN MANAGEMENT
-        await (0, domainManagerIntegration_1.runDomainManagerMigration)(database_1.pool);
-        const domainManager = (0, domainManagerIntegration_1.integrateDomainManager)(app, database_1.pool);
-        console.log('✅ Dynamic domain management integrated');
+        // 🚀 ADD DYNAMIC DOMAIN MANAGEMENT (with graceful fallback)
+        try {
+            await (0, domainManagerIntegration_1.runDomainManagerMigration)(database_1.pool);
+            const domainManager = (0, domainManagerIntegration_1.integrateDomainManager)(app, database_1.pool);
+            console.log('✅ Dynamic domain management integrated');
+        }
+        catch (error) {
+            console.error('⚠️ Domain management integration failed, continuing with basic functionality:', error);
+            console.log('💡 System will operate normally, domain management features unavailable');
+        }
         // Start the server
         app.listen(port, () => {
             console.log(`Server running at http://localhost:${port}`);

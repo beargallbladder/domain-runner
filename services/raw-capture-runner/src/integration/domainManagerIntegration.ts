@@ -187,36 +187,45 @@ export async function runDomainManagerMigration(pool: Pool): Promise<void> {
   try {
     console.log('🔄 Running bulletproof domain manager migration...');
     
-    // Step 1: Check if columns already exist to avoid unnecessary operations
-    const columnCheck = await client.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'domains' 
-      AND column_name IN ('cohort', 'priority')
-    `);
+    // Step 1: Check if columns already exist using a robust approach with fallback
+    let hasCohort = false;
+    let hasPriority = false;
     
-    const existingColumns = columnCheck.rows.map(row => row.column_name);
-    const hasCohort = existingColumns.includes('cohort');
-    const hasPriority = existingColumns.includes('priority');
+    try {
+      const columnCheck = await client.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public'
+        AND table_name = 'domains' 
+        AND column_name IN ('cohort', 'priority')
+      `);
+      
+      const existingColumns = columnCheck.rows.map(row => row.column_name);
+      hasCohort = existingColumns.includes('cohort');
+      hasPriority = existingColumns.includes('priority');
+    } catch (schemaError) {
+      console.log('⚠️ Could not check existing columns, will attempt to add them safely');
+      // Will try to add columns with IF NOT EXISTS (safe to run multiple times)
+    }
     
     console.log(`📋 Migration status: cohort=${hasCohort ? '✅' : '❌'}, priority=${hasPriority ? '✅' : '❌'}`);
     
-    // Step 2: Add cohort column if it doesn't exist
+    // Step 2: Add cohort column if it doesn't exist (or if we couldn't check)
     if (!hasCohort) {
       console.log('🔧 Adding cohort column...');
       await client.query(`
         ALTER TABLE domains 
-        ADD COLUMN cohort TEXT DEFAULT 'legacy'
+        ADD COLUMN IF NOT EXISTS cohort TEXT DEFAULT 'legacy'
       `);
       console.log('✅ Cohort column added');
     }
     
-    // Step 3: Add priority column if it doesn't exist  
+    // Step 3: Add priority column if it doesn't exist (or if we couldn't check)  
     if (!hasPriority) {
       console.log('🔧 Adding priority column...');
       await client.query(`
         ALTER TABLE domains 
-        ADD COLUMN priority INTEGER DEFAULT 1
+        ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 1
       `);
       console.log('✅ Priority column added');
     }
