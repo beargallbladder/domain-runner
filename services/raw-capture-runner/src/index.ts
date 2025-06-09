@@ -12,10 +12,18 @@ import axios from 'axios';
 // Load environment variables
 dotenv.config();
 
-// Initialize LLM clients
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// 🚀 DUAL OpenAI clients for maximum ultra-budget reliability
+const openaiKeys = [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(Boolean);
+const openaiClients = openaiKeys.map(key => new OpenAI({ apiKey: key }));
+
+// Smart OpenAI client rotation for load balancing
+function getOpenAIClient(): OpenAI {
+  const randomIndex = Math.floor(Math.random() * openaiClients.length);
+  return openaiClients[randomIndex] || openaiClients[0];
+}
+
+// Fallback for legacy code
+const openai = getOpenAIClient();
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -372,8 +380,9 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
   
   try {
     if (model.includes('gpt')) {
-      // OpenAI API call
-      const completion = await openai.chat.completions.create({
+      // 🚀 Smart OpenAI API call with dual key rotation
+      const selectedOpenAI = getOpenAIClient();
+      const completion = await selectedOpenAI.chat.completions.create({
         model: model,
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 1000,
