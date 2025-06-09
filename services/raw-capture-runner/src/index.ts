@@ -63,6 +63,16 @@ const hfClient = axios.create({
   }
 });
 
+// 🚀 Grok/X.AI client for ultra-cheap models
+const grokClient = axios.create({
+  baseURL: 'https://api.x.ai/v1',
+  headers: {
+    'Authorization': `Bearer ${process.env.XAI_API_KEY}`,
+    'Content-Type': 'application/json'
+  },
+  timeout: 30000
+});
+
 // Real prompt templates for domain analysis
 const PROMPT_TEMPLATES = {
   business_analysis: (domain: string) => `
@@ -578,9 +588,9 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
         latency: latency
       };
       
-    } else if (model.includes('Qwen') || model.includes('microsoft') || model.includes('google/gemma')) {
-      // 🚀 Hugging Face for additional models (Qwen, Phi, Gemma)
-      const response = await hfClient.post('/chat/completions', {
+    } else if (model.includes('grok')) {
+      // 🚀 Grok/X.AI API call (OpenAI-compatible)
+      const response = await grokClient.post('/chat/completions', {
         model: model,
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 1000,
@@ -592,7 +602,38 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
       const promptTokens = usage.prompt_tokens || 0;
       const completionTokens = usage.completion_tokens || 0;
       
-      // Ultra-budget model pricing
+      // Grok pricing (ultra-competitive)
+      let cost = 0;
+      if (model.includes('grok-2')) {
+        cost = promptTokens * 0.000005 + completionTokens * 0.000015; // Grok 2 pricing
+      } else if (model.includes('grok-beta')) {
+        cost = promptTokens * 0.000005 + completionTokens * 0.000015; // Grok Beta pricing
+      } else {
+        cost = promptTokens * 0.000005 + completionTokens * 0.000015; // Default Grok pricing
+      }
+      
+      return {
+        response: (response.data as any).choices[0]?.message?.content || 'No response',
+        tokenUsage: usage,
+        cost: cost,
+        latency: latency
+      };
+      
+    } else if (model.includes('Qwen') || model.includes('microsoft') || model.includes('google/gemma')) {
+      // 🔧 FIXED: Route to Together AI instead of Hugging Face
+      const response = await togetherClient.post('/chat/completions', {
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1000,
+        temperature: 0.7
+      });
+      
+      const latency = Date.now() - startTime;
+      const usage = (response.data as any).usage || {};
+      const promptTokens = usage.prompt_tokens || 0;
+      const completionTokens = usage.completion_tokens || 0;
+      
+      // Ultra-budget model pricing (Together AI rates)
       let cost = 0;
       if (model.includes('72B') || model.includes('70B')) {
         cost = promptTokens * 0.000008 + completionTokens * 0.000012; // Large Qwen models
@@ -895,58 +936,34 @@ async function processNextBatch(): Promise<void> {
           // Real LLM processing with multiple models
           console.log(`📝 Starting real LLM processing for ${domain.domain}...`);
           
-          // Define ALL 35 models for COMPLETE COST SPECTRUM 2025 tensor analysis 🚀💰
+          // 💰 ULTRA-BUDGET FOCUS: 15 CHEAPEST WORKING MODELS + GROK
           const models = [
-            // 💎 FLAGSHIP TIER ($0.05-$0.15) - Premium powerhouses
-            'gpt-4.1',                      // $0.11 - Enhanced coding and reasoning capabilities
-            'claude-opus-4-20250514',       // $0.087 - Claude 4 Opus - most powerful
-            'claude-sonnet-4-20250514',     // $0.047 - Claude 4 Sonnet - balanced
-            'gpt-4.1-mini',                 // $0.051 - Faster and more efficient variant
+            // 🏆 PROVEN ULTRA-CHEAP CHAMPIONS (Your best performers!)
+            'claude-3-haiku-20240307',      // 🥇 1,055 responses - $0.00000025 input - CHAMPION!
+            'deepseek-chat',                // 🥈 954 responses - $0.000002 input - Ultra-smart + cheap
+            'deepseek-coder',               // 🥉 953 responses - $0.000002 input - Coding specialist
+            'mistral-small-2402',           // 🏃 955 responses - $0.000002 input - European efficiency
+            'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',   // 🦙 850 responses - $0.0000015 input
+            'gpt-4o-mini',                  // 💎 983 responses - $0.0000015 input - OpenAI budget
+            'gpt-3.5-turbo',                // 🔧 970 responses - $0.000001 input - Reliable workhorse
+            'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',  // 🦙 855 responses - $0.000008 input - Larger but cheap
             
-            // 🔥 PREMIUM TIER ($0.015-$0.05) - High-end models
-            'claude-3-7-sonnet-20250219',   // $0.026 - Claude 3.7 Sonnet - enhanced
-            'gpt-4.1-nano',                 // $0.013 - Optimized for low-latency tasks
-            'mistral-large-2407',           // $0.010 - Mistral Large - Flagship model
-            'claude-3-5-sonnet-20241022',   // $0.009 - Claude 3.5 Sonnet
-            'gpt-4o',                       // $0.006 - Multimodal model supporting text, image, and audio
+            // 🚀 GROK MODELS - Missing from your setup!
+            'grok-beta',                    // $0.000005 input + $0.000015 output - X.AI API
+            'grok-2',                       // TBD pricing - likely similar to grok-beta
             
-            // ⚖️ MID-TIER ($0.005-$0.015) - Balanced performance/cost
-            'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',  // ~$0.012 - Meta's large workhorse
-            'Qwen/Qwen2.5-72B-Instruct',    // ~$0.010 - Premium Chinese model
-            'mistralai/Mixtral-8x22B-Instruct-v0.1',  // ~$0.009 - Larger mixture model
-            'claude-3-opus-20240229',       // $0.049 - Claude 3 Opus - legacy flagship
-            'deepseek-chat',                // $0.004 - DeepSeek V3 - Advanced reasoning & coding
-            'deepseek-coder',               // $0.006 - DeepSeek Coder - Specialized coding model
-            
-            // 💰 BUDGET TIER ($0.001-$0.005) - Efficient workhorses  
-            'mistral-small-2402',           // $0.004 - Mistral Small - Cost-effective
-            'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',   // ~$0.003 - Meta's efficient model
-            'mistralai/Mixtral-8x7B-Instruct-v0.1',  // ~$0.0025 - Mixture of experts
-            'Qwen/Qwen2.5-14B-Instruct',    // ~$0.002 - Mid-size reasoning
-            'gpt-3.5-turbo',                // $0.001 - Widely used model for general-purpose tasks
-            'claude-3-haiku-20240307',      // $0.0005 - Claude 3 Haiku - fast and efficient
-            'gpt-4o-mini',                  // $0.0013 - Smaller, cost-effective multimodal model
-            
-            // 🏃 ULTRA-BUDGET TIER ($0.0001-$0.001) - Maximum efficiency
-            'meta-llama/Meta-Llama-3.2-3B-Instruct-Turbo',   // ~$0.0008 - Tiny but capable
-            'Qwen/Qwen2.5-7B-Instruct',     // ~$0.0005 - Efficient Chinese model  
-            'mistralai/Mistral-7B-Instruct-v0.3',  // ~$0.0004 - Baseline Mistral
-            'microsoft/Phi-3-mini-4k-instruct',  // ~$0.0003 - Microsoft's efficient model
-            'google/gemma-2-9b-it',          // ~$0.0002 - Google's efficient model
-            'gemini-1.5-flash',             // $0.0006 - Gemini 1.5 Flash - Fast and efficient
-            'meta-llama/CodeLlama-7b-Instruct-hf',  // ~$0.0003 - Specialized coding model
-            'NousResearch/Nous-Hermes-2-Yi-34B',  // ~$0.0008 - Strong open model
-            
-            // 🚀 EXPERIMENTAL TIER - Latest releases (varies)
-            'gpt-4.5',                      // TBD - Orion research preview
-            'gemini-1.5-pro',              // TBD - Gemini 1.5 Pro - Multimodal powerhouse
-            'meta-llama/Meta-Llama-3.3-70B-Instruct',  // ~$0.008 - Latest Meta release
+            // 🔧 FIXED TOGETHER AI MODELS (Previously failed due to wrong routing)
+            'Qwen/Qwen2.5-14B-Instruct',    // Fixed: Route to Together AI - $0.000003 input
+            'Qwen/Qwen2.5-7B-Instruct',     // Fixed: Route to Together AI - $0.0000008 input  
+            'mistralai/Mixtral-8x7B-Instruct-v0.1',  // Fixed: Route to Together AI - $0.0000006 input
+            'microsoft/Phi-3-mini-4k-instruct',      // Fixed: Route to Together AI - $0.0000001 input
+            'google/gemma-2-9b-it',          // Fixed: Route to Together AI - $0.0000003 input
           ];
           const promptTypes = ['business_analysis', 'content_strategy', 'technical_assessment'] as const;
           
-          // ⚡ PARALLEL PROCESSING - ULTIMATE COST SPECTRUM WITH 35 MODELS!
+          // 💰 PARALLEL PROCESSING - ULTRA-BUDGET FOCUS WITH 15 CHEAPEST MODELS!
           for (const promptType of promptTypes) {
-            console.log(`🚀 PARALLEL processing ${promptType} across ALL 35 MODELS (COMPLETE COST SPECTRUM 2025) for ${domain.domain}`);
+            console.log(`💰 PARALLEL processing ${promptType} across 15 ULTRA-BUDGET MODELS + GROK for ${domain.domain}`);
             
             // Create parallel promises for all models
             const modelPromises = models.map(async (model) => {
@@ -1005,7 +1022,7 @@ async function processNextBatch(): Promise<void> {
             // Execute all models in parallel
             const results = await Promise.all(modelPromises);
             const successful = results.filter(r => r.success).length;
-            console.log(`🎯 ${promptType} completed: ${successful}/${models.length} models successful (COMPLETE COST SPECTRUM!)`);
+            console.log(`💰 ${promptType} completed: ${successful}/${models.length} models successful (ULTRA-BUDGET FOCUS!)`);
             
             // Brief pause between prompt types to be respectful to APIs
             await new Promise(resolve => setTimeout(resolve, 2000));
