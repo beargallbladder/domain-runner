@@ -2,12 +2,13 @@ import * as dotenv from 'dotenv';
 import { MonitoringService } from './services/monitoring';
 import express, { Request, Response } from 'express';
 import path from 'path';
-import { query, testConnection } from './config/database';
+import { query, testConnection, pool } from './config/database';
 import { Pool } from 'pg';
 import * as fs from 'fs';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import axios from 'axios';
+import { integrateDomainManager, runDomainManagerMigration } from './integration/domainManagerIntegration';
 
 // Load environment variables
 dotenv.config();
@@ -985,6 +986,11 @@ async function initializeApp(): Promise<void> {
     
     // Ensure schema exists with proper structure
     await ensureSchemaExists();
+    
+    // 🚀 ADD DYNAMIC DOMAIN MANAGEMENT
+    await runDomainManagerMigration(pool);
+    const domainManager = integrateDomainManager(app, pool);
+    console.log('✅ Dynamic domain management integrated');
     
     // Start the server
     app.listen(port, () => {
