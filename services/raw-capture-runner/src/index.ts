@@ -25,9 +25,18 @@ function getOpenAIClient(): OpenAI {
 // Fallback for legacy code
 const openai = getOpenAIClient();
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+// 🏆 DUAL Anthropic clients for CHAMPION MODEL claude-3-haiku 2X POWER!
+const anthropicKeys = [process.env.ANTHROPIC_API_KEY, process.env.ATHROPTIC_API_KEY2].filter(Boolean);
+const anthropicClients = anthropicKeys.map(key => new Anthropic({ apiKey: key }));
+
+// Smart Anthropic client rotation for claude-3-haiku DOMINATION
+function getAnthropicClient(): Anthropic {
+  const randomIndex = Math.floor(Math.random() * anthropicClients.length);
+  return anthropicClients[randomIndex] || anthropicClients[0];
+}
+
+// Fallback for legacy code
+const anthropic = getAnthropicClient();
 
 // Initialize additional API clients for comprehensive 2025 coverage
 const deepseekClient = axios.create({
@@ -428,8 +437,9 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
       };
       
     } else if (model.includes('claude')) {
-      // Anthropic API call
-      const message = await anthropic.messages.create({
+      // 🏆 Smart Anthropic API call with dual key rotation for CHAMPION claude-3-haiku!
+      const selectedAnthropic = getAnthropicClient();
+      const message = await selectedAnthropic.messages.create({
         model: model,
         max_tokens: 1000,
         temperature: 0.7,
