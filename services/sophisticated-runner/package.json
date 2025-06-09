@@ -1,0 +1,40 @@
+{
+  "name": "sophisticated-runner",
+  "version": "1.0.0",
+  "description": "Sophisticated parallel runner with 500+ premium domains and modular architecture",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "test": "node dist/test.js",
+    "deploy": "./deploy.sh"
+  },
+  "dependencies": {
+    "pg": "^8.8.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "@types/pg": "^8.6.6",
+    "winston": "^3.8.2",
+    "axios": "^1.3.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.0",
+    "@types/express": "^4.17.17",
+    "typescript": "^4.9.5",
+    "ts-node": "^10.9.1"
+  },
+  "keywords": [
+    "sophisticated",
+    "parallel",
+    "domain-processing",
+    "modular",
+    "premium-domains",
+    "business-intelligence"
+  ],
+  "author": "Sophisticated Runner Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
