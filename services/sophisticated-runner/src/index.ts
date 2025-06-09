@@ -79,10 +79,10 @@ class SophisticatedRunner {
     for (const domain of this.domains) {
       try {
         await pool.query(`
-          INSERT INTO domains (domain, status, processor_id, created_at) 
-          VALUES ($1, 'pending', $2, NOW())
-          ON CONFLICT (domain, processor_id) DO NOTHING
-        `, [domain, this.processorId]);
+          INSERT INTO domains (domain, status, created_at) 
+          VALUES ($1, 'pending', NOW())
+          ON CONFLICT (domain) DO NOTHING
+        `, [domain]);
         inserted++;
       } catch (error) {
         // Skip duplicates
@@ -96,9 +96,10 @@ class SophisticatedRunner {
     try {
       const result = await pool.query(`
         SELECT id, domain FROM domains 
-        WHERE status = 'pending' AND processor_id = $1
+        WHERE status = 'pending'
+        ORDER BY created_at ASC
         LIMIT 1
-      `, [this.processorId]);
+      `, []);
 
       if (result.rows.length === 0) {
         console.log('✅ No pending domains');
@@ -106,7 +107,7 @@ class SophisticatedRunner {
       }
 
       const { id, domain } = result.rows[0];
-      console.log(`🎯 Processing: ${domain}`);
+      console.log(`🎯 Processing: ${domain} (sophisticated_v1)`);
 
       // Mark as processing
       await pool.query(
@@ -123,7 +124,7 @@ class SophisticatedRunner {
         ['completed', id]
       );
 
-      console.log(`✅ Completed: ${domain}`);
+      console.log(`✅ Completed: ${domain} (sophisticated_v1)`);
     } catch (error) {
       console.error('❌ Processing error:', error);
     }
@@ -134,16 +135,16 @@ class SophisticatedRunner {
       const result = await pool.query(`
         SELECT status, COUNT(*) as count
         FROM domains 
-        WHERE processor_id = $1
         GROUP BY status
-      `, [this.processorId]);
+      `, []);
 
       return {
         service: 'sophisticated-runner',
         processor_id: this.processorId,
         mode: SERVICE_MODE,
         status_breakdown: result.rows,
-        parallel_to: 'raw-capture-runner'
+        parallel_to: 'raw-capture-runner',
+        note: 'Sharing domain pool with raw-capture-runner'
       };
     } catch (error) {
       return { error: (error as Error).message };
