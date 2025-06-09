@@ -802,7 +802,7 @@ app.post('/seed', async (req: Request, res: Response) => {
 
     const response = {
       success: true,
-      message: '🎉 Domain seeding complete!',
+      message: '🎉 PREMIUM DOMAIN SEEDING COMPLETE! 500+ domains across 25 sectors',
       inserted: result.inserted,
       skipped: result.skipped,
       total_in_list: result.total,
