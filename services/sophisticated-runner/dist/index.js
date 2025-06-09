@@ -39,6 +39,7 @@ dotenv.config();
 // 🎯 Mission: Run parallel to raw-capture-runner with REAL LLM API calls
 // 🎯 Strategy: Pure cheap + middle tier models (no expensive models yet)  
 // 🎯 Database: SAME EXACT schema as raw-capture-runner - NO processor_id!
+// 🎯 FORCE DEPLOY: 2025-06-09T23:49:00Z - Fixed processor_id caching issue
 // ============================================================================
 console.log('🚀 SOPHISTICATED RUNNER STARTING');
 console.log('   Service ID: sophisticated_v1');
