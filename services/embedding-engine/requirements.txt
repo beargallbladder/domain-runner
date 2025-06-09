@@ -3,6 +3,9 @@ Flask==2.3.3
 python-dotenv==1.0.0
 psycopg2-binary==2.9.7
 
+# Production Database Dependencies (Fire Alarm System)
+asyncpg==0.29.0
+
 # Layer 2: Embedding Dependencies (compatible versions)
 sentence-transformers==2.2.2
 torch==2.1.0

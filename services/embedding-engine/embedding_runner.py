@@ -1160,6 +1160,23 @@ def admin_cache_status():
             "error": str(e)
         }), 500
 
+# =============================================================================
+# PRODUCTION INTEGRATION - Fire Alarm System
+# =============================================================================
+
+# Add production cache system integration
+try:
+    from admin_integration import add_production_endpoints
+    add_production_endpoints(app)
+    print("🚀 Production cache system integrated!")
+    print("📊 New fire alarm endpoints available:")
+    print("   POST /admin/production-cache-batch - Fast cache generation (2-5 min)")
+    print("   GET  /admin/fire-alarm-status - Monitor reputation alerts") 
+    print("   GET  /admin/production-migration-status - Check migration progress")
+except ImportError as e:
+    print(f"⚠️  Production integration not available: {e}")
+    print("   Legacy cache system still available at /admin/generate-cache-batch")
+
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     print(f"🚀 ULTRA-DEEP-FIX-V3 Multi-Layer Embedding Engine on port {port}")
