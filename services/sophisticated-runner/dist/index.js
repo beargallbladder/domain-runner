@@ -34,41 +34,41 @@ const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const axios_1 = __importDefault(require("axios"));
 dotenv.config();
 // ============================================================================
-// SOPHISTICATED RUNNER - REAL LLM PROCESSING WITH DUAL KEY SYSTEM
+// SOPHISTICATED RUNNER - REAL LLM PROCESSING (NO PROCESSOR_ID DEPENDENCIES)
 // ============================================================================
 // 🎯 Mission: Run parallel to raw-capture-runner with REAL LLM API calls
 // 🎯 Strategy: Pure cheap + middle tier models (no expensive models yet)  
-// 🎯 Database: SAME as raw-capture-runner (shared schema)
+// 🎯 Database: SAME EXACT schema as raw-capture-runner - NO processor_id!
 // ============================================================================
-const SERVICE_ID = process.env.PROCESSOR_ID || 'sophisticated_v1';
-const SERVICE_MODE = process.env.SERVICE_MODE || 'sophisticated_parallel';
-console.log('🚀 SOPHISTICATED RUNNER WITH REAL LLM PROCESSING STARTING');
-console.log(`   Service ID: ${SERVICE_ID}`);
-console.log(`   Mode: ${SERVICE_MODE}`);
-console.log(`   Strategy: Pure cheap + middle tier (no expensive models)`);
-// Database connection (same database as raw-capture-runner)
+console.log('🚀 SOPHISTICATED RUNNER STARTING');
+console.log('   Service ID: sophisticated_v1');
+console.log('   Mode: sophisticated_parallel');
+console.log('   Parallel to: raw-capture-runner');
+const SERVICE_ID = 'sophisticated_v1';
+const SERVICE_MODE = 'sophisticated_parallel';
+// Database connection
 const pool = new pg_1.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
-// 🚀 DUAL API Key System (Enterprise Grade)
-const openaiKeys = [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(Boolean);
-const openaiClients = openaiKeys.map(key => new openai_1.default({ apiKey: key }));
-const anthropicKeys = [process.env.ANTHROPIC_API_KEY, process.env.ATHROPTIC_API_KEY2].filter(Boolean);
-const anthropicClients = anthropicKeys.map(key => new sdk_1.default({ apiKey: key }));
-// Smart client rotation for load balancing
+// Dual API key clients (copied from raw-capture-runner architecture)  
+const openaiClients = [
+    new openai_1.default({ apiKey: process.env.OPENAI_API_KEY }),
+    new openai_1.default({ apiKey: process.env.OPENAI_API_KEY_2 })
+].filter(client => client.apiKey);
+const anthropicClients = [
+    new sdk_1.default({ apiKey: process.env.ANTHROPIC_API_KEY }),
+    new sdk_1.default({ apiKey: process.env.ANTHROPIC_API_KEY_2 })
+].filter(client => client.apiKey);
 function getOpenAIClient() {
-    const randomIndex = Math.floor(Math.random() * openaiClients.length);
-    return openaiClients[randomIndex] || openaiClients[0];
+    return openaiClients[Math.floor(Math.random() * openaiClients.length)];
 }
 function getAnthropicClient() {
-    const randomIndex = Math.floor(Math.random() * anthropicClients.length);
-    return anthropicClients[randomIndex] || anthropicClients[0];
+    return anthropicClients[Math.floor(Math.random() * anthropicClients.length)];
 }
-// Additional API clients
+// Other API clients
 const deepseekClient = axios_1.default.create({
     baseURL: 'https://api.deepseek.com/v1',
     headers: {
@@ -289,7 +289,7 @@ async function callLLM(model, prompt, domain) {
         throw error;
     }
 }
-// 500+ Premium Domains for Business Intelligence Analysis
+// 500+ Premium Domains for Business Intelligence Analysis (subset for testing)
 const PREMIUM_DOMAINS = [
     // AI/ML Companies (Tier 1)
     'openai.com', 'anthropic.com', 'deepmind.com', 'huggingface.co',
@@ -315,59 +315,58 @@ const PREMIUM_DOMAINS = [
     // Development Tools (Tier 1)
     'github.com', 'gitlab.com', 'docker.com', 'kubernetes.io',
     'terraform.io', 'postman.com', 'jetbrains.com', 'atlassian.com',
-    'jira.atlassian.com', 'confluence.atlassian.com', 'bitbucket.org',
-    // Technology Giants
-    'microsoft.com', 'google.com', 'apple.com', 'meta.com',
-    'tesla.com', 'netflix.com', 'spotify.com', 'uber.com',
-    'airbnb.com', 'doordash.com', 'zoom.us', 'discord.com',
-    // Additional 400+ domains across 25 sectors...
-    // (truncated for brevity - the full list reaches 500+)
 ];
 class SophisticatedRunner {
     constructor() {
-        this.processorId = SERVICE_ID;
         this.domains = PREMIUM_DOMAINS;
-        console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} premium domains`);
-        console.log(`🎯 Model Strategy: ${ULTRA_CHEAP_MODELS.length} ultra-cheap + ${MIDDLE_TIER_MODELS.length} middle-tier models`);
+        console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
     }
     async seedDomains() {
-        console.log('🌱 Seeding premium domains for sophisticated processing...');
+        console.log('🌱 Seeding premium domains...');
         let inserted = 0;
+        let skipped = 0;
         for (const domain of this.domains) {
             try {
-                await pool.query(`
-          INSERT INTO domains (domain, status, created_at, processor_id) 
-          VALUES ($1, 'pending', NOW(), $2)
+                // Use exact same schema as raw-capture-runner - NO processor_id
+                const result = await pool.query(`
+          INSERT INTO domains (domain, status, created_at) 
+          VALUES ($1, 'pending', NOW())
           ON CONFLICT (domain) DO NOTHING
-        `, [domain, this.processorId]);
-                inserted++;
+          RETURNING id
+        `, [domain]);
+                if (result.rows.length > 0) {
+                    inserted++;
+                }
+                else {
+                    skipped++;
+                }
             }
             catch (error) {
                 // Skip duplicates or errors
+                skipped++;
             }
         }
-        console.log(`✅ Seeded ${inserted} domains for sophisticated processing`);
+        console.log(`✅ Seeded ${inserted} domains`);
     }
     async processNextBatch() {
         try {
+            // Query pending domains using exact same logic as raw-capture-runner - NO processor_id filtering
             const result = await pool.query(`
         SELECT id, domain FROM domains 
         WHERE status = 'pending'
-        AND (processor_id IS NULL OR processor_id = $1)
         ORDER BY created_at ASC
         LIMIT 1
-      `, [this.processorId]);
+      `);
             if (result.rows.length === 0) {
-                console.log('✅ No pending domains for sophisticated processing');
+                console.log('✅ No pending domains available');
                 return;
             }
             const { id, domain } = result.rows[0];
-            console.log(`🎯 Processing: ${domain} with sophisticated LLM system`);
-            // Mark as processing
-            await pool.query('UPDATE domains SET status = $1, processor_id = $2 WHERE id = $3', ['processing', this.processorId, id]);
+            console.log(`🎯 Processing: ${domain} (${SERVICE_ID})`);
+            // Mark as processing - same as raw-capture-runner
+            await pool.query('UPDATE domains SET status = $1, last_processed_at = NOW() WHERE id = $2', ['processing', id]);
             // Select optimal model (cost-optimized)
             const selectedModel = selectOptimalModel();
-            console.log(`🤖 Selected model: ${selectedModel} (cost-optimized)`);
             // Create sophisticated prompt
             const prompt = `Analyze the business intelligence value of ${domain}. Provide insights on:
 1. Primary business model and revenue streams
@@ -379,26 +378,29 @@ class SophisticatedRunner {
 Focus on actionable business intelligence for investment and partnership decisions.`;
             // Make real LLM API call
             const llmResult = await callLLM(selectedModel, prompt, domain);
-            // Store response in database (same schema as raw-capture-runner)
+            // Store response using EXACT same schema as raw-capture-runner - NO processor_id
             await pool.query(`
         INSERT INTO responses (
-          domain_id, domain, model, prompt, response, 
-          token_usage, cost, latency, processor_id, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+          domain_id, model, prompt_type, interpolated_prompt, 
+          raw_response, token_count, prompt_tokens, completion_tokens,
+          token_usage, total_cost_usd, latency_ms, captured_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
       `, [
-                id, domain, selectedModel, prompt, llmResult.response,
-                JSON.stringify(llmResult.tokenUsage), llmResult.cost,
-                llmResult.latency, this.processorId
+                id, selectedModel, 'business_intelligence', prompt, llmResult.response,
+                (llmResult.tokenUsage.total_tokens || llmResult.tokenUsage.prompt_tokens + llmResult.tokenUsage.completion_tokens || 0),
+                (llmResult.tokenUsage.prompt_tokens || llmResult.tokenUsage.input_tokens || 0),
+                (llmResult.tokenUsage.completion_tokens || llmResult.tokenUsage.output_tokens || 0),
+                JSON.stringify(llmResult.tokenUsage), llmResult.cost, llmResult.latency
             ]);
-            // Mark as completed
-            await pool.query('UPDATE domains SET status = $1 WHERE id = $2', ['completed', id]);
-            console.log(`✅ Completed: ${domain} | Model: ${selectedModel} | Cost: $${llmResult.cost.toFixed(6)} | Latency: ${llmResult.latency}ms`);
+            // Mark as completed - same as raw-capture-runner
+            await pool.query('UPDATE domains SET status = $1, last_processed_at = NOW() WHERE id = $2', ['completed', id]);
+            console.log(`✅ Completed: ${domain} (${SERVICE_ID})`);
         }
         catch (error) {
             console.error('❌ Processing error:', error);
-            // Reset failed domain for retry
+            // Reset failed domains for retry - same as raw-capture-runner
             try {
-                await pool.query('UPDATE domains SET status = $1 WHERE status = $2 AND processor_id = $3', ['pending', 'processing', this.processorId]);
+                await pool.query('UPDATE domains SET status = $1 WHERE status = $2', ['pending', 'processing']);
             }
             catch (resetError) {
                 console.error('❌ Failed to reset domain status:', resetError);
@@ -407,25 +409,26 @@ Focus on actionable business intelligence for investment and partnership decisio
     }
     async getStatus() {
         try {
+            // Status query without processor_id - all domains visible to both services
             const statusResult = await pool.query(`
         SELECT status, COUNT(*) as count
         FROM domains 
-        WHERE processor_id = $1 OR processor_id IS NULL
         GROUP BY status
-      `, [this.processorId]);
+      `);
+            // Responses without processor_id filtering  
             const costResult = await pool.query(`
         SELECT 
           COUNT(*) as total_responses,
-          SUM(cost) as total_cost,
-          AVG(cost) as avg_cost,
-          AVG(latency) as avg_latency,
+          SUM(total_cost_usd) as total_cost,
+          AVG(total_cost_usd) as avg_cost,
+          AVG(latency_ms) as avg_latency,
           COUNT(DISTINCT model) as models_used
         FROM responses 
-        WHERE processor_id = $1
-      `, [this.processorId]);
+        WHERE prompt_type = 'business_intelligence'
+      `);
             return {
                 service: 'sophisticated-runner',
-                processor_id: this.processorId,
+                service_id: SERVICE_ID,
                 mode: SERVICE_MODE,
                 strategy: 'Real LLM Processing - Cheap + Middle Tier',
                 status_breakdown: statusResult.rows,
@@ -436,12 +439,7 @@ Focus on actionable business intelligence for investment and partnership decisio
                     expensive_tier: 'Not implemented yet'
                 },
                 parallel_to: 'raw-capture-runner',
-                api_infrastructure: {
-                    openai_keys: openaiClients.length,
-                    anthropic_keys: anthropicClients.length,
-                    total_providers: 7,
-                    dual_key_system: 'Active'
-                }
+                database_schema: 'Same as raw-capture-runner - no processor_id'
             };
         }
         catch (error) {
@@ -451,17 +449,17 @@ Focus on actionable business intelligence for investment and partnership decisio
 }
 // Express API for health checks and monitoring
 const app = (0, express_1.default)();
-const port = process.env.PORT || 3003;
+const port = process.env.PORT || 10000;
 app.get('/', (req, res) => {
     res.json({
         service: 'sophisticated-runner',
         status: 'running',
         mode: SERVICE_MODE,
-        processor_id: SERVICE_ID,
+        service_id: SERVICE_ID,
         strategy: 'Real LLM Processing - Cost Optimized',
         parallel_to: 'raw-capture-runner',
-        message: 'Sophisticated runner with real LLM API calls (cheap + middle tier)',
-        api_system: 'Dual key rotation active'
+        message: 'Sophisticated runner with real LLM API calls - no processor_id dependencies',
+        database_compatibility: 'Full compatibility with raw-capture-runner schema'
     });
 });
 app.get('/status', async (req, res) => {
@@ -473,7 +471,8 @@ app.get('/health', (req, res) => {
     res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        processor_id: SERVICE_ID,
+        service_id: SERVICE_ID,
+        database_schema: 'Compatible with raw-capture-runner',
         api_keys_configured: {
             openai: openaiClients.length,
             anthropic: anthropicClients.length,
@@ -490,19 +489,17 @@ async function main() {
     try {
         console.log('🔍 Testing database connection...');
         await pool.query('SELECT 1');
-        console.log('✅ Database connected - ready for sophisticated processing');
+        console.log('✅ Database connected');
         const runner = new SophisticatedRunner();
         await runner.seedDomains();
         // Start real LLM processing loop
         console.log('🚀 Starting sophisticated LLM processing loop...');
         setInterval(async () => {
             await runner.processNextBatch();
-        }, 10000); // Process every 10 seconds (faster than raw-capture-runner)
+        }, 10000); // Process every 10 seconds
         app.listen(port, () => {
-            console.log(`🌐 Sophisticated Runner with real LLM processing running on port ${port}`);
-            console.log(`   Health: http://localhost:${port}/health`);
-            console.log(`   Status: http://localhost:${port}/status`);
-            console.log('🎯 Ready for cost-optimized sophisticated processing!');
+            console.log(`🌐 Sophisticated Runner running on port ${port}`);
+            console.log('🎯 Ready to prove equivalence!');
         });
     }
     catch (error) {

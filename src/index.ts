@@ -235,121 +235,133 @@ async function ensureSchemaExists(): Promise<void> {
   }
 }
 
-// Domain seeding function
-async function seedDomains(): Promise<{ inserted: number; skipped: number; total: number }> {
-  // Embedded domains list (our 266 premium domains)
-  const domains = [
-    'google.com', 'blogger.com', 'youtube.com', 'linkedin.com', 'cloudflare.com',
-    'microsoft.com', 'apple.com', 'wikipedia.org', 'wordpress.org', 'mozilla.org',
-    'youtu.be', 'blogspot.com', 'googleusercontent.com', 't.me', 'europa.eu',
-    'whatsapp.com', 'adobe.com', 'facebook.com', 'uol.com.br', 'istockphoto.com',
-    'vimeo.com', 'vk.com', 'github.com', 'amazon.com', 'bbc.co.uk',
-    'google.de', 'live.com', 'gravatar.com', 'nih.gov', 'dan.com',
-    'wordpress.com', 'yahoo.com', 'cnn.com', 'dropbox.com', 'wikimedia.org',
-    'creativecommons.org', 'google.com.br', 'line.me', 'googleblog.com', 'opera.com',
-    'globo.com', 'brandbucket.com', 'myspace.com', 'slideshare.net', 'paypal.com',
-    'tiktok.com', 'netvibes.com', 'theguardian.com', 'who.int', 'goo.gl',
-    'medium.com', 'weebly.com', 'w3.org', 'gstatic.com', 'jimdofree.com',
-    'cpanel.net', 'imdb.com', 'wa.me', 'feedburner.com', 'enable-javascript.com',
-    'nytimes.com', 'ok.ru', 'google.es', 'dailymotion.com', 'afternic.com',
-    'bloomberg.com', 'amazon.de', 'wiley.com', 'aliexpress.com', 'indiatimes.com',
-    'youronlinechoices.com', 'elpais.com', 'tinyurl.com', 'yadi.sk', 'spotify.com',
-    'huffpost.com', 'google.fr', 'webmd.com', 'samsung.com', 'independent.co.uk',
-    'amazon.co.jp', 'amazon.co.uk', '4shared.com', 'telegram.me', 'planalto.gov.br',
-    'businessinsider.com', 'ig.com.br', 'issuu.com', 'gov.br', 'wsj.com',
-    'hugedomains.com', 'usatoday.com', 'scribd.com', 'gov.uk', 'googleapis.com',
-    'huffingtonpost.com', 'bbc.com', 'estadao.com.br', 'nature.com', 'mediafire.com',
-    'washingtonpost.com', 'forms.gle', 'namecheap.com', 'forbes.com', 'mirror.co.uk',
-    'soundcloud.com', 'fb.com', 'domainmarket.com', 'ytimg.com', 'terra.com.br',
-    'google.co.uk', 'shutterstock.com', 'dailymail.co.uk', 'reg.ru', 't.co',
-    'cdc.gov', 'thesun.co.uk', 'wp.com', 'cnet.com', 'instagram.com',
-    'researchgate.net', 'google.it', 'fandom.com', 'office.com', 'list-manage.com',
-    'msn.com', 'un.org', 'ovh.com', 'mail.ru', 'bing.com',
-    'hatena.ne.jp', 'shopify.com', 'bit.ly', 'reuters.com', 'booking.com',
-    'discord.com', 'buydomains.com', 'nasa.gov', 'aboutads.info', 'time.com',
-    'abril.com.br', 'change.org', 'nginx.org', 'twitter.com', 'archive.org',
-    'cbsnews.com', 'networkadvertising.org', 'telegraph.co.uk', 'pinterest.com', 'google.co.jp',
-    'pixabay.com', 'zendesk.com', 'cpanel.com', 'vistaprint.com', 'sky.com',
-    'windows.net', 'alicdn.com', 'google.ca', 'lemonde.fr', 'newyorker.com',
-    'webnode.page', 'surveymonkey.com', 'amazonaws.com', 'academia.edu', 'apache.org',
-    'imageshack.us', 'akamaihd.net', 'nginx.com', 'discord.gg', 'thetimes.co.uk',
-    'amazon.fr', 'yelp.com', 'berkeley.edu', 'google.ru', 'sedoparking.com',
-    'cbc.ca', 'unesco.org', 'ggpht.com', 'privacyshield.gov', 'over-blog.com',
-    'clarin.com', 'wix.com', 'whitehouse.gov', 'icann.org', 'gnu.org',
-    'yandex.ru', 'francetvinfo.fr', 'gmail.com', 'mozilla.com', 'ziddu.com',
-    'guardian.co.uk', 'twitch.tv', 'sedo.com', 'foxnews.com', 'rambler.ru',
-    'stanford.edu', 'wikihow.com', '20minutos.es', 'sfgate.com', 'liveinternet.ru',
-    '000webhost.com', 'espn.com', 'eventbrite.com', 'disney.com', 'statista.com',
-    'addthis.com', 'pinterest.fr', 'lavanguardia.com', 'vkontakte.ru', 'doubleclick.net',
-    'skype.com', 'sciencedaily.com', 'bloglovin.com', 'insider.com', 'sputniknews.com',
-    'doi.org', 'nypost.com', 'elmundo.es', 'go.com', 'deezer.com',
-    'express.co.uk', 'detik.com', 'mystrikingly.com', 'rakuten.co.jp', 'amzn.to',
-    'arxiv.org', 'alibaba.com', 'fb.me', 'wikia.com', 't-online.de',
-    'telegra.ph', 'mega.nz', 'usnews.com', 'plos.org', 'naver.com',
-    'ibm.com', 'smh.com.au', 'dw.com', 'google.nl', 'lefigaro.fr',
-    'theatlantic.com', 'nydailynews.com', 'themeforest.net', 'rtve.es', 'newsweek.com',
-    'ovh.net', 'ca.gov', 'goodreads.com', 'economist.com', 'target.com',
-    'marca.com', 'kickstarter.com', 'hindustantimes.com', 'weibo.com', 'huawei.com',
-    'e-monsite.com', 'hubspot.com', 'npr.org', 'netflix.com', 'gizmodo.com',
-    'netlify.app', 'yandex.com', 'mashable.com', 'ebay.com', 'etsy.com', 'walmart.com',
-    
-    // 🔥 WILDFIRE SEO JUICE DOMAINS - 75 NEW DOMAINS FOR MAXIMUM SIGNAL DIVERSITY 🔥
-    
-    // 🚀 AI/LLM POWERHOUSES (Peak discussion, controversy, future-focused)
-    'openai.com', 'anthropic.com', 'huggingface.co', 'midjourney.com', 'stability.ai',
-    'character.ai', 'perplexity.ai', 'replicate.com', 'runwayml.com', 'cohere.com',
-    'together.ai', 'fireworks.ai', 'adept.ai', 'inflection.ai', 'mistral.ai',
-    
-    // 💸 CRYPTO/WEB3 CHAOS (Maximum volatility, extreme opinions)
-    'coinbase.com', 'binance.com', 'opensea.io', 'uniswap.org', 'solana.com',
-    'polygon.technology', 'avalanche.network', 'chainlink.com', 'aave.com', 'compound.finance',
-    'ftx.com', 'celsius.network', 'terra.money', 'algorand.com', 'cardano.org',
-    
-    // 🎮 GAMING/METAVERSE EXPLOSION (Viral content, young demographics)
-    'roblox.com', 'epicgames.com', 'steam.com', 'minecraft.net', 'fortnite.com',
-    'unity.com', 'unrealengine.com', 'oculus.com', 'meta.com', 'sandbox.game',
-    'decentraland.org', 'axieinfinity.com', 'opensea.io', 'enjin.io', 'immutable.com',
-    
-    // 🚗 EV/FUTURE MOBILITY (Rapidly evolving, polarizing)
-    'tesla.com', 'rivian.com', 'lucidmotors.com', 'nio.com', 'xpeng.com',
-    'byd.com', 'waymo.com', 'cruise.com', 'uber.com', 'lyft.com',
-    
-    // 🧬 BIOTECH/LONGEVITY FRONTIER (Cutting-edge science, ethical debates)
-    '23andme.com', 'illumina.com', 'crispr.com', 'modernatx.com', 'biontech.se',
-    '10xgenomics.com', 'calico.com', 'altos.com', 'unity-biotechnology.com', 'grail.com',
-    
-    // 🌶️ CONTROVERSIAL/POLARIZING (Maximum response diversity, training bias reveals)
-    'infowars.com', 'breitbart.com', 'truthsocial.com', 'parler.com', 'gab.com',
-    'rt.com', 'aljazeera.com', '4chan.org', 'wikileaks.org', 'rumble.com',
-    
-    // 📱 SOCIAL/CONTENT ALTERNATIVES (Emerging platforms, cultural shifts)
-    'substack.com', 'clubhouse.com', 'snapchat.com', 'reddit.com', 'quora.com',
-    'signal.org', 'telegram.org', 'mastodon.social', 'bluesky.app', 'threads.net'
-  ];
-
-  let inserted = 0;
-  let skipped = 0;
+// 🚀 SIMPLE MODULAR DOMAIN PROCESSOR - PHASE 1
+// Goal: Prove exact equivalence with original logic, but domains are configurable
+class ModularDomainProcessor {
+  private pool: Pool;
+  private processorId: string;
+  private domains: string[];
   
-  for (const domain of domains) {
-    try {
-      const result = await query(`
-        INSERT INTO domains (domain, source, status)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (domain) DO NOTHING
-        RETURNING id
-      `, [domain.trim(), 'api_seed', 'pending']);
-      
-      if (result.rows.length > 0) {
-        inserted++;
-      } else {
-        skipped++;
-      }
-    } catch (error) {
-      console.error(`Error inserting ${domain}:`, error);
-    }
+  constructor(config: {
+    databaseUrl: string;
+    domains: string[];
+    processorId: string;
+  }) {
+    this.processorId = config.processorId;
+    this.domains = config.domains;
+    this.pool = new Pool({ connectionString: config.databaseUrl });
+    
+    console.log(`🚀 Modular Domain Processor initialized`);
+    console.log(`   Processor ID: ${this.processorId}`);
+    console.log(`   Domain count: ${this.domains.length}`);
   }
 
-  return { inserted, skipped, total: domains.length };
+  async query(text: string, params?: any[]): Promise<any> {
+    const start = Date.now();
+    const result = await this.pool.query(text, params);
+    const duration = Date.now() - start;
+    
+    console.log('Query executed', {
+      text: text.length > 50 ? text.substring(0, 50) + '...' : text,
+      duration,
+      rows: result.rowCount
+    });
+    
+    return result;
+  }
+
+  async seedDomains(): Promise<{ inserted: number; skipped: number; total: number }> {
+    let inserted = 0;
+    let skipped = 0;
+    
+    console.log(`🌱 Seeding ${this.domains.length} domains with processor ID: ${this.processorId}`);
+    
+    for (const domain of this.domains) {
+      try {
+        const result = await this.query(`
+          INSERT INTO domains (domain, source, status)
+          VALUES ($1, $2, $3)
+          ON CONFLICT (domain) DO NOTHING
+          RETURNING id
+        `, [domain.trim(), this.processorId, 'pending']);
+        
+        if (result.rows.length > 0) {
+          inserted++;
+          console.log(`✅ Inserted: ${domain}`);
+        } else {
+          skipped++;
+          console.log(`⏭️ Skipped (exists): ${domain}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error inserting ${domain}:`, error);
+      }
+    }
+
+    return { inserted, skipped, total: this.domains.length };
+  }
+
+  async getStatus(): Promise<any> {
+    const result = await this.query(`
+      SELECT 
+        COUNT(*) as total_domains,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending,
+        COUNT(*) FILTER (WHERE status = 'processing') as processing,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed,
+        COUNT(*) FILTER (WHERE status = 'error') as errors
+      FROM domains
+      WHERE source = $1
+    `, [this.processorId]);
+    
+    return result.rows[0];
+  }
+
+  async processNextBatch(): Promise<void> {
+    try {
+      const pendingDomains = await this.query(`
+        SELECT id, domain
+        FROM domains
+        WHERE status = 'pending' AND source = $1
+        ORDER BY last_processed_at ASC NULLS FIRST
+        LIMIT 5
+      `, [this.processorId]);
+
+      if (pendingDomains.rows.length > 0) {
+        console.log(`🚀 Processing ${pendingDomains.rows.length} domains (${this.processorId})`);
+        
+        for (const domain of pendingDomains.rows) {
+          console.log(`📋 Mock processing: ${domain.domain} (${this.processorId})`);
+          
+          await this.query(`
+            UPDATE domains 
+            SET status = 'processing', 
+                last_processed_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP,
+                process_count = process_count + 1
+            WHERE id = $1
+          `, [domain.id]);
+          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          await this.query(`
+            UPDATE domains 
+            SET status = 'completed',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+          `, [domain.id]);
+          
+          console.log(`✅ Mock processing complete: ${domain.domain} (${this.processorId})`);
+        }
+        
+      } else {
+        console.log(`📊 No pending domains found for ${this.processorId}`);
+      }
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Processing error:', err);
+    }
+
+    setTimeout(() => this.processNextBatch(), 12000);
+  }
 }
 
 // Real LLM API call function
@@ -1058,3 +1070,67 @@ async function processNextBatch(): Promise<void> {
 
 // Start the application
 initializeApp(); 
+
+async function main() {
+  console.log('🚀 SIMPLE MODULAR DOMAIN PROCESSOR v1.0.0 - PHASE 1');
+  console.log('=================================================');
+  console.log('🎯 Goal: Prove exact equivalence with original logic');
+  
+  const testDomains = [
+    'openai.com', 
+    'anthropic.com', 
+    'huggingface.co', 
+    'stability.ai', 
+    'replicate.com'
+  ];
+  
+  const processor = new ModularDomainProcessor({
+    databaseUrl: process.env.DATABASE_URL!,
+    domains: testDomains,
+    processorId: 'simple_modular_v1'
+  });
+  
+  console.log('🌱 Seeding test domains...');
+  const seedResult = await processor.seedDomains();
+  console.log(`✅ Seeding complete: ${seedResult.inserted} inserted, ${seedResult.skipped} skipped`);
+  
+  console.log('🚀 Starting modular processing loop...');
+  processor.processNextBatch();
+  
+  const app = express();
+  const port = process.env.PORT || 3002; // Different port to avoid conflicts
+  
+  app.get('/health', (req: Request, res: Response) => {
+    res.json({ 
+      status: 'ok', 
+      service: 'simple-modular-processor',
+      processor: 'simple_modular_v1',
+      domains: testDomains.length,
+      phase: 'equivalence_testing'
+    });
+  });
+  
+  app.get('/status', async (req: Request, res: Response) => {
+    try {
+      const status = await processor.getStatus();
+      res.json({
+        service: 'simple-modular-processor',
+        processor_id: 'simple_modular_v1',
+        domain_stats: status,
+        configured_domains: testDomains.length,
+        phase: 'equivalence_testing'
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get status' });
+    }
+  });
+  
+  app.listen(port, () => {
+    console.log(`🌐 Simple modular processor running on port ${port}`);
+    console.log(`   Health: http://localhost:${port}/health`);
+    console.log(`   Status: http://localhost:${port}/status`);
+  });
+}
+
+// Start the modular processor
+main().catch(console.error); 
