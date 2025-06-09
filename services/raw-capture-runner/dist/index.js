@@ -1,4 +1,9 @@
 "use strict";
+// 🚀 FORCE RENDER CACHE BUST: Deployment timestamp 2025-06-09T05:58:00Z - Build ID: CACHE_BREAKER_565_DOMAINS
+// 🔥 ULTRA NUCLEAR CACHE BUST: Version 2.0.0 - Force Rebuild - 565 Premium Domains
+// 🚨 RENDER PLATFORM BUG WORKAROUND: Multiple cache busters deployed
+// 💥 BUILD_ID: ULTRA_NUCLEAR_565_DOMAINS_2025_06_09_06_02
+// 🎯 DOMAIN_COUNT_VERIFICATION: Should be 565 not 350
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
