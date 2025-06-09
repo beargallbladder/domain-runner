@@ -14,9 +14,9 @@ services:
       - key: DOMAINS_SOURCE
         value: premium_500_plus
       - key: CACHE_BUST
-        value: "SOPHISTICATED_2025_06_09_PARALLEL"
+        value: "SOPHISTICATED_2025_06_09_REBUILD_CLEAN"
       - key: BUILD_ID
-        value: "SOPHISTICATED_RUNNER_500_DOMAINS"
+        value: "SOPHISTICATED_RUNNER_500_DOMAINS_V2"
       - key: OPENAI_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
