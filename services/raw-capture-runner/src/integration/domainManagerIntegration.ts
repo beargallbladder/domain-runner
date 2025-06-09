@@ -179,27 +179,50 @@ export function createPriorityProcessingWrapper(
  * Migration helper for existing deployments
  * 
  * Runs database migration to add cohort/priority columns
- * Safe to run multiple times (uses IF NOT EXISTS)
+ * BULLETPROOF: Handles all edge cases, safe to run multiple times
  */
 export async function runDomainManagerMigration(pool: Pool): Promise<void> {
   const client = await pool.connect();
   
   try {
-    console.log('🔄 Running domain manager migration...');
+    console.log('🔄 Running bulletproof domain manager migration...');
     
-    // Add cohort column
-    await client.query(`
-      ALTER TABLE domains 
-      ADD COLUMN IF NOT EXISTS cohort TEXT DEFAULT 'legacy'
+    // Step 1: Check if columns already exist to avoid unnecessary operations
+    const columnCheck = await client.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'domains' 
+      AND column_name IN ('cohort', 'priority')
     `);
     
-    // Add priority column  
-    await client.query(`
-      ALTER TABLE domains 
-      ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 1
-    `);
+    const existingColumns = columnCheck.rows.map(row => row.column_name);
+    const hasCohort = existingColumns.includes('cohort');
+    const hasPriority = existingColumns.includes('priority');
     
-    // Create indexes
+    console.log(`📋 Migration status: cohort=${hasCohort ? '✅' : '❌'}, priority=${hasPriority ? '✅' : '❌'}`);
+    
+    // Step 2: Add cohort column if it doesn't exist
+    if (!hasCohort) {
+      console.log('🔧 Adding cohort column...');
+      await client.query(`
+        ALTER TABLE domains 
+        ADD COLUMN cohort TEXT DEFAULT 'legacy'
+      `);
+      console.log('✅ Cohort column added');
+    }
+    
+    // Step 3: Add priority column if it doesn't exist  
+    if (!hasPriority) {
+      console.log('🔧 Adding priority column...');
+      await client.query(`
+        ALTER TABLE domains 
+        ADD COLUMN priority INTEGER DEFAULT 1
+      `);
+      console.log('✅ Priority column added');
+    }
+    
+    // Step 4: Create indexes (safe with IF NOT EXISTS)
+    console.log('📊 Creating performance indexes...');
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_domains_cohort_status 
       ON domains(cohort, status)
@@ -209,18 +232,45 @@ export async function runDomainManagerMigration(pool: Pool): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_domains_priority_status 
       ON domains(priority DESC, status, created_at)
     `);
+    console.log('✅ Indexes created');
     
-    // Update existing domains
-    await client.query(`
-      UPDATE domains 
-      SET cohort = 'legacy' 
-      WHERE cohort IS NULL
+    // Step 5: Update existing domains with safe NULL check
+    if (!hasCohort) {
+      console.log('🔄 Updating existing domains to legacy cohort...');
+      const updateResult = await client.query(`
+        UPDATE domains 
+        SET cohort = 'legacy' 
+        WHERE cohort IS NULL OR cohort = ''
+      `);
+      console.log(`✅ Updated ${updateResult.rowCount} domains to legacy cohort`);
+    }
+    
+    // Step 6: Verify migration success
+    const verifyCheck = await client.query(`
+      SELECT 
+        COUNT(*) as total_domains,
+        COUNT(*) FILTER (WHERE cohort IS NOT NULL) as with_cohort,
+        COUNT(*) FILTER (WHERE priority IS NOT NULL) as with_priority
+      FROM domains
     `);
     
-    console.log('✅ Domain manager migration completed');
+    const verification = verifyCheck.rows[0];
+    console.log(`🔍 Migration verification:
+      - Total domains: ${verification.total_domains}
+      - With cohort: ${verification.with_cohort}
+      - With priority: ${verification.with_priority}`);
+    
+    if (verification.with_cohort !== verification.total_domains || 
+        verification.with_priority !== verification.total_domains) {
+      throw new Error('Migration verification failed - some domains missing cohort/priority');
+    }
+    
+    console.log('✅ Domain manager migration completed successfully');
     
   } catch (error) {
     console.error('❌ Migration failed:', error);
+    console.error('🔧 This is likely due to database permissions or connection issues');
+    console.error('💡 You can manually run the migration SQL if needed');
     throw error;
   } finally {
     client.release();

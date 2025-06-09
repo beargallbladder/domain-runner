@@ -987,11 +987,10 @@ async function initializeApp(): Promise<void> {
     // Ensure schema exists with proper structure
     await ensureSchemaExists();
     
-    // 🚀 DYNAMIC DOMAIN MANAGEMENT (Temporarily disabled for safe deployment)
-    // TODO: Re-enable after fixing TypeScript compilation issues
-    // await runDomainManagerMigration(pool);
-    // const domainManager = integrateDomainManager(app, pool);
-    console.log('✅ System ready - domain list updated to 500+ premium domains');
+    // 🚀 ADD DYNAMIC DOMAIN MANAGEMENT
+    await runDomainManagerMigration(pool);
+    const domainManager = integrateDomainManager(app, pool);
+    console.log('✅ Dynamic domain management integrated');
     
     // Start the server
     app.listen(port, () => {
