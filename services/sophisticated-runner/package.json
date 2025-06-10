@@ -8,6 +8,8 @@
     "dev": "ts-node src/index.ts",
     "build": "tsc",
     "test": "node dist/test.js",
+    "test:jolt": "./test_jolt.sh",
+    "test:jolt:migrate": "./test_jolt.sh http://localhost:10000 --migrate",
     "deploy": "./deploy.sh"
   },
   "dependencies": {
@@ -30,7 +32,9 @@
     "domain-processing",
     "modular",
     "premium-domains",
-    "business-intelligence"
+    "business-intelligence",
+    "jolt-benchmarking",
+    "brand-transition-analysis"
   ],
   "author": "Sophisticated Runner Team",
   "license": "MIT",

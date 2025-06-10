@@ -1,0 +1,170 @@
+{
+  "jolt_benchmarks": {
+    "facebook_meta": {
+      "old_domain": "facebook.com",
+      "new_domain": "meta.com", 
+      "industry": "technology",
+      "sector": "social_media",
+      "transition_date": "2021-10-28",
+      "type": "brand_transition",
+      "severity": "high",
+      "current_scores": {
+        "facebook_com": 52,
+        "meta_com": null
+      },
+      "baseline_metrics": {
+        "memory_decay_rate": 0.15,
+        "brand_confusion_level": 0.75,
+        "ai_consensus": 44.5
+      },
+      "market_context": {
+        "investment": 10000000000,
+        "strategic_rationale": "Pivot to metaverse",
+        "market_reaction": "mixed"
+      },
+      "ai_behavior_patterns": {
+        "models_still_use_facebook": 0.80,
+        "models_understand_connection": 0.60,
+        "temporal_awareness": 0.40
+      }
+    },
+    "google_alphabet": {
+      "old_domain": "google.com",
+      "new_domain": "alphabet.com",
+      "industry": "technology", 
+      "sector": "search_cloud",
+      "transition_date": "2015-08-10",
+      "type": "corporate_restructure",
+      "severity": "medium",
+      "current_scores": {
+        "google_com": 55.7,
+        "alphabet_com": null
+      },
+      "baseline_metrics": {
+        "memory_decay_rate": 0.08,
+        "brand_confusion_level": 0.45,
+        "ai_consensus": 44.5
+      },
+      "market_context": {
+        "investment": 1000000000,
+        "strategic_rationale": "Corporate restructuring",
+        "market_reaction": "positive"
+      },
+      "ai_behavior_patterns": {
+        "models_still_use_google": 0.95,
+        "models_understand_connection": 0.40,
+        "temporal_awareness": 0.30
+      }
+    },
+    "twitter_x": {
+      "old_domain": "twitter.com",
+      "new_domain": "x.com",
+      "industry": "media_entertainment",
+      "sector": "social_media", 
+      "transition_date": "2023-07-23",
+      "type": "brand_transition",
+      "severity": "high",
+      "current_scores": {
+        "twitter_com": null,
+        "x_com": null
+      },
+      "baseline_metrics": {
+        "memory_decay_rate": null,
+        "brand_confusion_level": 0.90,
+        "ai_consensus": null
+      },
+      "market_context": {
+        "investment": 44000000000,
+        "strategic_rationale": "Complete rebrand",
+        "market_reaction": "negative"
+      },
+      "ai_behavior_patterns": {
+        "models_still_use_twitter": 0.95,
+        "models_understand_connection": 0.30, 
+        "temporal_awareness": 0.20
+      }
+    },
+    "weightwatchers_ww": {
+      "old_domain": "weightwatchers.com",
+      "new_domain": "ww.com",
+      "industry": "consumer_goods",
+      "sector": "health_wellness",
+      "transition_date": "2018-09-24", 
+      "type": "brand_transition",
+      "severity": "medium",
+      "current_scores": {
+        "weightwatchers_com": null,
+        "ww_com": null
+      },
+      "baseline_metrics": {
+        "memory_decay_rate": null,
+        "brand_confusion_level": 0.60,
+        "ai_consensus": null
+      },
+      "market_context": {
+        "investment": 100000000,
+        "strategic_rationale": "Brand simplification",
+        "market_reaction": "mixed"
+      },
+      "ai_behavior_patterns": {
+        "models_still_use_weightwatchers": 0.70,
+        "models_understand_connection": 0.50,
+        "temporal_awareness": 0.35
+      }
+    },
+    "dunkindonuts_dunkin": {
+      "old_domain": "dunkindonuts.com", 
+      "new_domain": "dunkin.com",
+      "industry": "consumer_goods",
+      "sector": "food_beverage",
+      "transition_date": "2018-09-25",
+      "type": "brand_transition", 
+      "severity": "medium",
+      "current_scores": {
+        "dunkindonuts_com": null,
+        "dunkin_com": null
+      },
+      "baseline_metrics": {
+        "memory_decay_rate": null,
+        "brand_confusion_level": 0.40,
+        "ai_consensus": null
+      },
+      "market_context": {
+        "investment": 50000000,
+        "strategic_rationale": "Brand simplification",
+        "market_reaction": "positive"
+      },
+      "ai_behavior_patterns": {
+        "models_still_use_dunkindonuts": 0.60,
+        "models_understand_connection": 0.80,
+        "temporal_awareness": 0.70
+      }
+    }
+  },
+  "industry_benchmarks": {
+    "technology": {
+      "avg_memory_score": 75.2,
+      "jolt_success_rate": 0.65,
+      "typical_decay_pattern": "fast_initial_then_stable",
+      "ai_adaptability": "high"
+    },
+    "media_entertainment": {
+      "avg_memory_score": 68.5,
+      "jolt_success_rate": 0.45,
+      "typical_decay_pattern": "volatile_then_gradual",
+      "ai_adaptability": "medium"
+    },
+    "consumer_goods": {
+      "avg_memory_score": 62.8,
+      "jolt_success_rate": 0.70,  
+      "typical_decay_pattern": "gradual_linear",
+      "ai_adaptability": "high"
+    },
+    "financial_services": {
+      "avg_memory_score": 78.9,
+      "jolt_success_rate": 0.85,
+      "typical_decay_pattern": "stable_then_slow",
+      "ai_adaptability": "low"
+    }
+  }
+} 

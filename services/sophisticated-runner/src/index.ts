@@ -14,6 +14,7 @@ dotenv.config();
 // 🎯 Strategy: Pure cheap + middle tier models (no expensive models yet)  
 // 🎯 Database: SAME EXACT schema as raw-capture-runner - NO processor_id!
 // 🎯 FORCE DEPLOY: 2025-06-09T23:49:00Z - Fixed processor_id caching issue
+// 🎯 JOLT FEATURE: 2025-06-10 - Added ground truth benchmarking for brand transitions
 // ============================================================================
 
 console.log('🚀 SOPHISTICATED RUNNER STARTING');
@@ -23,6 +24,97 @@ console.log('   Parallel to: raw-capture-runner');
 
 const SERVICE_ID = 'sophisticated_v1';
 const SERVICE_MODE = 'sophisticated_parallel';
+
+// ============================================================================
+// 🔗 INDUSTRY INTELLIGENCE INTEGRATION
+// ============================================================================
+// Purpose: Dynamic JOLT detection via industry-intelligence API
+// Benefit: Modular, configurable, testable JOLT management
+
+const INDUSTRY_INTELLIGENCE_URL = process.env.INDUSTRY_INTELLIGENCE_URL || 'http://localhost:10001';
+
+interface JoltData {
+  jolt: boolean;
+  type?: 'brand_transition' | 'corporate_restructure' | 'acquisition_merger' | 'leadership_change';
+  date?: string;
+  description?: string;
+  paired_domain?: string;
+  severity?: 'low' | 'medium' | 'high';
+  additional_prompts?: number;
+}
+
+class JoltService {
+  private joltCache: Map<string, JoltData> = new Map();
+  private lastCacheUpdate: number = 0;
+  private cacheValidityMs: number = 300000; // 5 minutes
+
+  async getJoltData(domain: string): Promise<JoltData> {
+    // Check cache first
+    if (this.joltCache.has(domain) && Date.now() - this.lastCacheUpdate < this.cacheValidityMs) {
+      return this.joltCache.get(domain)!;
+    }
+
+    try {
+      const response = await axios.get(`${INDUSTRY_INTELLIGENCE_URL}/jolt/check/${domain}`, {
+        timeout: 5000
+      });
+
+      if (response.data?.success) {
+        const responseData = response.data as any;
+        const joltData: JoltData = {
+          jolt: responseData.data.is_jolt,
+          additional_prompts: responseData.data.additional_prompts,
+          ...responseData.data.metadata
+        };
+        
+        this.joltCache.set(domain, joltData);
+        this.lastCacheUpdate = Date.now();
+        
+        if (joltData.jolt) {
+          console.log(`⚡ JOLT detected for ${domain}: ${joltData.additional_prompts} additional prompts`);
+        }
+        
+        return joltData;
+      }
+    } catch (error) {
+      console.warn(`⚠️  Failed to check JOLT status for ${domain}, falling back to non-JOLT`);
+    }
+
+    // Fallback: not a JOLT domain
+    const fallbackData: JoltData = { jolt: false, additional_prompts: 0 };
+    this.joltCache.set(domain, fallbackData);
+    return fallbackData;
+  }
+
+  async getJoltDomainList(): Promise<string[]> {
+    try {
+      const response = await axios.get(`${INDUSTRY_INTELLIGENCE_URL}/jolt/domains`, {
+        timeout: 5000
+      });
+
+      if (response.data?.success) {
+        const responseData = response.data as any;
+        return responseData.data.domains;
+      }
+    } catch (error) {
+      console.warn('⚠️  Failed to get JOLT domain list from industry-intelligence');
+    }
+
+    return [];
+  }
+
+  clearCache(): void {
+    this.joltCache.clear();
+    this.lastCacheUpdate = 0;
+  }
+}
+
+const joltService = new JoltService();
+
+// ============================================================================
+// PREMIUM DOMAINS - DYNAMIC JOLT INTEGRATION
+// ============================================================================
+// JOLT domains are now loaded dynamically from industry-intelligence service
 
 // Database connection
 const pool = new Pool({
@@ -308,7 +400,7 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
   }
 }
 
-// 100 NEW Premium Domains for Business Intelligence Analysis (NO OVERLAPS with existing 437)
+// 100+ Premium Domains for Business Intelligence Analysis 
 const PREMIUM_DOMAINS = [
   // 🏥 BIOTECH/PHARMACEUTICALS ($4T+ market cap) - MAJOR GAP!
   'moderna.com', 'pfizer.com', 'johnson.com', 'merck.com', 'novartis.com', 
@@ -360,39 +452,121 @@ const PREMIUM_DOMAINS = [
 
 class SophisticatedRunner {
   private domains: string[];
+  private joltDomainCount: number = 0;
   
   constructor() {
     this.domains = PREMIUM_DOMAINS;
-    console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
+    this.initializeWithJoltDomains();
   }
 
+  private async initializeWithJoltDomains(): Promise<void> {
+    try {
+      // Load JOLT domains from industry-intelligence service
+      const joltDomains = await joltService.getJoltDomainList();
+      
+      // Add JOLT domains to the beginning (priority)
+      const combinedDomains = [...joltDomains, ...this.domains];
+      
+      // Remove duplicates while preserving order
+      this.domains = [...new Set(combinedDomains)];
+      this.joltDomainCount = joltDomains.length;
+      
+      console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
+      console.log(`🔬 Including ${this.joltDomainCount} JOLT benchmark domains`);
+    } catch (error) {
+      console.warn('⚠️  Failed to load JOLT domains, using standard domains only');
+      console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
+    }
+  }
+
+  // 🔬 JOLT-ENHANCED SEED DOMAINS (Backwards Compatible)
   async seedDomains(): Promise<void> {
-    console.log('🌱 Seeding premium domains...');
+    console.log('🌱 Seeding premium domains with jolt metadata...');
     let inserted = 0;
     let skipped = 0;
+    let joltInserted = 0;
     
     for (const domain of this.domains) {
       try {
-        // Use exact same schema as raw-capture-runner - NO processor_id
-        const result = await pool.query(`
-          INSERT INTO domains (domain, status, created_at) 
-          VALUES ($1, 'pending', NOW())
-          ON CONFLICT (domain) DO NOTHING
-          RETURNING id
-        `, [domain]);
+        // Check if this domain has jolt metadata
+        const joltData = await joltService.getJoltData(domain);
+        const isJoltDomain = joltData.jolt;
         
-        if (result.rows.length > 0) {
-          inserted++;
+        if (isJoltDomain) {
+          // For jolt domains, try to add to a jolt_metadata table if it exists
+          // But fall back gracefully to standard insertion if table doesn't exist
+          try {
+            // Try advanced insertion with jolt metadata (if schema supports it)
+            const result = await pool.query(`
+              INSERT INTO domains (domain, status, created_at, jolt, jolt_type, jolt_date, jolt_description, paired_domain, jolt_severity) 
+              VALUES ($1, 'pending', NOW(), $2, $3, $4, $5, $6, $7)
+              ON CONFLICT (domain) DO UPDATE SET
+                jolt = EXCLUDED.jolt,
+                jolt_type = EXCLUDED.jolt_type,
+                jolt_date = EXCLUDED.jolt_date,
+                jolt_description = EXCLUDED.jolt_description,
+                paired_domain = EXCLUDED.paired_domain,
+                jolt_severity = EXCLUDED.jolt_severity
+              RETURNING id
+            `, [
+              domain, 
+              joltData.jolt, 
+              joltData.type, 
+              joltData.date, 
+              joltData.description, 
+              joltData.paired_domain, 
+              joltData.severity
+            ]);
+            
+            if (result.rows.length > 0) {
+              inserted++;
+              joltInserted++;
+              console.log(`🔬 Jolt domain inserted: ${domain} (${joltData.type})`);
+            } else {
+              skipped++;
+            }
+          } catch (joltError) {
+            // If jolt columns don't exist, fall back to standard insertion
+            console.log(`⚠️  Jolt columns not found, falling back to standard insertion for: ${domain}`);
+            
+            const result = await pool.query(`
+              INSERT INTO domains (domain, status, created_at) 
+              VALUES ($1, 'pending', NOW())
+              ON CONFLICT (domain) DO NOTHING
+              RETURNING id
+            `, [domain]);
+            
+            if (result.rows.length > 0) {
+              inserted++;
+              console.log(`✅ Standard insertion (jolt fallback): ${domain}`);
+            } else {
+              skipped++;
+            }
+          }
         } else {
-          skipped++;
+          // Standard domain insertion (non-jolt)
+          const result = await pool.query(`
+            INSERT INTO domains (domain, status, created_at) 
+            VALUES ($1, 'pending', NOW())
+            ON CONFLICT (domain) DO NOTHING
+            RETURNING id
+          `, [domain]);
+          
+          if (result.rows.length > 0) {
+            inserted++;
+          } else {
+            skipped++;
+          }
         }
       } catch (error) {
         // Skip duplicates or errors
         skipped++;
+        console.log(`⚠️  Skipped domain due to error: ${domain}`);
       }
     }
     
-    console.log(`✅ Seeded ${inserted} domains`);
+    console.log(`✅ Seeded ${inserted} domains (${joltInserted} jolt domains)`);
+    console.log(`🔬 Jolt domains provide ground truth benchmarks for brand transition analysis`);
   }
 
   async processNextBatch(): Promise<void> {
@@ -601,6 +775,111 @@ app.get('/health', (req, res) => {
       grok: !!process.env.XAI_API_KEY
     }
   });
+});
+
+// 🔬 JOLT ANALYSIS ENDPOINTS
+app.get('/jolt', async (req, res) => {
+  try {
+    // Get all jolt domains with their metadata
+    const joltDomains = Object.entries(JOLT_DOMAINS).map(([domain, data]) => ({
+      domain,
+      ...data
+    }));
+    
+    // Try to get jolt data from database if schema supports it
+    let databaseJoltData = [];
+    try {
+      const result = await pool.query(`
+        SELECT domain, jolt, jolt_type, jolt_date, jolt_description, paired_domain, jolt_severity
+        FROM domains 
+        WHERE jolt = true
+      `);
+      databaseJoltData = result.rows;
+    } catch (error) {
+      // Schema doesn't support jolt columns yet
+      databaseJoltData = [];
+    }
+    
+    res.json({
+      jolt_feature: 'Ground Truth Benchmarking for Brand Transitions',
+      total_jolt_domains: joltDomains.length,
+      jolt_domains: joltDomains,
+      database_jolt_data: databaseJoltData,
+      schema_support: databaseJoltData.length > 0 ? 'full' : 'fallback',
+      analysis_capabilities: {
+        brand_transition_tracking: 'Monitor AI memory decay during corporate rebrands',
+        comparative_analysis: 'Compare before/after domains for transition effectiveness',
+        benchmark_metrics: 'Ground truth data for academic research',
+        predictive_modeling: 'Training data for brand transition success prediction'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/jolt/transitions', async (req, res) => {
+  try {
+    // Get transition pairs for analysis
+    const transitions = [];
+    
+    for (const [domain, data] of Object.entries(JOLT_DOMAINS)) {
+      if (data.type === 'brand_transition' && data.paired_domain) {
+        transitions.push({
+          old_brand: domain,
+          new_brand: data.paired_domain,
+          transition_date: data.date,
+          description: data.description,
+          severity: data.severity
+        });
+      }
+    }
+    
+    res.json({
+      total_transitions: transitions.length,
+      transitions: transitions,
+      analysis_note: 'These represent confirmed major brand transitions for ground truth benchmarking'
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// 🔧 DATABASE SCHEMA MIGRATION HELPER
+app.post('/migrate/jolt-schema', async (req, res) => {
+  try {
+    console.log('🔧 Attempting to add jolt columns to domains table...');
+    
+    // Try to add jolt columns (will fail gracefully if they already exist)
+    const migrations = [
+      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt BOOLEAN DEFAULT FALSE',
+      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_type VARCHAR(50)',
+      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_date DATE',
+      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_description TEXT',
+      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS paired_domain VARCHAR(255)',
+      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_severity VARCHAR(20)'
+    ];
+    
+    const results = [];
+    for (const migration of migrations) {
+      try {
+        await pool.query(migration);
+        results.push({ sql: migration, status: 'success' });
+      } catch (error) {
+        results.push({ sql: migration, status: 'failed', error: (error as Error).message });
+      }
+    }
+    
+    console.log('✅ Jolt schema migration completed');
+    
+    res.json({
+      message: 'Jolt schema migration completed',
+      results: results,
+      next_step: 'Re-run seedDomains to populate jolt metadata'
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
 });
 
 // Main execution
