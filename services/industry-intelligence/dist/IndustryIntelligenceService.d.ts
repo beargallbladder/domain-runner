@@ -1,28 +1,28 @@
-import { Industry, JoltBenchmark, IndustryBenchmark, JoltComparison, HealthStatus } from './types';
+import { Industry, JoltComparison, HealthStatus } from './types';
 export declare class IndustryIntelligenceService {
     private foundationConfig;
     private benchmarkConfig;
     private startTime;
     private version;
+    private industryConfig;
     constructor();
     initialize(): Promise<void>;
     private loadConfigurations;
     getIndustries(): Record<string, Industry>;
     getIndustry(industryKey: string): Industry | null;
-    getJoltBenchmarks(): Record<string, JoltBenchmark>;
-    getJoltBenchmark(benchmarkKey: string): JoltBenchmark | null;
-    getIndustryBenchmarks(): Record<string, IndustryBenchmark>;
-    getIndustryBenchmark(industryKey: string): IndustryBenchmark | null;
+    getJoltBenchmarks(): Record<string, any>;
+    getJoltBenchmark(domain: string): any | null;
+    getIndustryBenchmarks(): Record<string, any>;
+    getIndustryBenchmark(industryKey: string): any[];
     classifyDomain(domain: string): {
         industry: string;
         sector: string;
         confidence: number;
     } | null;
     isJoltDomain(domain: string): boolean;
-    getJoltMetadata(domain: string): JoltBenchmark | null;
+    getJoltMetadata(domain: string): any | null;
     getAdditionalPromptCount(domain: string): number;
     compareToBenchmarks(domain: string, currentScore: number, industry: string): JoltComparison[];
-    private getBenchmarkScore;
     private calculateSimilarityFactors;
     private predictOutcome;
     getHealthStatus(): HealthStatus;
