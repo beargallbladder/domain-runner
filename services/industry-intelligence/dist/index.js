@@ -187,15 +187,20 @@ app.get('/jolt/domains', (req, res) => {
     try {
         const benchmarks = service.getJoltBenchmarks();
         const joltDomains = [];
-        Object.values(benchmarks).forEach(benchmark => {
-            joltDomains.push(benchmark.old_domain);
-            if (benchmark.new_domain) {
-                joltDomains.push(benchmark.new_domain);
+        // Extract domain names from the keys of JOLT cases
+        Object.keys(benchmarks).forEach(domain => {
+            joltDomains.push(domain);
+            // Also add paired domains if they exist
+            const benchmark = benchmarks[domain];
+            if (benchmark.metadata && benchmark.metadata.paired_domain) {
+                joltDomains.push(benchmark.metadata.paired_domain);
             }
         });
+        // Remove duplicates and sort
+        const uniqueDomains = [...new Set(joltDomains)].sort();
         const data = {
-            count: joltDomains.length,
-            domains: joltDomains.sort()
+            count: uniqueDomains.length,
+            domains: uniqueDomains
         };
         const response = {
             success: true,
