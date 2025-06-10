@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import styled, { createGlobalStyle } from 'styled-components'
 import Landing from './pages/Landing'
 import Domain from './pages/Domain'
@@ -71,7 +71,7 @@ const PlausibleScript = () => {
   React.useEffect(() => {
     const script = document.createElement('script');
     script.defer = true;
-    script.setAttribute('data-domain', 'llmpagerank.com'); // Replace with your domain
+    script.setAttribute('data-domain', 'llmpagerank.com');
     script.src = 'https://plausible.io/js/script.js';
     document.head.appendChild(script);
 
@@ -88,19 +88,17 @@ function App() {
     <AppContainer>
       <GlobalStyle />
       <PlausibleScript />
-      <Router>
-        <Navigation />
-        <Main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/domains" element={<DomainDirectory />} />
-            <Route path="/domain/:domainName" element={<Domain />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/about" element={<About />} />
-          </Routes>
-        </Main>
-      </Router>
+      <Navigation />
+      <Main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/domains" element={<DomainDirectory />} />
+          <Route path="/domain/:domainName" element={<Domain />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/about" element={<About />} />
+        </Routes>
+      </Main>
     </AppContainer>
   )
 }

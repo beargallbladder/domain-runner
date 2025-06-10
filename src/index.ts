@@ -656,7 +656,12 @@ app.use(express.static(path.join(__dirname, 'dashboard/public')));
 app.post('/seed', async (req: Request, res: Response) => {
   try {
     console.log('🌱 Seeding domains via API endpoint...');
-    const result = await seedDomains();
+    const processor = new ModularDomainProcessor({
+      databaseUrl: process.env.DATABASE_URL!,
+      domains: ['openai.com', 'anthropic.com', 'huggingface.co', 'stability.ai', 'replicate.com'],
+      processorId: 'api_seed_v1'
+    });
+    const result = await processor.seedDomains();
     
     // Get current stats
     const stats = await query(`

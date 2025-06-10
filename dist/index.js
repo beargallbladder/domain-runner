@@ -640,7 +640,12 @@ app.use(express_1.default.static(path_1.default.join(__dirname, 'dashboard/publi
 app.post('/seed', async (req, res) => {
     try {
         console.log('🌱 Seeding domains via API endpoint...');
-        const result = await seedDomains();
+        const processor = new ModularDomainProcessor({
+            databaseUrl: process.env.DATABASE_URL,
+            domains: ['openai.com', 'anthropic.com', 'huggingface.co', 'stability.ai', 'replicate.com'],
+            processorId: 'api_seed_v1'
+        });
+        const result = await processor.seedDomains();
         // Get current stats
         const stats = await (0, database_1.query)(`
       SELECT 
