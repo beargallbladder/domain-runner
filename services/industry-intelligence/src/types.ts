@@ -86,8 +86,33 @@ export interface FoundationConfig {
 }
 
 export interface JoltBenchmarkConfig {
-  jolt_benchmarks: Record<string, JoltBenchmark>;
-  industry_benchmarks: Record<string, IndustryBenchmark>;
+  version: string;
+  last_updated: string;
+  total_cases: number;
+  severity_distribution: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  jolt_cases: {
+    [domain: string]: {
+      is_jolt: boolean;
+      additional_prompts: number;
+      metadata: {
+        type: string;
+        date: string;
+        description: string;
+        paired_domain?: string;
+        parent_domain?: string;
+        severity: 'critical' | 'high' | 'medium' | 'low';
+        industry: string;
+        market_context: string;
+        ai_behavior_pattern?: string;
+        baseline_memory_score?: number;
+      };
+    };
+  };
 }
 
 export interface APIResponse<T> {
@@ -106,4 +131,8 @@ export interface HealthStatus {
   config_loaded: boolean;
   benchmarks_loaded: boolean;
   uptime: number;
+}
+
+export interface IndustryConfig {
+  industries: Record<string, Industry>;
 } 

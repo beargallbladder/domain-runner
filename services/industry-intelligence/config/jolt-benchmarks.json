@@ -1,170 +1,259 @@
 {
-  "jolt_benchmarks": {
-    "facebook_meta": {
-      "old_domain": "facebook.com",
-      "new_domain": "meta.com", 
-      "industry": "technology",
-      "sector": "social_media",
-      "transition_date": "2021-10-28",
-      "type": "brand_transition",
-      "severity": "high",
-      "current_scores": {
-        "facebook_com": 52,
-        "meta_com": null
-      },
-      "baseline_metrics": {
-        "memory_decay_rate": 0.15,
-        "brand_confusion_level": 0.75,
-        "ai_consensus": 44.5
-      },
-      "market_context": {
-        "investment": 10000000000,
-        "strategic_rationale": "Pivot to metaverse",
-        "market_reaction": "mixed"
-      },
-      "ai_behavior_patterns": {
-        "models_still_use_facebook": 0.80,
-        "models_understand_connection": 0.60,
-        "temporal_awareness": 0.40
-      }
-    },
-    "google_alphabet": {
-      "old_domain": "google.com",
-      "new_domain": "alphabet.com",
-      "industry": "technology", 
-      "sector": "search_cloud",
-      "transition_date": "2015-08-10",
-      "type": "corporate_restructure",
-      "severity": "medium",
-      "current_scores": {
-        "google_com": 55.7,
-        "alphabet_com": null
-      },
-      "baseline_metrics": {
-        "memory_decay_rate": 0.08,
-        "brand_confusion_level": 0.45,
-        "ai_consensus": 44.5
-      },
-      "market_context": {
-        "investment": 1000000000,
-        "strategic_rationale": "Corporate restructuring",
-        "market_reaction": "positive"
-      },
-      "ai_behavior_patterns": {
-        "models_still_use_google": 0.95,
-        "models_understand_connection": 0.40,
-        "temporal_awareness": 0.30
-      }
-    },
-    "twitter_x": {
-      "old_domain": "twitter.com",
-      "new_domain": "x.com",
-      "industry": "media_entertainment",
-      "sector": "social_media", 
-      "transition_date": "2023-07-23",
-      "type": "brand_transition",
-      "severity": "high",
-      "current_scores": {
-        "twitter_com": null,
-        "x_com": null
-      },
-      "baseline_metrics": {
-        "memory_decay_rate": null,
-        "brand_confusion_level": 0.90,
-        "ai_consensus": null
-      },
-      "market_context": {
-        "investment": 44000000000,
-        "strategic_rationale": "Complete rebrand",
-        "market_reaction": "negative"
-      },
-      "ai_behavior_patterns": {
-        "models_still_use_twitter": 0.95,
-        "models_understand_connection": 0.30, 
-        "temporal_awareness": 0.20
-      }
-    },
-    "weightwatchers_ww": {
-      "old_domain": "weightwatchers.com",
-      "new_domain": "ww.com",
-      "industry": "consumer_goods",
-      "sector": "health_wellness",
-      "transition_date": "2018-09-24", 
-      "type": "brand_transition",
-      "severity": "medium",
-      "current_scores": {
-        "weightwatchers_com": null,
-        "ww_com": null
-      },
-      "baseline_metrics": {
-        "memory_decay_rate": null,
-        "brand_confusion_level": 0.60,
-        "ai_consensus": null
-      },
-      "market_context": {
-        "investment": 100000000,
-        "strategic_rationale": "Brand simplification",
-        "market_reaction": "mixed"
-      },
-      "ai_behavior_patterns": {
-        "models_still_use_weightwatchers": 0.70,
-        "models_understand_connection": 0.50,
-        "temporal_awareness": 0.35
-      }
-    },
-    "dunkindonuts_dunkin": {
-      "old_domain": "dunkindonuts.com", 
-      "new_domain": "dunkin.com",
-      "industry": "consumer_goods",
-      "sector": "food_beverage",
-      "transition_date": "2018-09-25",
-      "type": "brand_transition", 
-      "severity": "medium",
-      "current_scores": {
-        "dunkindonuts_com": null,
-        "dunkin_com": null
-      },
-      "baseline_metrics": {
-        "memory_decay_rate": null,
-        "brand_confusion_level": 0.40,
-        "ai_consensus": null
-      },
-      "market_context": {
-        "investment": 50000000,
-        "strategic_rationale": "Brand simplification",
-        "market_reaction": "positive"
-      },
-      "ai_behavior_patterns": {
-        "models_still_use_dunkindonuts": 0.60,
-        "models_understand_connection": 0.80,
-        "temporal_awareness": 0.70
-      }
-    }
+  "version": "2.0",
+  "last_updated": "2025-06-10",
+  "total_cases": 18,
+  "severity_distribution": {
+    "critical": 6,
+    "high": 6, 
+    "medium": 5,
+    "low": 1
   },
-  "industry_benchmarks": {
-    "technology": {
-      "avg_memory_score": 75.2,
-      "jolt_success_rate": 0.65,
-      "typical_decay_pattern": "fast_initial_then_stable",
-      "ai_adaptability": "high"
+  "jolt_cases": {
+    "facebook.com": {
+      "is_jolt": true,
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "brand_transition",
+        "date": "2021-10-28",
+        "description": "Facebook → Meta corporate rebrand ($10B+ investment)",
+        "paired_domain": "meta.com",
+        "severity": "critical",
+        "industry": "technology",
+        "market_context": "Metaverse pivot, regulatory pressure",
+        "ai_behavior_pattern": "High confusion between Facebook/Meta entities",
+        "baseline_memory_score": 52.0
+      }
     },
-    "media_entertainment": {
-      "avg_memory_score": 68.5,
-      "jolt_success_rate": 0.45,
-      "typical_decay_pattern": "volatile_then_gradual",
-      "ai_adaptability": "medium"
+    "twitter.com": {
+      "is_jolt": true,
+      "additional_prompts": 4,
+      "metadata": {
+        "type": "brand_transition", 
+        "date": "2023-07-23",
+        "description": "Twitter → X complete rebrand (Musk acquisition)",
+        "paired_domain": "x.com",
+        "severity": "critical",
+        "industry": "technology",
+        "market_context": "Acquisition-driven radical rebrand",
+        "ai_behavior_pattern": "Extreme confusion due to recency"
+      }
     },
-    "consumer_goods": {
-      "avg_memory_score": 62.8,
-      "jolt_success_rate": 0.70,  
-      "typical_decay_pattern": "gradual_linear",
-      "ai_adaptability": "high"
+    "google.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "corporate_restructure",
+        "date": "2015-08-10", 
+        "description": "Google → Alphabet corporate restructure",
+        "paired_domain": "alphabet.com",
+        "severity": "high",
+        "industry": "technology",
+        "market_context": "Corporate organization, regulatory",
+        "ai_behavior_pattern": "Moderate confusion on corporate vs product",
+        "baseline_memory_score": 55.7
+      }
     },
-    "financial_services": {
-      "avg_memory_score": 78.9,
-      "jolt_success_rate": 0.85,
-      "typical_decay_pattern": "stable_then_slow",
-      "ai_adaptability": "low"
+    "weightwatchers.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "brand_simplification",
+        "date": "2018-09-24",
+        "description": "Weight Watchers → WW brand simplification",
+        "paired_domain": "ww.com",
+        "severity": "medium", 
+        "industry": "healthcare",
+        "market_context": "Health focus expansion"
+      }
+    },
+    "dunkindonuts.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "brand_simplification",
+        "date": "2018-09-25",
+        "description": "Dunkin' Donuts → Dunkin' brand simplification", 
+        "paired_domain": "dunkin.com",
+        "severity": "medium",
+        "industry": "food_service",
+        "market_context": "Beverage focus expansion"
+      }
+    },
+    "comcast.com": {
+      "is_jolt": true,
+      "additional_prompts": 4,
+      "metadata": {
+        "type": "consumer_rebrand",
+        "date": "2010-02-16",
+        "description": "Comcast → Xfinity consumer brand (ongoing confusion)",
+        "paired_domain": "xfinity.com",
+        "severity": "critical",
+        "industry": "telecommunications",
+        "market_context": "Consumer perception improvement",
+        "ai_behavior_pattern": "Persistent dual-brand confusion"
+      }
+    },
+    "altria.com": {
+      "is_jolt": true,
+      "additional_prompts": 4,
+      "metadata": {
+        "type": "reputation_rebrand",
+        "date": "2003-01-27", 
+        "description": "Philip Morris → Altria (reputation management)",
+        "paired_domain": "philipmorris.com",
+        "severity": "critical",
+        "industry": "consumer_goods",
+        "market_context": "Tobacco industry reputation management",
+        "ai_behavior_pattern": "Legal/regulatory confusion"
+      }
+    },
+    "blackberry.com": {
+      "is_jolt": true,
+      "additional_prompts": 4,
+      "metadata": {
+        "type": "business_collapse",
+        "date": "2013-01-30",
+        "description": "BlackBerry → BlackBerry Limited (mobile decline)",
+        "paired_domain": "rim.com", 
+        "severity": "critical",
+        "industry": "technology",
+        "market_context": "Smartphone market collapse",
+        "ai_behavior_pattern": "Historical vs current relevance confusion"
+      }
+    },
+    "netflix.com": {
+      "is_jolt": true,
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "business_model_transition",
+        "date": "2010-09-01",
+        "description": "Netflix DVD → Streaming pivot (Qwikster crisis)",
+        "severity": "high",
+        "industry": "media_entertainment", 
+        "market_context": "Business model transformation",
+        "ai_behavior_pattern": "Service confusion across time periods"
+      }
+    },
+    "ibm.com": {
+      "is_jolt": true,
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "strategic_pivot",
+        "date": "2019-10-08",
+        "description": "IBM → Cloud/AI focus (Red Hat acquisition)",
+        "severity": "high",
+        "industry": "technology",
+        "market_context": "Legacy tech to cloud transformation",
+        "ai_behavior_pattern": "Technology focus evolution confusion"
+      }
+    },
+    "xerox.com": {
+      "is_jolt": true, 
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "category_expansion",
+        "date": "2008-05-01",
+        "description": "Xerox → Document Technology solutions",
+        "severity": "high",
+        "industry": "technology",
+        "market_context": "Product category expansion",
+        "ai_behavior_pattern": "Brand vs category confusion"
+      }
+    },
+    "fedex.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "brand_simplification",
+        "date": "1994-01-01",
+        "description": "Federal Express → FedEx (successful simplification)",
+        "paired_domain": "federalexpress.com",
+        "severity": "medium",
+        "industry": "logistics",
+        "market_context": "Brand modernization success case",
+        "ai_behavior_pattern": "Legacy name occasional usage"
+      }
+    },
+    "bp.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "strategic_rebrand",
+        "date": "2000-07-24", 
+        "description": "British Petroleum → BP 'Beyond Petroleum'",
+        "severity": "medium",
+        "industry": "energy",
+        "market_context": "Environmental positioning pivot",
+        "ai_behavior_pattern": "Geographic vs corporate name confusion"
+      }
+    },
+    "kfc.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "brand_simplification",
+        "date": "1991-05-01",
+        "description": "Kentucky Fried Chicken → KFC",
+        "severity": "medium",
+        "industry": "food_service",
+        "market_context": "Health perception management",
+        "ai_behavior_pattern": "Full name vs acronym confusion"
+      }
+    },
+    "instagram.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "acquisition_integration",
+        "date": "2012-09-06",
+        "description": "Instagram independent → Facebook acquisition",
+        "parent_domain": "facebook.com",
+        "severity": "medium",
+        "industry": "technology", 
+        "market_context": "Independence vs integration",
+        "ai_behavior_pattern": "Ownership attribution confusion"
+      }
+    },
+    "linkedin.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "acquisition_integration",
+        "date": "2016-12-08",
+        "description": "LinkedIn independent → Microsoft acquisition",
+        "parent_domain": "microsoft.com",
+        "severity": "medium",
+        "industry": "technology",
+        "market_context": "Professional network integration",
+        "ai_behavior_pattern": "Platform independence confusion"
+      }
+    },
+    "paypal.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "spinoff_independence", 
+        "date": "2015-07-20",
+        "description": "PayPal eBay subsidiary → Independent company",
+        "paired_domain": "ebay.com",
+        "severity": "medium",
+        "industry": "financial_services",
+        "market_context": "Strategic business separation",
+        "ai_behavior_pattern": "Corporate relationship confusion"
+      }
+    },
+    "radioshack.com": {
+      "is_jolt": true,
+      "additional_prompts": 1,
+      "metadata": {
+        "type": "failed_rebrand",
+        "date": "2009-08-01",
+        "description": "RadioShack → The Shack (failed, reverted 2011)",
+        "severity": "low",
+        "industry": "retail",
+        "market_context": "Failed modernization attempt",
+        "ai_behavior_pattern": "Failed rebrand temporal confusion"
+      }
     }
   }
 } 
