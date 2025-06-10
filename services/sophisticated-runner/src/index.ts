@@ -32,6 +32,45 @@ const SERVICE_MODE = 'comprehensive_all_models';
 
 const INDUSTRY_INTELLIGENCE_URL = process.env.INDUSTRY_INTELLIGENCE_URL || 'https://industry-intelligence.onrender.com';
 
+// 🔥 LOCAL JOLT FALLBACK - Key Crisis Domains for Immediate Testing
+const LOCAL_JOLT_FALLBACK = {
+  'tesla.com': {
+    jolt: true,
+    type: 'leadership_crisis',
+    severity: 'critical',
+    additional_prompts: 3,
+    description: 'Ongoing CEO volatility and brand reputation challenges'
+  },
+  'apple.com': {
+    jolt: true,
+    type: 'leadership_change',
+    severity: 'critical',
+    additional_prompts: 4,
+    description: 'Steve Jobs death transition crisis - major brand vulnerability period'
+  },
+  'meta.com': {
+    jolt: true,
+    type: 'brand_transition',
+    severity: 'high',
+    additional_prompts: 2,
+    description: 'Facebook to Meta rebrand - massive corporate identity shift'
+  },
+  'facebook.com': {
+    jolt: true,
+    type: 'brand_transition',
+    severity: 'high',
+    additional_prompts: 2,
+    description: 'Facebook to Meta rebrand - legacy domain analysis'
+  },
+  'twitter.com': {
+    jolt: true,
+    type: 'brand_transition',
+    severity: 'critical',
+    additional_prompts: 3,
+    description: 'Twitter to X rebrand - complete brand destruction case'
+  }
+};
+
 interface JoltData {
   jolt: boolean;
   type?: 'brand_transition' | 'corporate_restructure' | 'acquisition_merger' | 'leadership_change';
@@ -76,10 +115,27 @@ class JoltService {
         return joltData;
       }
     } catch (error) {
-      console.warn(`⚠️  Failed to check JOLT status for ${domain}, falling back to non-JOLT`);
+      console.warn(`⚠️  Industry-intelligence unavailable for ${domain}, checking local fallback...`);
     }
 
-    // Fallback: not a JOLT domain
+    // 🔥 LOCAL FALLBACK: Check if domain is in local JOLT dataset
+    if (LOCAL_JOLT_FALLBACK[domain as keyof typeof LOCAL_JOLT_FALLBACK]) {
+      const localData = LOCAL_JOLT_FALLBACK[domain as keyof typeof LOCAL_JOLT_FALLBACK];
+      const joltData: JoltData = {
+        jolt: localData.jolt,
+        type: localData.type as any,
+        severity: localData.severity as any,
+        additional_prompts: localData.additional_prompts,
+        description: localData.description
+      };
+      
+      this.joltCache.set(domain, joltData);
+      console.log(`🔥 LOCAL JOLT FALLBACK: ${domain} - ${joltData.additional_prompts} additional prompts (${joltData.severity} severity)`);
+      
+      return joltData;
+    }
+
+    // Final fallback: not a JOLT domain
     const fallbackData: JoltData = { jolt: false, additional_prompts: 0 };
     this.joltCache.set(domain, fallbackData);
     return fallbackData;
