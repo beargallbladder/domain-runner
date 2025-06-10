@@ -1,11 +1,11 @@
 {
   "version": "2.0",
   "last_updated": "2025-06-10",
-  "total_cases": 18,
+  "total_cases": 30,
   "severity_distribution": {
-    "critical": 6,
-    "high": 6, 
-    "medium": 5,
+    "critical": 11,
+    "high": 10,
+    "medium": 8,
     "low": 1
   },
   "jolt_cases": {
@@ -253,6 +253,150 @@
         "industry": "retail",
         "market_context": "Failed modernization attempt",
         "ai_behavior_pattern": "Failed rebrand temporal confusion"
+      }
+    },
+    "apple.com": {
+      "is_jolt": true,
+      "additional_prompts": 4,
+      "metadata": {
+        "type": "ceo_death_transition",
+        "date": "2011-10-05",
+        "description": "Steve Jobs death → Tim Cook era transition",
+        "severity": "critical",
+        "industry": "technology",
+        "market_context": "Iconic founder death, succession planning",
+        "ai_behavior_pattern": "Temporal confusion about Apple leadership eras",
+        "baseline_memory_score": 89.2
+      }
+    },
+    "theranos.com": {
+      "is_jolt": true,
+      "additional_prompts": 4,
+      "metadata": {
+        "type": "fraud_collapse",
+        "date": "2018-03-14",
+        "description": "Theranos fraud scandal → Complete business collapse",
+        "severity": "critical",
+        "industry": "healthcare",
+        "market_context": "Massive fraud, CEO Elizabeth Holmes convicted",
+        "ai_behavior_pattern": "Brand existence vs destruction confusion"
+      }
+    },
+    "wework.com": {
+      "is_jolt": true,
+      "additional_prompts": 4,
+      "metadata": {
+        "type": "ceo_scandal_collapse",
+        "date": "2019-09-24",
+        "description": "Adam Neumann scandal → WeWork IPO collapse",
+        "severity": "critical",
+        "industry": "real_estate",
+        "market_context": "CEO behavior scandal, valuation collapse from $47B to $8B",
+        "ai_behavior_pattern": "Valuation vs reality confusion"
+      }
+    },
+    "ftx.com": {
+      "is_jolt": true,
+      "additional_prompts": 4,
+      "metadata": {
+        "type": "fraud_collapse",
+        "date": "2022-11-11",
+        "description": "FTX collapse → Sam Bankman-Fried fraud conviction",
+        "severity": "critical",
+        "industry": "financial_services",
+        "market_context": "Crypto exchange collapse, $8B missing funds",
+        "ai_behavior_pattern": "Recent collapse, high AI confusion about current status"
+      }
+    },
+    "tesla.com": {
+      "is_jolt": true,
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "ceo_controversy_ongoing",
+        "date": "2022-10-27",
+        "description": "Elon Musk Twitter acquisition → Tesla brand stress",
+        "severity": "high",
+        "industry": "automotive",
+        "market_context": "CEO distraction, political polarization, brand association",
+        "ai_behavior_pattern": "Musk vs Tesla entity confusion, ongoing volatility"
+      }
+    },
+    "enron.com": {
+      "is_jolt": true,
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "corporate_collapse",
+        "date": "2001-12-02",
+        "description": "Enron accounting scandal → Complete corporate collapse",
+        "severity": "high",
+        "industry": "energy",
+        "market_context": "Massive accounting fraud, bankruptcy",
+        "ai_behavior_pattern": "Historical vs current existence confusion"
+      }
+    },
+    "lehman.com": {
+      "is_jolt": true,
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "financial_collapse",
+        "date": "2008-09-15",
+        "description": "Lehman Brothers collapse → Global financial crisis trigger",
+        "severity": "high",
+        "industry": "financial_services",
+        "market_context": "Investment bank collapse, $600B bankruptcy",
+        "ai_behavior_pattern": "Pre/post financial crisis confusion"
+      }
+    },
+    "starbucks.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "ceo_transition_return",
+        "date": "2008-01-07",
+        "description": "Howard Schultz return as CEO → Brand turnaround",
+        "severity": "medium",
+        "industry": "food_service",
+        "market_context": "Founder return during crisis, successful turnaround",
+        "ai_behavior_pattern": "Multiple CEO transition confusion"
+      }
+    },
+    "disney.com": {
+      "is_jolt": true,
+      "additional_prompts": 2,
+      "metadata": {
+        "type": "acquisition_spree",
+        "date": "2009-08-31",
+        "description": "Disney mega-acquisitions → Marvel, Star Wars, Fox integration",
+        "severity": "medium",
+        "industry": "media_entertainment",
+        "market_context": "Brand portfolio expansion, $71B in acquisitions",
+        "ai_behavior_pattern": "Disney vs acquired brands attribution confusion"
+      }
+    },
+    "uber.com": {
+      "is_jolt": true,
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "ceo_scandal_transition",
+        "date": "2017-06-21",
+        "description": "Travis Kalanick resignation → Multiple scandals fallout",
+        "severity": "high",
+        "industry": "technology",
+        "market_context": "Sexual harassment, corporate culture crisis",
+        "ai_behavior_pattern": "Founder vs professional management era confusion"
+      }
+    },
+    "wells-fargo.com": {
+      "is_jolt": true,
+      "additional_prompts": 3,
+      "metadata": {
+        "type": "scandal_reputation_crisis",
+        "date": "2016-09-08",
+        "description": "Wells Fargo fake accounts scandal → Massive reputation damage",
+        "severity": "high",
+        "industry": "financial_services",
+        "market_context": "3.5M fake accounts, regulatory fines, CEO resignation",
+        "ai_behavior_pattern": "Pre/post scandal reputation confusion"
       }
     }
   }
