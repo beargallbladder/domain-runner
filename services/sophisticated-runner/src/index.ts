@@ -152,10 +152,11 @@ class JoltService {
         return responseData.data.domains;
       }
     } catch (error) {
-      console.warn('⚠️  Failed to get JOLT domain list from industry-intelligence');
+      console.warn('⚠️  Industry-intelligence unavailable, using local JOLT fallback domains');
     }
 
-    return [];
+    // 🔥 Return local JOLT fallback domains when service is unavailable
+    return Object.keys(LOCAL_JOLT_FALLBACK);
   }
 
   clearCache(): void {
