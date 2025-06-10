@@ -1074,6 +1074,69 @@ app.post('/migrate/jolt-schema', async (req, res) => {
   }
 });
 
+// 🚀 MANUAL COMPREHENSIVE PROCESSING ACTIVATION
+app.post('/jolt/activate', async (req, res) => {
+  try {
+    console.log('🔥 MANUAL JOLT ACTIVATION TRIGGERED');
+    
+    // Reset some domains to trigger comprehensive processing
+    const resetDomains = ['tesla.com', 'apple.com', 'meta.com', 'facebook.com', 'twitter.com'];
+    let resetCount = 0;
+    
+    for (const domain of resetDomains) {
+      try {
+        await pool.query(
+          'UPDATE domains SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE domain = $2 AND processor_id = $3',
+          ['pending', domain, 'sophisticated_v1_comprehensive']
+        );
+        resetCount++;
+        console.log(`✅ Reset ${domain} for comprehensive processing`);
+      } catch (error) {
+        console.log(`⚠️  Failed to reset ${domain}:`, (error as Error).message);
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'Comprehensive JOLT processing activated',
+      reset_domains: resetCount,
+      jolt_fallback_domains: Object.keys(LOCAL_JOLT_FALLBACK),
+      comprehensive_mode: true,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: (error as Error).message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Get JOLT status and configuration
+app.get('/jolt/status', async (req, res) => {
+  try {
+    const joltDomains = await joltService.getJoltDomainList();
+    
+    res.json({
+      success: true,
+      jolt_domains: joltDomains,
+      local_fallback_domains: Object.keys(LOCAL_JOLT_FALLBACK),
+      comprehensive_mode: true,
+      industry_intelligence_status: 'fallback_active',
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: (error as Error).message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Main execution
 async function main() {
   try {
