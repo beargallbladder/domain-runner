@@ -8,22 +8,21 @@ import axios from 'axios';
 dotenv.config();
 
 // ============================================================================
-// SOPHISTICATED RUNNER - REAL LLM PROCESSING (NO PROCESSOR_ID DEPENDENCIES)
+// SOPHISTICATED RUNNER - COMPREHENSIVE MODE (JOLT + ALL MODELS)
 // ============================================================================
-// 🎯 Mission: Run parallel to raw-capture-runner with REAL LLM API calls
-// 🎯 Strategy: Pure cheap + middle tier models (no expensive models yet)  
+// 🎯 Mission: Full comprehensive analysis with ALL models and JOLT enhancement
+// 🎯 Strategy: Complete cost spectrum - ultra cheap to premium models  
 // 🎯 Database: SAME EXACT schema as raw-capture-runner - NO processor_id!
-// 🎯 FORCE DEPLOY: 2025-06-09T23:49:00Z - Fixed processor_id caching issue
-// 🎯 JOLT FEATURE: 2025-06-10 - Added ground truth benchmarking for brand transitions
+// 🎯 COMPREHENSIVE MODE: 2025-06-10 - ALL MODELS + JOLT ADDITIONAL PROMPTS
 // ============================================================================
 
-console.log('🚀 SOPHISTICATED RUNNER STARTING');
-console.log('   Service ID: sophisticated_v1');
-console.log('   Mode: sophisticated_parallel');
-console.log('   Parallel to: raw-capture-runner');
+console.log('🚀 SOPHISTICATED RUNNER STARTING - COMPREHENSIVE MODE');
+console.log('   Service ID: sophisticated_v1_comprehensive');
+console.log('   Mode: comprehensive_all_models');
+console.log('   JOLT Integration: ACTIVE');
 
-const SERVICE_ID = 'sophisticated_v1';
-const SERVICE_MODE = 'sophisticated_parallel';
+const SERVICE_ID = 'sophisticated_v1_comprehensive';
+const SERVICE_MODE = 'comprehensive_all_models';
 
 // ============================================================================
 // 🔗 INDUSTRY INTELLIGENCE INTEGRATION
@@ -31,7 +30,7 @@ const SERVICE_MODE = 'sophisticated_parallel';
 // Purpose: Dynamic JOLT detection via industry-intelligence API
 // Benefit: Modular, configurable, testable JOLT management
 
-const INDUSTRY_INTELLIGENCE_URL = process.env.INDUSTRY_INTELLIGENCE_URL || 'http://localhost:10001';
+const INDUSTRY_INTELLIGENCE_URL = process.env.INDUSTRY_INTELLIGENCE_URL || 'https://industry-intelligence.onrender.com';
 
 interface JoltData {
   jolt: boolean;
@@ -39,7 +38,7 @@ interface JoltData {
   date?: string;
   description?: string;
   paired_domain?: string;
-  severity?: 'low' | 'medium' | 'high';
+  severity?: 'low' | 'medium' | 'high' | 'critical';
   additional_prompts?: number;
 }
 
@@ -59,7 +58,7 @@ class JoltService {
         timeout: 5000
       });
 
-      if (response.data?.success) {
+      if (response.data && typeof response.data === 'object' && 'success' in response.data && response.data.success) {
         const responseData = response.data as any;
         const joltData: JoltData = {
           jolt: responseData.data.is_jolt,
@@ -71,7 +70,7 @@ class JoltService {
         this.lastCacheUpdate = Date.now();
         
         if (joltData.jolt) {
-          console.log(`⚡ JOLT detected for ${domain}: ${joltData.additional_prompts} additional prompts`);
+          console.log(`⚡ JOLT detected for ${domain}: ${joltData.additional_prompts} additional prompts (${joltData.severity} severity)`);
         }
         
         return joltData;
@@ -92,7 +91,7 @@ class JoltService {
         timeout: 5000
       });
 
-      if (response.data?.success) {
+      if (response.data && typeof response.data === 'object' && 'success' in response.data && response.data.success) {
         const responseData = response.data as any;
         return responseData.data.domains;
       }
@@ -110,6 +109,130 @@ class JoltService {
 }
 
 const joltService = new JoltService();
+
+// ============================================================================
+// 🎯 COMPREHENSIVE MODEL SELECTION - ALL TIERS (COMPLETE COST SPECTRUM)
+// ============================================================================
+
+// 💎 ULTRA-CHEAP TIER ($0.0001-$0.001) - Maximum efficiency
+const ULTRA_CHEAP_MODELS = [
+  'claude-3-haiku-20240307',      // Champion: $0.00000025
+  'deepseek-chat',                // Ultra-competitive: $0.000002
+  'gpt-4o-mini',                  // OpenAI baseline: $0.0000015
+  'meta-llama/Meta-Llama-3-8B-Instruct', // Together AI: $0.0000008
+  'gemini-1.5-flash',             // Google fast: $0.00000025
+  'mistral-small-latest',         // European alt: $0.000002  
+];
+
+// ⚖️ MIDDLE TIER ($0.001-$0.005) - Balanced performance/cost
+const MIDDLE_TIER_MODELS = [
+  'gpt-3.5-turbo',               // Reliable workhorse: $0.000001
+  'claude-3-sonnet-20240229',    // Claude mid-tier: $0.000003
+  'deepseek-coder',              // Specialized coding: $0.000006
+  'meta-llama/Meta-Llama-3.1-70B-Instruct', // Large model: $0.000012
+  'mistralai/Mixtral-8x7B-Instruct-v0.1',   // Mixture of experts: $0.0025
+];
+
+// 🔥 PREMIUM TIER ($0.005-$0.05) - High-end models
+const PREMIUM_MODELS = [
+  'gpt-4',                       // OpenAI flagship: $0.03
+  'claude-3-opus-20240229',      // Claude flagship: $0.015
+  'gpt-4-turbo',                 // OpenAI enhanced: $0.01
+  'claude-3-5-sonnet-20241022',  // Claude 3.5: $0.003
+];
+
+// 💰 ALL AVAILABLE MODELS (Complete Cost Spectrum)
+const ALL_COMPREHENSIVE_MODELS = [
+  ...ULTRA_CHEAP_MODELS,
+  ...MIDDLE_TIER_MODELS,
+  ...PREMIUM_MODELS
+];
+
+// 🎯 COMPREHENSIVE PROMPT TYPES
+const COMPREHENSIVE_PROMPTS = {
+  business_analysis: (domain: string) => 
+    `Analyze the business intelligence value of ${domain}. Provide insights on:
+1. Primary business model and revenue streams
+2. Key technology stack and competitive advantages  
+3. Market position and growth trajectory
+4. Strategic partnerships and ecosystem
+5. Future opportunities and risks
+Focus on actionable business intelligence for investment and partnership decisions.`,
+
+  technical_assessment: (domain: string) =>
+    `Conduct a comprehensive technical assessment of ${domain}:
+1. Technology stack and architecture patterns
+2. Development practices and engineering culture
+3. Open source contributions and technical leadership
+4. API design and developer experience
+5. Technical innovation and research capabilities
+Provide technical due diligence insights for technology partnerships.`,
+
+  brand_memory_analysis: (domain: string) =>
+    `Analyze the brand memory and recognition patterns for ${domain}:
+1. Brand recall strength and market positioning
+2. Historical brand evolution and major transitions
+3. Consumer sentiment and brand associations
+4. Competitive brand differentiation
+5. Brand vulnerability and crisis resilience
+Focus on measuring AI and human memory decay patterns for this brand.`,
+
+  market_intelligence: (domain: string) =>
+    `Provide comprehensive market intelligence for ${domain}:
+1. Industry landscape and competitive positioning
+2. Market share analysis and growth trajectories
+3. Strategic threats and opportunities
+4. Regulatory environment and compliance status
+5. Macroeconomic factors affecting business
+Generate insights for strategic planning and market entry decisions.`
+};
+
+// Model selection strategies for comprehensive analysis
+function selectModelsForDomain(joltData: JoltData): string[] {
+  if (joltData.jolt) {
+    // 🔥 JOLT DOMAINS: Expensive comprehensive analysis for benchmarking
+    const baseModels = 2; // Always use 2 base models
+    const joltModels = joltData.additional_prompts || 0; // Additional models for JOLT domains
+    
+    const totalModels = baseModels + joltModels;
+    
+    // Distribute across ALL tiers for comprehensive analysis
+    const selectedModels: string[] = [];
+    
+    // Include premium models for JOLT domains (this is where we spend money)
+    selectedModels.push(...PREMIUM_MODELS.slice(0, Math.max(1, Math.floor(totalModels * 0.4))));
+    
+    // Add middle tier for quality
+    selectedModels.push(...MIDDLE_TIER_MODELS.slice(0, Math.max(1, Math.floor(totalModels * 0.4))));
+    
+    // Always include some ultra-cheap for cost balance
+    selectedModels.push(...ULTRA_CHEAP_MODELS.slice(0, Math.max(1, Math.floor(totalModels * 0.2))));
+    
+    // Ensure we don't exceed available models and return exact count needed
+    const uniqueModels = [...new Set(selectedModels)];
+    return uniqueModels.slice(0, totalModels);
+  } else {
+    // 💰 REGULAR DOMAINS: Cheap coverage only
+    return [ULTRA_CHEAP_MODELS[Math.floor(Math.random() * ULTRA_CHEAP_MODELS.length)]];
+  }
+}
+
+function selectPromptsForDomain(joltData: JoltData): string[] {
+  if (joltData.jolt) {
+    // 🔬 JOLT domains get comprehensive prompts for benchmarking
+    const basePrompts = ['business_analysis', 'technical_assessment'];
+    const joltPrompts = ['brand_memory_analysis', 'market_intelligence'];
+    return [...basePrompts, ...joltPrompts.slice(0, joltData.additional_prompts || 1)];
+  } else {
+    // 📊 Regular domains get basic coverage
+    return ['business_analysis'];
+  }
+}
+
+function selectOptimalModel(): string {
+  // For backward compatibility - select from ultra-cheap tier
+  return ULTRA_CHEAP_MODELS[Math.floor(Math.random() * ULTRA_CHEAP_MODELS.length)];
+}
 
 // ============================================================================
 // PREMIUM DOMAINS - DYNAMIC JOLT INTEGRATION
@@ -183,29 +306,6 @@ const grokClient = axios.create({
   },
   timeout: 30000
 });
-
-// 🎯 COST-OPTIMIZED MODEL SELECTION (Cheap + Middle Tier Only)
-const ULTRA_CHEAP_MODELS = [
-  'claude-3-haiku-20240307',      // Champion: $0.00000025
-  'deepseek-chat',                // Ultra-competitive: $0.000002
-  'gpt-4o-mini',                  // OpenAI baseline: $0.0000015
-  'meta-llama/Meta-Llama-3-8B-Instruct', // Together AI: $0.0000008
-];
-
-const MIDDLE_TIER_MODELS = [
-  'gpt-3.5-turbo',               // Reliable workhorse: $0.000001
-  'mistral-small-latest',        // European alt: $0.000002  
-  'gemini-1.5-flash',           // Google fast: $0.00000025
-  'grok-beta',                   // Alternative perspective
-];
-
-// Combined model pool (ultra-cheap prioritized)
-const ALL_AVAILABLE_MODELS = [...ULTRA_CHEAP_MODELS, ...MIDDLE_TIER_MODELS];
-
-function selectOptimalModel(): string {
-  // Priority: ultra-cheap first, then middle tier
-  return ULTRA_CHEAP_MODELS[Math.floor(Math.random() * ULTRA_CHEAP_MODELS.length)];
-}
 
 // Real LLM API call function (ported from raw-capture-runner)
 async function callLLM(model: string, prompt: string, domain: string): Promise<{
@@ -593,36 +693,66 @@ class SophisticatedRunner {
         ['processing', id]
       );
 
-      // Select optimal model (cost-optimized)
-      const selectedModel = selectOptimalModel();
-
-      // Create sophisticated prompt
-      const prompt = `Analyze the business intelligence value of ${domain}. Provide insights on:
-1. Primary business model and revenue streams
-2. Key technology stack and competitive advantages  
-3. Market position and growth trajectory
-4. Strategic partnerships and ecosystem
-5. Future opportunities and risks
-
-Focus on actionable business intelligence for investment and partnership decisions.`;
-
-      // Make real LLM API call
-      const llmResult = await callLLM(selectedModel, prompt, domain);
+      // 🔬 Get JOLT data for intelligent processing strategy
+      const joltData = await joltService.getJoltData(domain);
       
-      // Store response using EXACT same schema as raw-capture-runner - NO processor_id
-      await pool.query(`
-        INSERT INTO responses (
-          domain_id, model, prompt_type, interpolated_prompt, 
-          raw_response, token_count, prompt_tokens, completion_tokens,
-          token_usage, total_cost_usd, latency_ms, captured_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
-      `, [
-        id, selectedModel, 'business_intelligence', prompt, llmResult.response,
-        (llmResult.tokenUsage.total_tokens || llmResult.tokenUsage.prompt_tokens + llmResult.tokenUsage.completion_tokens || 0),
-        (llmResult.tokenUsage.prompt_tokens || llmResult.tokenUsage.input_tokens || 0),
-        (llmResult.tokenUsage.completion_tokens || llmResult.tokenUsage.output_tokens || 0),
-        JSON.stringify(llmResult.tokenUsage), llmResult.cost, llmResult.latency
-      ]);
+      // 🎯 Select models and prompts based on JOLT status
+      const selectedModels = selectModelsForDomain(joltData);
+      const selectedPrompts = selectPromptsForDomain(joltData);
+      
+      console.log(`📊 ${domain} analysis plan: ${selectedModels.length} models × ${selectedPrompts.length} prompts = ${selectedModels.length * selectedPrompts.length} total API calls`);
+      
+      if (joltData.jolt) {
+        console.log(`🔥 JOLT BENCHMARK: ${domain} - Comprehensive analysis with premium models`);
+      } else {
+        console.log(`💰 COVERAGE: ${domain} - Basic analysis with ultra-cheap models`);
+      }
+
+      // 🚀 Process all model-prompt combinations
+      for (const promptType of selectedPrompts) {
+        for (const model of selectedModels) {
+          try {
+            const prompt = COMPREHENSIVE_PROMPTS[promptType as keyof typeof COMPREHENSIVE_PROMPTS](domain);
+            
+            // Make real LLM API call
+            const llmResult = await callLLM(model, prompt, domain);
+            
+            // Store response using EXACT same schema as raw-capture-runner - NO processor_id
+            await pool.query(`
+              INSERT INTO responses (
+                domain_id, model, prompt_type, interpolated_prompt, 
+                raw_response, token_count, prompt_tokens, completion_tokens,
+                token_usage, total_cost_usd, latency_ms, captured_at
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+            `, [
+              id, model, promptType, prompt, llmResult.response,
+              (llmResult.tokenUsage.total_tokens || llmResult.tokenUsage.prompt_tokens + llmResult.tokenUsage.completion_tokens || 0),
+              (llmResult.tokenUsage.prompt_tokens || llmResult.tokenUsage.input_tokens || 0),
+              (llmResult.tokenUsage.completion_tokens || llmResult.tokenUsage.output_tokens || 0),
+              JSON.stringify(llmResult.tokenUsage), llmResult.cost, llmResult.latency
+            ]);
+
+            console.log(`✅ ${model} ${promptType} completed for ${domain} ($${llmResult.cost.toFixed(6)})`);
+            
+            // Brief pause between API calls to be respectful
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+          } catch (modelError: any) {
+            console.error(`❌ ${model} ${promptType} failed for ${domain}:`, modelError.message);
+            
+            // Log error but continue with other models
+            await pool.query(`
+              INSERT INTO processing_logs (domain_id, event_type, details)
+              VALUES ($1, $2, $3)
+            `, [id, 'model_error', { 
+              model, 
+              prompt_type: promptType, 
+              error: modelError.message,
+              domain: domain
+            }]);
+          }
+        }
+      }
 
       // Mark as completed - same as raw-capture-runner
       await pool.query(
@@ -630,7 +760,7 @@ Focus on actionable business intelligence for investment and partnership decisio
         ['completed', id]
       );
 
-      console.log(`✅ Completed: ${domain} (${SERVICE_ID})`);
+      console.log(`✅ Completed comprehensive processing: ${domain} (${SERVICE_ID})`);
       
     } catch (error) {
       console.error('❌ Processing error:', error);
@@ -780,11 +910,8 @@ app.get('/health', (req, res) => {
 // 🔬 JOLT ANALYSIS ENDPOINTS
 app.get('/jolt', async (req, res) => {
   try {
-    // Get all jolt domains with their metadata
-    const joltDomains = Object.entries(JOLT_DOMAINS).map(([domain, data]) => ({
-      domain,
-      ...data
-    }));
+    // Get JOLT domains from industry-intelligence service
+    const joltDomains = await joltService.getJoltDomainList();
     
     // Try to get jolt data from database if schema supports it
     let databaseJoltData = [];
@@ -820,18 +947,26 @@ app.get('/jolt', async (req, res) => {
 
 app.get('/jolt/transitions', async (req, res) => {
   try {
-    // Get transition pairs for analysis
+    // Get transition data from industry-intelligence service
+    const joltDomains = await joltService.getJoltDomainList();
     const transitions = [];
     
-    for (const [domain, data] of Object.entries(JOLT_DOMAINS)) {
-      if (data.type === 'brand_transition' && data.paired_domain) {
-        transitions.push({
-          old_brand: domain,
-          new_brand: data.paired_domain,
-          transition_date: data.date,
-          description: data.description,
-          severity: data.severity
-        });
+    // Get detailed data for each JOLT domain
+    for (const domain of joltDomains) {
+      try {
+        const joltData = await joltService.getJoltData(domain);
+        if (joltData.type === 'brand_transition' && joltData.paired_domain) {
+          transitions.push({
+            old_brand: domain,
+            new_brand: joltData.paired_domain,
+            transition_date: joltData.date,
+            description: joltData.description,
+            severity: joltData.severity
+          });
+        }
+      } catch (error) {
+        // Skip this domain if we can't get its data
+        continue;
       }
     }
     
