@@ -63,7 +63,7 @@ async function withRetry<T>(
 }
 
 // Export helper functions for common database operations with retry logic
-export async function query<T = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+export async function query<T extends Record<string, any> = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
   const start = Date.now();
   
   return withRetry(async () => {
