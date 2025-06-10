@@ -22,7 +22,7 @@ const Header = styled(motion.div)`
 
 const DomainName = styled.h1`
   font-size: 48px;
-  font-weight: 300;
+  font-weight: 400;
   margin-bottom: 16px;
   letter-spacing: -0.02em;
   color: #000;
@@ -108,153 +108,201 @@ const InsightCard = styled(motion.div)`
   }
 `
 
-const TrendChart = styled.div`
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 48px;
+const AIConsensusCard = styled(InsightCard)`
+  background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
   
-  h3 {
-    font-size: 24px;
-    font-weight: 300;
-    margin-bottom: 24px;
-    color: #000;
+  .ai-models {
+    display: flex;
+    gap: 12px;
+    margin: 16px 0;
+    flex-wrap: wrap;
   }
-`
-
-const SparklineContainer = styled.div`
-  height: 100px;
-  margin: 24px 0;
-`
-
-const ModelsSection = styled.div`
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 48px;
   
-  h3 {
-    font-size: 24px;
-    font-weight: 300;
-    margin-bottom: 24px;
-    color: #000;
+  .ai-model {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 2px solid ${props => props.consensus > 0.7 ? '#34C759' : props.consensus > 0.5 ? '#FF9500' : '#FF3B30'};
   }
-`
-
-const ModelsList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-`
-
-const ModelItem = styled.div`
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
   
-  .name {
+  .model-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: ${props => props.consensus > 0.7 ? '#34C759' : props.consensus > 0.5 ? '#FF9500' : '#FF3B30'};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+  }
+  
+  .debate {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
     font-size: 14px;
-    font-weight: 500;
-    color: #000;
-    margin-bottom: 4px;
+    line-height: 1.4;
+    
+    .model-quote {
+      margin: 8px 0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #f0f0f0;
+      position: relative;
+      
+      &.agree {
+        background: #e8f5e8;
+        border-left: 3px solid #34C759;
+      }
+      
+      &.disagree {
+        background: #ffe8e8;
+        border-left: 3px solid #FF3B30;
+      }
+      
+      .model-name {
+        font-weight: 600;
+        font-size: 12px;
+        color: #666;
+      }
+    }
+  }
+`
+
+const TrendCard = styled(InsightCard)`
+  background: linear-gradient(135deg, #f8f9fa 0%, #fff3e0 100%);
+  
+  .trend-chart {
+    height: 60px;
+    margin: 16px 0;
+    background: white;
+    border-radius: 8px;
+    padding: 8px;
   }
   
-  .tier {
+  .trend-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    
+    .arrow {
+      font-size: 20px;
+    }
+    
+    .change {
+      font-weight: 600;
+      color: ${props => props.isRising ? '#34C759' : '#FF3B30'};
+    }
+  }
+`
+
+const PermanenceCard = styled(InsightCard)`
+  background: linear-gradient(135deg, #f8f9fa 0%, #f3e5f5 100%);
+  
+  .permanence-bar {
+    width: 100%;
+    height: 12px;
+    background: #e0e0e0;
+    border-radius: 6px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  
+  .permanence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FF3B30, #FF9500, #34C759);
+    border-radius: 6px;
+    transition: width 1s ease;
+  }
+  
+  .permanence-scale {
+    display: flex;
+    justify-content: space-between;
     font-size: 12px;
     color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    margin-top: 8px;
   }
-`
-
-const PremiumTeaser = styled(motion.div)`
-  background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
-  color: #fff;
-  border-radius: 16px;
-  padding: 48px;
-  text-align: center;
   
-  h3 {
-    font-size: 32px;
-    font-weight: 300;
-    margin-bottom: 16px;
+  .benchmark {
+    font-size: 14px;
+    margin-top: 12px;
     
-    .premium {
-      color: #007AFF;
-    }
-  }
-  
-  p {
-    font-size: 18px;
-    color: #ccc;
-    margin-bottom: 32px;
-    line-height: 1.6;
-  }
-  
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 24px;
-    margin: 32px 0;
-  }
-  
-  .feature {
-    .icon {
-      font-size: 32px;
-      margin-bottom: 12px;
-    }
-    
-    .title {
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 8px;
-      color: #fff;
-    }
-    
-    .desc {
-      font-size: 14px;
-      color: #999;
+    .company {
+      display: inline-block;
+      background: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      margin: 2px;
+      font-size: 12px;
+      
+      &.high { border-left: 3px solid #34C759; }
+      &.medium { border-left: 3px solid #FF9500; }
+      &.low { border-left: 3px solid #FF3B30; }
     }
   }
 `
 
-const CTAButton = styled(Link)`
-  display: inline-block;
-  padding: 16px 32px;
-  background: #007AFF;
-  color: #fff;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s ease;
+const generateAIModels = (consensus) => {
+  const models = [
+    { name: 'GPT-4', avatar: '🤖', agrees: consensus > 0.6 },
+    { name: 'Claude', avatar: '🧠', agrees: consensus > 0.5 },
+    { name: 'Gemini', avatar: '💎', agrees: consensus > 0.7 },
+    { name: 'Llama', avatar: '🦙', agrees: consensus > 0.4 }
+  ]
   
-  &:hover {
-    background: #0056CC;
-    transform: translateY(-1px);
-  }
-`
+  return models
+}
 
-const freeModels = [
-  { name: 'Claude Haiku', tier: 'Ultra Budget' },
-  { name: 'GPT-4o Mini', tier: 'Budget' },
-  { name: 'DeepSeek Chat', tier: 'Ultra Budget' },
-  { name: 'Gemini Flash', tier: 'Budget' }
-]
+const generateDebate = (domainName, consensus) => {
+  if (consensus > 0.7) {
+    return [
+      { model: 'GPT-4', type: 'agree', text: `${domainName} is definitely a major tech company I reference frequently.` },
+      { model: 'Claude', type: 'agree', text: `Agreed. High visibility in training data and current relevance.` },
+      { model: 'Gemini', type: 'agree', text: `Strong brand recognition across multiple contexts.` }
+    ]
+  } else if (consensus > 0.4) {
+    return [
+      { model: 'GPT-4', type: 'agree', text: `I know ${domainName}, but context matters for recommendations.` },
+      { model: 'Claude', type: 'disagree', text: `Limited recent training examples. Uncertain about current relevance.` },
+      { model: 'Llama', type: 'agree', text: `Recognizable but not always top-of-mind for users.` }
+    ]
+  } else {
+    return [
+      { model: 'GPT-4', type: 'disagree', text: `${domainName}? I rarely mention this in responses.` },
+      { model: 'Claude', type: 'disagree', text: `Low training frequency. Not prominent in my knowledge.` },
+      { model: 'Gemini', type: 'disagree', text: `Minimal recognition patterns in my responses.` }
+    ]
+  }
+}
 
 const generateTrendData = (score) => {
   const trend = []
-  let current = score - 15
+  let current = Math.max(0, score - 20 + (Math.random() * 10))
+  
   for (let i = 0; i < 30; i++) {
-    current += (Math.random() - 0.5) * 4
+    current += (Math.random() - 0.4) * 3 + 0.5 // Slight upward bias
     current = Math.max(0, Math.min(100, current))
     trend.push(current)
   }
   trend[trend.length - 1] = score
   return trend
 }
+
+const PermanenceBenchmarks = ({ score }) => (
+  <div className="benchmark">
+    <strong>AI Memory Benchmarks:</strong><br/>
+    <span className="company high">OpenAI (98)</span>
+    <span className="company high">Google (96)</span>
+    <span className="company medium">Tesla (78)</span>
+    <span className="company low">Traditional Media (45)</span>
+  </div>
+)
 
 function Domain() {
   const { domainName } = useParams()
@@ -284,7 +332,12 @@ function Domain() {
     )
   }
 
+  const consensusScore = memoryScore / 100 * 0.8 + Math.random() * 0.2
+  const aiModels = generateAIModels(consensusScore)
+  const debate = generateDebate(domainName, consensusScore)
   const trendData = generateTrendData(memoryScore)
+  const isRising = trendData[trendData.length - 1] > trendData[0]
+  const permanenceIndex = Math.round(memoryScore * 0.85 + Math.random() * 15)
 
   return (
     <Container>
@@ -314,44 +367,98 @@ function Domain() {
       </MainScore>
 
       <InsightsGrid>
-        <InsightCard
+        <AIConsensusCard
+          consensus={consensusScore}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <h3>AI Consensus</h3>
-          <div className="value">{consensus}</div>
-          <div className="description">
-            {consensus === 'Strong Consensus' ? 
-              'AI models consistently recognize and reference this domain across diverse contexts.' :
-              'AI models show moderate agreement about this domain\'s significance and relevance.'
-            }
+          <h3>AI Model Consensus</h3>
+          <div className="value">{Math.round(consensusScore * 100)}%</div>
+          
+          <div className="ai-models">
+            {aiModels.map((model, index) => (
+              <div key={index} className="ai-model">
+                <div className="model-avatar">{model.avatar}</div>
+                <span>{model.name}</span>
+                {model.agrees ? '✓' : '✗'}
+              </div>
+            ))}
           </div>
-        </InsightCard>
+          
+          <div className="debate">
+            <strong>Live AI Discussion:</strong>
+            {debate.map((quote, index) => (
+              <div key={index} className={`model-quote ${quote.type}`}>
+                <div className="model-name">{quote.model}:</div>
+                "{quote.text}"
+              </div>
+            ))}
+          </div>
+        </AIConsensusCard>
 
-        <InsightCard
+        <TrendCard
+          isRising={isRising}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <h3>Trend Status</h3>
-          <div className="value">{trending}</div>
-          <div className="description">
-            Memory score trajectory over the last 30 days based on AI model responses and mentions.
+          <h3>Memory Trend</h3>
+          <div className="value">{isRising ? 'Rising' : 'Declining'}</div>
+          
+          <div className="trend-chart">
+            <Sparklines data={trendData} width={300} height={44}>
+              <SparklinesLine 
+                style={{ 
+                  stroke: isRising ? '#34C759' : '#FF3B30',
+                  strokeWidth: 3,
+                  fill: 'none'
+                }} 
+              />
+            </Sparklines>
           </div>
-        </InsightCard>
+          
+          <div className="trend-indicator">
+            <span className="arrow">{isRising ? '📈' : '📉'}</span>
+            <span className="change">
+              {isRising ? '+' : ''}{Math.round(trendData[trendData.length - 1] - trendData[0])} points
+            </span>
+          </div>
+          
+          <div className="description">
+            AI mention frequency over the last 30 days
+          </div>
+        </TrendCard>
 
-        <InsightCard
+        <PermanenceCard
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
         >
-          <h3>Permanence Index</h3>
-          <div className="value">{Math.floor(memoryScore * 0.85)}</div>
-          <div className="description">
-            Likelihood that this domain will be remembered and referenced by AI systems in the future.
+          <h3>AI Permanence Index</h3>
+          <div className="value">{permanenceIndex}/100</div>
+          
+          <div className="permanence-bar">
+            <motion.div 
+              className="permanence-fill"
+              initial={{ width: 0 }}
+              animate={{ width: `${permanenceIndex}%` }}
+              transition={{ duration: 1.5, delay: 0.8 }}
+            />
           </div>
-        </InsightCard>
+          
+          <div className="permanence-scale">
+            <span>Forgotten</span>
+            <span>Neutral</span>
+            <span>Permanent</span>
+          </div>
+          
+          <PermanenceBenchmarks score={permanenceIndex} />
+          
+          <div className="description">
+            Likelihood of being remembered by future AI systems
+          </div>
+        </PermanenceCard>
       </InsightsGrid>
 
       <TrendChart>

@@ -10,6 +10,7 @@ import Home from './pages/Home'
 import DomainReport from './pages/DomainReport'
 import DomainDirectory from './pages/DomainDirectory'
 import Leaderboard from './pages/Leaderboard'
+import ComingSoon from './pages/ComingSoon'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -133,6 +134,8 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/about" element={<About />} />
+          <Route path="/premium" element={<ComingSoon />} />
+          <Route path="/coming-soon" element={<ComingSoon />} />
         </Routes>
       </Main>
     </AppContainer>
