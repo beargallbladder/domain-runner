@@ -166,7 +166,7 @@ const DomainDirectory = () => {
   useEffect(() => {
     const fetchDomains = async () => {
       try {
-        const response = await axios.get('https://llm-pagerank-public-api.onrender.com/api/domains');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/domains`);
         setDomains(response.data.domains || []);
         setLoading(false);
       } catch (error) {

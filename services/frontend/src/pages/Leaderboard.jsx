@@ -186,7 +186,7 @@ const Leaderboard = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const response = await axios.get('https://llm-pagerank-public-api.onrender.com/api/leaderboard');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/leaderboard`);
         setDomains(response.data.domains || []);
         setLoading(false);
       } catch (error) {

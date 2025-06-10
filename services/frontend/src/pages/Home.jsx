@@ -315,7 +315,7 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('https://llm-pagerank-public-api.onrender.com/api/stats');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/stats`);
         setStats(response.data.platform_stats);
         setDomains(response.data.top_performers || []);
         setLoading(false);

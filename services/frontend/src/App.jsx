@@ -1,6 +1,6 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
-import styled, { createGlobalStyle } from 'styled-components'
+import styled, { createGlobalStyle, keyframes } from 'styled-components'
 import Landing from './pages/Landing'
 import Domain from './pages/Domain'
 import Categories from './pages/Categories'
@@ -10,6 +10,23 @@ import Home from './pages/Home'
 import DomainReport from './pages/DomainReport'
 import DomainDirectory from './pages/DomainDirectory'
 import Leaderboard from './pages/Leaderboard'
+
+// Subtle drift animation for text
+const textDrift = keyframes`
+  0%, 100% { 
+    opacity: 0.85;
+    transform: translateY(0px);
+  }
+  50% { 
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+`
+
+const subtlePulse = keyframes`
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+`
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -27,10 +44,29 @@ const GlobalStyle = createGlobalStyle`
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Steve Jobs aesthetic - minimal, purposeful */
+  /* Steve Jobs aesthetic - readable but elegant */
   h1, h2, h3 {
-    font-weight: 300;
+    font-weight: 400; /* Changed from 300 to 400 for better visibility */
     letter-spacing: -0.02em;
+    animation: ${textDrift} 4s ease-in-out infinite;
+  }
+
+  /* Large titles get slightly heavier weight */
+  h1 {
+    font-weight: 500;
+  }
+
+  /* Subtle text elements get drift animation */
+  .drift-text {
+    animation: ${subtlePulse} 3s ease-in-out infinite;
+    font-weight: 400; /* Readable but still light */
+  }
+
+  /* Ultra-light text now has better contrast */
+  .light-text {
+    font-weight: 300;
+    opacity: 0.9;
+    animation: ${textDrift} 5s ease-in-out infinite;
   }
 
   a {
