@@ -308,37 +308,54 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
   }
 }
 
-// 500+ Premium Domains for Business Intelligence Analysis (subset for testing)
+// 100 NEW Premium Domains for Business Intelligence Analysis (NO OVERLAPS with existing 437)
 const PREMIUM_DOMAINS = [
-  // AI/ML Companies (Tier 1)
-  'openai.com', 'anthropic.com', 'deepmind.com', 'huggingface.co',
-  'stability.ai', 'replicate.com', 'runway.ml', 'midjourney.com',
-  'character.ai', 'elevenlabs.io', 'synthesia.io', 'jasper.ai',
-  'perplexity.ai', 'scale.com', 'databricks.com', 'weights-biases.com',
+  // 🏥 BIOTECH/PHARMACEUTICALS ($4T+ market cap) - MAJOR GAP!
+  'moderna.com', 'pfizer.com', 'johnson.com', 'merck.com', 'novartis.com', 
+  'gsk.com', 'sanofi.com', 'abbvie.com', 'amgen.com', 'gilead.com',
+  'biogen.com', 'regeneron.com', 'vertex.com', 'ginkgobioworks.com', 'benchling.com',
   
-  // Cloud Infrastructure (Tier 1)
-  'aws.amazon.com', 'cloud.google.com', 'azure.microsoft.com',
-  'digitalocean.com', 'vultr.com', 'linode.com', 'cloudflare.com',
-  'vercel.com', 'netlify.com', 'railway.app', 'render.com',
-  'heroku.com', 'fly.io', 'planetscale.com', 'supabase.com',
+  // 🛡️ AEROSPACE/DEFENSE ($800B+ market cap) - COMPLETELY MISSING!
+  'lockheedmartin.com', 'boeing.com', 'northropgrumman.com', 'raytheon.com', 
+  'generaldynamics.com', 'airbus.com', 'rolls-royce.com', 'safran-group.com',
+  'embraer.com', 'bombardier.com', 'prattwhitney.com', 'aerovironment.com',
   
-  // SaaS Leaders (Tier 1)
-  'salesforce.com', 'hubspot.com', 'slack.com', 'notion.so',
-  'airtable.com', 'asana.com', 'monday.com', 'zendesk.com',
-  'intercom.com', 'mailchimp.com', 'canva.com', 'figma.com',
+  // ⚡ ENERGY/CLIMATE TECH ($2T+ market cap) - MAJOR GAP!
+  'exxonmobil.com', 'chevron.com', 'shell.com', 'bp.com', 'totalenergies.com',
+  'conocophillips.com', 'nextera.com', 'enphase.com', 'solaredge.com', 'firstsolar.com',
+  'vestas.com', 'orsted.com', 'ge.com', 'siemens-energy.com', 'climeworks.com',
   
-  // Fintech (Tier 1)
-  'stripe.com', 'square.com', 'plaid.com', 'coinbase.com',
-  'robinhood.com', 'brex.com', 'ramp.com', 'mercury.com',
-  'wise.com', 'chime.com', 'affirm.com', 'klarna.com',
+  // 📱 SEMICONDUCTORS/HARDWARE (Expand $500B sector) - MISSING KEY PLAYERS!
+  'tsmc.com', 'asml.com', 'applied-materials.com', 'lam-research.com', 'kla.com',
+  'synopsys.com', 'cadence.com', 'ansys.com', 'keysight.com', 'teradyne.com',
+  'groq.com', 'graphcore.ai', 'cerebras.ai', 'sambanova.ai', 'd-wave.com',
   
-  // E-commerce (Tier 1)
-  'shopify.com', 'amazon.com', 'woocommerce.com', 'bigcommerce.com',
-  'magento.com', 'etsy.com', 'ebay.com', 'alibaba.com',
+  // 📞 TELECOM/COMMUNICATIONS ($1.5T+ missing)
+  'verizon.com', 'att.com', 't-mobile.com', 'comcast.com', 'charter.com',
+  'ericsson.com', 'nokia.com', 'cisco.com', 'juniper.net', 'arista.com',
   
-  // Development Tools (Tier 1)
-  'github.com', 'gitlab.com', 'docker.com', 'kubernetes.io',
-  'terraform.io', 'postman.com', 'jetbrains.com', 'atlassian.com',
+  // 🌾 FOOD/AGRICULTURE ($1T+ missing)
+  'cargill.com', 'adm.com', 'bunge.com', 'tyson.com', 'nestle.com',
+  'unilever.com', 'pepsico.com', 'mondelez.com', 'kellogg.com', 'generalmills.com',
+  'indigo.ag', 'plenty.ag', 'aerofarms.com', 'boweryfarming.com', 'appharvest.com',
+  
+  // 🏭 MANUFACTURING/INDUSTRIAL ($2T+ missing)
+  '3m.com', 'honeywell.com', 'emerson.com', 'rockwellautomation.com', 'eaton.com',
+  'parker.com', 'danaher.com', 'illinois-tool.com', 'stanley-black-decker.com', 'dover.com',
+  
+  // 🌍 INTERNATIONAL GIANTS (Fix US bias)
+  'tencent.com', 'xiaomi.com', 'byd.com', 'meituan.com', 'bytedance.com',
+  'kuaishou.com', 'bilibili.com', 'netease.com', 'sina.com', 'sohu.com',
+  
+  // ✈️ TRAVEL/HOSPITALITY ($800B missing)
+  'marriott.com', 'hilton.com', 'ihg.com', 'hyatt.com', 'accor.com',
+  'carnival.com', 'royal-caribbean.com', 'norwegian.com', 'delta.com', 'united.com',
+  'american.com', 'southwest.com', 'jetblue.com', 'alaska.com',
+  
+  // 🛍️ RETAIL/CONSUMER (Beyond e-commerce platforms)
+  'costco.com', 'homedepot.com', 'lowes.com', 'macys.com', 'nordstrom.com',
+  'tjx.com', 'ross.com', 'gap.com', 'under-armour.com', 'lululemon.com',
+  'patagonia.com', 'rei.com', 'dicks.com', 'footlocker.com'
 ];
 
 class SophisticatedRunner {
