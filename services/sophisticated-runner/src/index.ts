@@ -714,7 +714,7 @@ Requirements:
     modelPerformance: Record<string, number>;
   }> {
     const existingDomains = await pool.query(`
-      SELECT DISTINCT domain FROM domains 
+      SELECT domain FROM domains 
       WHERE status IN ('completed', 'pending')
       ORDER BY created_at DESC
     `);
@@ -888,7 +888,7 @@ class JOLTDiscoveryService {
     modelPerformance: Record<string, number>;
   }> {
     const domains = await pool.query(`
-      SELECT DISTINCT domain FROM domains 
+      SELECT domain FROM domains 
       WHERE status = 'completed'
       ORDER BY last_processed_at DESC
       LIMIT 50
@@ -2369,7 +2369,7 @@ class PremiumDiscoveryMode {
   private async runPremiumCompetitorDiscovery(): Promise<any> {
     // Get domains to process
     const domains = await pool.query(`
-      SELECT DISTINCT domain FROM domains 
+      SELECT domain FROM domains 
       WHERE status IN ('completed', 'pending')
       ORDER BY created_at DESC
       LIMIT 50
@@ -2454,7 +2454,7 @@ Requirements:
 
   private async runPremiumCrisisDetection(): Promise<any> {
     const domains = await pool.query(`
-      SELECT DISTINCT domain FROM domains 
+      SELECT domain FROM domains 
       WHERE status = 'completed'
       ORDER BY last_processed_at DESC
       LIMIT 30
