@@ -335,7 +335,7 @@ function Rankings() {
           sort: sortBy
         })
         
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/rankings?${params}`)
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/rankings?${params}`)
         const data = await response.json()
         
         setRankings(data.domains || [])

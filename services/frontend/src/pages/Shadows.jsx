@@ -195,7 +195,7 @@ function Shadows() {
   useEffect(() => {
     const fetchShadows = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/shadows`)
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/shadows`)
         const data = await response.json()
         
         // If no declining domains, show some mock data for demonstration

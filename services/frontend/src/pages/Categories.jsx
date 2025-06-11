@@ -471,7 +471,7 @@ function Categories() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/categories`)
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/categories`)
         const data = await response.json()
         setCategories(data.categories || [])
       } catch (error) {
