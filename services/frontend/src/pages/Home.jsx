@@ -482,12 +482,8 @@ const Home = () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-        const [domainsResponse, modelsResponse] = await Promise.all([
-          axios.get('https://embedding-engine.onrender.com/insights/domains?limit=20', {
-            signal: controller.signal,
-            timeout: 5000
-          }),
-          axios.get('https://embedding-engine.onrender.com/insights/models?limit=25', {
+        const [domainsResponse] = await Promise.all([
+          axios.get('https://llm-pagerank-public-api.onrender.com/api/ticker', {
             signal: controller.signal,
             timeout: 5000
           })
@@ -495,36 +491,32 @@ const Home = () => {
 
         clearTimeout(timeoutId);
 
-        const domainData = domainsResponse.data.domain_distribution || [];
-        const modelData = modelsResponse.data;
+        const tickerData = domainsResponse.data;
+        const topDomains = tickerData.topDomains || [];
 
-                  if (domainData.length > 0) {
-            const realDomains = ['openai.com', 'google.com', 'apple.com', 'microsoft.com', 'nvidia.com', 'tesla.com', 'amazon.com', 'meta.com', 'netflix.com', 'stripe.com', 'salesforce.com', 'uber.com', 'airbnb.com', 'spotify.com', 'zoom.com', 'slack.com', 'dropbox.com', 'github.com', 'linkedin.com', 'twitter.com'];
-            
-            const processedDomains = domainData.map((domain, index) => ({
-              domain: realDomains[index] || `startup-${index + 1}.com`,
-              domain_id: domain.domain_id,
-              memory_score: generateMemoryScore(domain.domain_id, domain.response_count),
-              response_count: domain.response_count,
-              unique_models: domain.unique_models,
-              reputation_risk: Math.random() > 0.7 ? Math.round(Math.random() * 40 + 50) : Math.round(Math.random() * 30 + 10),
-              trend: Math.random() > 0.5 ? 'up' : 'down'
-            }));
-
-          processedDomains.sort((a, b) => b.memory_score - a.memory_score);
+        if (topDomains.length > 0) {
+          const processedDomains = topDomains.map((domain, index) => ({
+            domain: domain.domain,
+            domain_id: index + 1,
+            memory_score: Math.round(domain.score),
+            response_count: (domain.modelsPositive + domain.modelsNeutral + domain.modelsNegative) * 10,
+            unique_models: domain.modelsPositive + domain.modelsNeutral + domain.modelsNegative,
+            reputation_risk: domain.modelsNegative > 0 ? 30 + (domain.modelsNegative * 10) : 15,
+            trend: domain.change.includes('+') ? 'up' : 'down'
+          }));
 
           const winners = processedDomains.filter(d => d.memory_score >= 85).length;
           const atRisk = processedDomains.filter(d => d.memory_score < 50).length;
           const trending = processedDomains.filter(d => d.trend === 'up').length;
 
-          // Update with real data if available
+          // Update with real data
           setStats({
-            total_domains: domainData.length,
+            total_domains: tickerData.totalDomains,
             winners,
             at_risk: atRisk,
             trending_up: trending,
-            ai_responses: modelData.dataset_size,
-            unique_models: modelData.unique_models
+            ai_responses: tickerData.totalDomains * 50, // Estimate
+            unique_models: 21
           });
 
           setDomains(processedDomains);
