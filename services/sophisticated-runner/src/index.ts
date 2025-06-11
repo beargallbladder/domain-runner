@@ -231,15 +231,50 @@ function selectModelsForDomain(joltData: JoltData): string[] {
   }
 }
 
-function selectPromptsForDomain(joltData: JoltData): string[] {
-  if (joltData.jolt) {
-    // 🔬 JOLT domains get comprehensive prompts for benchmarking
-    const basePrompts = ['business_analysis', 'technical_assessment'];
-    const joltPrompts = ['brand_memory_analysis', 'market_intelligence'];
-    return [...basePrompts, ...joltPrompts.slice(0, joltData.additional_prompts || 1)];
-  } else {
-    // 📊 Regular domains get basic coverage
-    return ['business_analysis'];
+// ============================================================================
+// 🎯 TIERED MODEL SELECTION - COST CONTROL BY DOMAIN TIER
+// ============================================================================
+
+async function selectModelsForDomainTiered(domain: string): Promise<string[]> {
+  const tier = await tieredJOLTManager.getJOLTTier(domain);
+  
+  switch (tier) {
+    case 'core':
+      // Core benchmark JOLT: ALL tiers (premium + middle + cheap)
+      return [
+        ...PREMIUM_MODELS.slice(0, 2),      // 2 premium models
+        ...MIDDLE_TIER_MODELS.slice(0, 2),  // 2 middle tier models  
+        ...ULTRA_CHEAP_MODELS.slice(0, 2)   // 2 ultra cheap models
+      ];
+      
+    case 'rotating':
+      // Rotating JOLT: Premium + middle (while active)
+      return [
+        ...PREMIUM_MODELS.slice(0, 1),      // 1 premium model
+        ...MIDDLE_TIER_MODELS.slice(0, 2),  // 2 middle tier models
+        ...ULTRA_CHEAP_MODELS.slice(0, 1)   // 1 ultra cheap model
+      ];
+      
+    case 'regular':
+    default:
+      // Regular domains: Only cheapest models
+      return [ULTRA_CHEAP_MODELS[Math.floor(Math.random() * ULTRA_CHEAP_MODELS.length)]];
+  }
+}
+
+async function selectPromptsForDomainTiered(domain: string): Promise<string[]> {
+  const tier = await tieredJOLTManager.getJOLTTier(domain);
+  
+  switch (tier) {
+    case 'core':
+    case 'rotating':
+      // JOLT domains get comprehensive prompts for benchmarking
+      return ['business_analysis', 'technical_assessment', 'brand_memory_analysis', 'market_intelligence'];
+      
+    case 'regular':
+    default:
+      // Regular domains get basic coverage
+      return ['business_analysis'];
   }
 }
 
@@ -956,6 +991,284 @@ class JOLTDiscoveryService {
 const competitorDiscoveryService = new CompetitorDiscoveryService();
 const joltDiscoveryService = new JOLTDiscoveryService();
 
+// ============================================================================
+// 🎯 TIERED JOLT ARCHITECTURE - COST CONTROL & INTELLIGENCE OPTIMIZATION
+// ============================================================================
+// Tier 1: Core Benchmark JOLT (Permanent) - Always get ALL LLMs
+// Tier 2: Discovered JOLT (Rotating) - Get ALL LLMs while active, rotate for cost control
+// Tier 3: Regular Domains (Cost-Optimized) - Only cheapest LLMs
+
+class TieredJOLTManager {
+  // Core benchmark JOLT domains that NEVER rotate out
+  private readonly CORE_BENCHMARK_JOLT = [
+    'facebook.com',     // Meta rebrand - critical benchmark
+    'twitter.com',      // X acquisition - critical benchmark  
+    'theranos.com',     // Fraud collapse - critical benchmark
+    'apple.com',        // Jobs death transition - critical benchmark
+    'ftx.com',          // SBF fraud - critical benchmark
+    'wework.com',       // Neumann scandal - critical benchmark
+    'tesla.com',        // Musk controversies - critical benchmark
+    'google.com',       // Alphabet restructure - critical benchmark
+    'netflix.com',      // Streaming pivot - critical benchmark
+    'blackberry.com',   // Mobile decline - critical benchmark
+    'enron.com',        // Corporate collapse - critical benchmark
+    'wells-fargo.com'   // Fake accounts scandal - critical benchmark
+  ];
+
+  private readonly MAX_ROTATING_JOLT = 15; // Max rotating JOLT domains active at once
+  private readonly ROTATION_DAYS = 30;     // Days before considering rotation
+
+  async getCoreBenchmarkDomains(): Promise<string[]> {
+    return [...this.CORE_BENCHMARK_JOLT];
+  }
+
+  async getActiveRotatingJOLT(): Promise<string[]> {
+    try {
+      const result = await pool.query(`
+        SELECT domain FROM domains 
+        WHERE is_jolt = TRUE 
+        AND domain NOT IN (${this.CORE_BENCHMARK_JOLT.map((_, i) => `$${i + 1}`).join(',')})
+        AND (jolt_activated_at IS NULL OR jolt_activated_at > NOW() - INTERVAL '${this.ROTATION_DAYS} days')
+        ORDER BY jolt_severity DESC, jolt_activated_at DESC
+        LIMIT $${this.CORE_BENCHMARK_JOLT.length + 1}
+      `, this.CORE_BENCHMARK_JOLT);
+      
+      return result.rows.map(row => row.domain);
+    } catch (error) {
+      console.warn('⚠️  Could not query rotating JOLT domains, using fallback');
+      return [];
+    }
+  }
+
+  async getAllJOLTDomains(): Promise<{
+    core: string[];
+    rotating: string[];
+    total: number;
+  }> {
+    const core = await this.getCoreBenchmarkDomains();
+    const rotating = await this.getActiveRotatingJOLT();
+    
+    return {
+      core,
+      rotating,
+      total: core.length + rotating.length
+    };
+  }
+
+  async rotateJOLTDomains(): Promise<{
+    rotatedOut: string[];
+    rotatedIn: string[];
+    stillActive: string[];
+  }> {
+    try {
+      // Find candidates to rotate out (old discovered JOLT domains)
+      const rotateOutCandidates = await pool.query(`
+        SELECT domain FROM domains 
+        WHERE is_jolt = TRUE 
+        AND domain NOT IN (${this.CORE_BENCHMARK_JOLT.map((_, i) => `$${i + 1}`).join(',')})
+        AND jolt_activated_at < NOW() - INTERVAL '${this.ROTATION_DAYS} days'
+        ORDER BY jolt_activated_at ASC
+      `, this.CORE_BENCHMARK_JOLT);
+
+      // Find candidates to rotate in (new discovered crisis domains)
+      const rotateInCandidates = await pool.query(`
+        SELECT domain FROM domains 
+        WHERE is_jolt = FALSE 
+        AND domain IN (
+          SELECT domain FROM crisis_discoveries 
+          WHERE event_count >= 2 OR EXISTS (
+            SELECT 1 FROM jsonb_array_elements(events) AS event 
+            WHERE event->>'severity' IN ('critical', 'high')
+          )
+        )
+        LIMIT 5
+      `);
+
+      const rotatedOut: string[] = [];
+      const rotatedIn: string[] = [];
+
+      // Rotate out old domains (but keep some minimum active)
+      const currentActive = await this.getActiveRotatingJOLT();
+      const canRotateOut = Math.max(0, currentActive.length - this.MAX_ROTATING_JOLT);
+      
+      for (let i = 0; i < Math.min(canRotateOut, rotateOutCandidates.rows.length); i++) {
+        const domain = rotateOutCandidates.rows[i].domain;
+        await pool.query(`
+          UPDATE domains 
+          SET is_jolt = FALSE, jolt_deactivated_at = NOW()
+          WHERE domain = $1
+        `, [domain]);
+        rotatedOut.push(domain);
+        console.log(`🔄 Rotated out JOLT: ${domain} (cost control)`);
+      }
+
+      // Rotate in new domains
+      for (const row of rotateInCandidates.rows.slice(0, 3)) {
+        const domain = row.domain;
+        await pool.query(`
+          UPDATE domains 
+          SET is_jolt = TRUE, jolt_activated_at = NOW()
+          WHERE domain = $1
+        `, [domain]);
+        rotatedIn.push(domain);
+        console.log(`🔥 Rotated in JOLT: ${domain} (fresh crisis)`);
+      }
+
+      const stillActive = await this.getActiveRotatingJOLT();
+
+      return { rotatedOut, rotatedIn, stillActive };
+      
+    } catch (error) {
+      console.error('❌ JOLT rotation failed:', error);
+      return { rotatedOut: [], rotatedIn: [], stillActive: [] };
+    }
+  }
+
+  async isDomainJOLT(domain: string): Promise<boolean> {
+    // Core benchmarks are always JOLT
+    if (this.CORE_BENCHMARK_JOLT.includes(domain)) {
+      return true;
+    }
+
+    // Check if it's an active rotating JOLT domain
+    try {
+      const result = await pool.query(`
+        SELECT is_jolt FROM domains 
+        WHERE domain = $1 
+        AND (jolt_activated_at IS NULL OR jolt_activated_at > NOW() - INTERVAL '${this.ROTATION_DAYS} days')
+      `, [domain]);
+      
+      return result.rows[0]?.is_jolt || false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async getJOLTTier(domain: string): Promise<'core' | 'rotating' | 'regular'> {
+    if (this.CORE_BENCHMARK_JOLT.includes(domain)) {
+      return 'core';
+    }
+    
+    const isJolt = await this.isDomainJOLT(domain);
+    return isJolt ? 'rotating' : 'regular';
+  }
+}
+
+// ============================================================================
+// 🕒 WEEKLY SCHEDULING SERVICE - AUTOMATED DISCOVERY & PROCESSING
+// ============================================================================
+
+class WeeklySchedulingService {
+  private readonly WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+  private schedulingActive = false;
+  private lastDiscoveryRun: Date | null = null;
+
+  async startWeeklyScheduling(): Promise<void> {
+    if (this.schedulingActive) {
+      console.log('📅 Weekly scheduling already active');
+      return;
+    }
+
+    this.schedulingActive = true;
+    console.log('🕒 Starting weekly automated discovery & processing...');
+
+    // Check if we need to run immediately (first time or been too long)
+    const shouldRunNow = await this.shouldRunDiscovery();
+    if (shouldRunNow) {
+      console.log('🚀 Running initial discovery...');
+      await this.runWeeklyDiscovery();
+    }
+
+    // Set up weekly recurring schedule
+    const scheduleNext = () => {
+      if (!this.schedulingActive) return;
+      
+      setTimeout(async () => {
+        try {
+          await this.runWeeklyDiscovery();
+          scheduleNext(); // Schedule next run
+        } catch (error) {
+          console.error('❌ Weekly discovery failed:', error);
+          scheduleNext(); // Continue scheduling despite error
+        }
+      }, this.WEEK_MS);
+    };
+
+    scheduleNext();
+    console.log('✅ Weekly scheduling activated - next run in 7 days');
+  }
+
+  private async shouldRunDiscovery(): Promise<boolean> {
+    try {
+      // Check when we last ran discovery
+      const result = await pool.query(`
+        SELECT MAX(discovered_at) as last_run 
+        FROM competitor_discoveries
+      `);
+      
+      const lastRun = result.rows[0]?.last_run;
+      if (!lastRun) return true; // Never run before
+      
+      const daysSinceLastRun = (Date.now() - new Date(lastRun).getTime()) / (24 * 60 * 60 * 1000);
+      return daysSinceLastRun >= 7; // Run if it's been 7+ days
+      
+    } catch (error) {
+      return true; // If we can't check, run anyway
+    }
+  }
+
+  private async runWeeklyDiscovery(): Promise<void> {
+    console.log('📈 Weekly Discovery: Phase 1 (Competitors) + Phase 2 (Crises)...');
+    
+    try {
+      // Phase 1: Discover new competitors
+      const competitorResult = await competitorDiscoveryService.expandAllDomains();
+      console.log(`✅ Phase 1: Found ${competitorResult.newCompetitors} new competitors`);
+
+      // Brief pause
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      // Phase 2: Discover new crises
+      const crisisResult = await joltDiscoveryService.discoverEmergingJOLTEvents();
+      console.log(`✅ Phase 2: Found ${crisisResult.potentialJOLTEvents} crisis events`);
+
+      // Phase 3: Rotate JOLT domains for cost control
+      const rotationResult = await tieredJOLTManager.rotateJOLTDomains();
+      console.log(`✅ Phase 3: Rotated ${rotationResult.rotatedOut.length} out, ${rotationResult.rotatedIn.length} in`);
+
+      this.lastDiscoveryRun = new Date();
+      
+      console.log('🎉 Weekly discovery complete!', {
+        new_competitors: competitorResult.newCompetitors,
+        crisis_events: crisisResult.potentialJOLTEvents,
+        jolt_rotation: `${rotationResult.rotatedOut.length}→${rotationResult.rotatedIn.length}`,
+        total_cost: `$${(competitorResult.totalCost + crisisResult.totalCost).toFixed(4)}`
+      });
+
+    } catch (error) {
+      console.error('❌ Weekly discovery failed:', error);
+    }
+  }
+
+  stopScheduling(): void {
+    this.schedulingActive = false;
+    console.log('🛑 Weekly scheduling stopped');
+  }
+
+  getStatus(): any {
+    return {
+      active: this.schedulingActive,
+      last_discovery_run: this.lastDiscoveryRun,
+      next_run_in_hours: this.schedulingActive ? 
+        Math.round((this.WEEK_MS - (Date.now() - (this.lastDiscoveryRun?.getTime() || Date.now()))) / (60 * 60 * 1000)) : 
+        null
+    };
+  }
+}
+
+const tieredJOLTManager = new TieredJOLTManager();
+const weeklySchedulingService = new WeeklySchedulingService();
+
 class SophisticatedRunner {
   private domains: string[];
   private joltDomainCount: number = 0;
@@ -1113,19 +1426,19 @@ class SophisticatedRunner {
         ['processing', id]
       );
 
-      // 🔬 Get JOLT data for intelligent processing strategy
-      const joltData = await joltService.getJoltData(domain);
+      // 🎯 Select models and prompts based on tiered JOLT architecture
+      const selectedModels = await selectModelsForDomainTiered(domain);
+      const selectedPrompts = await selectPromptsForDomainTiered(domain);
+      const tier = await tieredJOLTManager.getJOLTTier(domain);
       
-      // 🎯 Select models and prompts based on JOLT status
-      const selectedModels = selectModelsForDomain(joltData);
-      const selectedPrompts = selectPromptsForDomain(joltData);
+      console.log(`📊 ${domain} analysis plan (${tier} tier): ${selectedModels.length} models × ${selectedPrompts.length} prompts = ${selectedModels.length * selectedPrompts.length} total API calls`);
       
-      console.log(`📊 ${domain} analysis plan: ${selectedModels.length} models × ${selectedPrompts.length} prompts = ${selectedModels.length * selectedPrompts.length} total API calls`);
-      
-      if (joltData.jolt) {
-        console.log(`🔥 JOLT BENCHMARK: ${domain} - Comprehensive analysis with premium models`);
+      if (tier === 'core') {
+        console.log(`🔥 CORE JOLT BENCHMARK: ${domain} - ALL models (premium + middle + cheap)`);
+      } else if (tier === 'rotating') {
+        console.log(`🔥 ROTATING JOLT: ${domain} - Premium + middle models while active`);
       } else {
-        console.log(`💰 COVERAGE: ${domain} - Basic analysis with ultra-cheap models`);
+        console.log(`💰 REGULAR COVERAGE: ${domain} - Ultra-cheap models only`);
       }
 
       // 🚀 Process all model-prompt combinations
@@ -1296,7 +1609,7 @@ app.get('/', (req, res) => {
     status: 'running',
     mode: SERVICE_MODE,
     service_id: SERVICE_ID,
-    strategy: 'Real LLM Processing - Cost Optimized',
+    strategy: 'Real LLM Processing - Cheap + Middle Tier',
     parallel_to: 'raw-capture-runner',
     message: 'Sophisticated runner with real LLM API calls - no processor_id dependencies',
     database_compatibility: 'Full compatibility with raw-capture-runner schema'
@@ -1575,6 +1888,13 @@ app.post('/migrate-jolt', async (req, res) => {
       ALTER TABLE domains
       ADD COLUMN IF NOT EXISTS source_domain TEXT;
       
+      -- Add JOLT rotation tracking columns
+      ALTER TABLE domains
+      ADD COLUMN IF NOT EXISTS jolt_activated_at TIMESTAMP;
+      
+      ALTER TABLE domains
+      ADD COLUMN IF NOT EXISTS jolt_deactivated_at TIMESTAMP;
+      
       -- Add cost tracking to responses table (optional)
       ALTER TABLE responses
       ADD COLUMN IF NOT EXISTS cost_usd DECIMAL(10,6);
@@ -1736,3 +2056,190 @@ async function main() {
 }
 
 main().catch(console.error); 
+
+// ============================================================================
+// 🎯 TIERED JOLT MANAGEMENT ENDPOINTS
+// ============================================================================
+
+// Get JOLT tier breakdown
+app.get('/jolt/tiers', async (req, res) => {
+  try {
+    const joltBreakdown = await tieredJOLTManager.getAllJOLTDomains();
+    
+    res.json({
+      success: true,
+      jolt_architecture: 'Tiered Cost Control System',
+      tiers: {
+        core_benchmark: {
+          domains: joltBreakdown.core,
+          count: joltBreakdown.core.length,
+          models: 'ALL (Premium + Middle + Cheap)',
+          description: 'Permanent crisis benchmarks - never rotate out'
+        },
+        rotating_jolt: {
+          domains: joltBreakdown.rotating,
+          count: joltBreakdown.rotating.length,
+          models: 'Premium + Middle (while active)',
+          description: 'Discovered crises - rotate for cost control'
+        }
+      },
+      total_jolt_domains: joltBreakdown.total,
+      cost_strategy: 'Spend premium budget on benchmarks, cheap models on regular domains'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Manual JOLT rotation
+app.post('/jolt/rotate', async (req, res) => {
+  try {
+    console.log('🔄 Manual JOLT rotation triggered...');
+    
+    const result = await tieredJOLTManager.rotateJOLTDomains();
+    
+    res.json({
+      success: true,
+      action: 'Manual JOLT Rotation',
+      results: {
+        rotated_out: result.rotatedOut,
+        rotated_in: result.rotatedIn,
+        still_active: result.stillActive
+      },
+      cost_impact: `Freed ${result.rotatedOut.length} premium slots, added ${result.rotatedIn.length} fresh crises`,
+      message: `🔄 Rotated ${result.rotatedOut.length} domains out, ${result.rotatedIn.length} domains in`
+    });
+    
+  } catch (error) {
+    console.error('❌ Manual JOLT rotation failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Check domain JOLT tier
+app.get('/jolt/tier/:domain', async (req, res) => {
+  try {
+    const domain = req.params.domain;
+    const tier = await tieredJOLTManager.getJOLTTier(domain);
+    
+    let tierInfo;
+    switch (tier) {
+      case 'core':
+        tierInfo = {
+          tier: 'Core Benchmark JOLT',
+          models: 'ALL (6 models: 2 premium + 2 middle + 2 cheap)',
+          prompts: 4,
+          rotation: 'Never rotates out',
+          cost_level: 'High (premium models)'
+        };
+        break;
+      case 'rotating':
+        tierInfo = {
+          tier: 'Rotating JOLT',
+          models: 'Premium + Middle (4 models: 1 premium + 2 middle + 1 cheap)',
+          prompts: 4,
+          rotation: 'Rotates after 30 days of inactivity',
+          cost_level: 'Medium (some premium models)'
+        };
+        break;
+      case 'regular':
+      default:
+        tierInfo = {
+          tier: 'Regular Domain',
+          models: 'Cheapest only (1 model: ultra-cheap random)',
+          prompts: 1,
+          rotation: 'N/A',
+          cost_level: 'Low (cheapest models only)'
+        };
+        break;
+    }
+    
+    res.json({
+      domain,
+      ...tierInfo,
+      estimated_cost_per_run: tier === 'core' ? '$0.15-0.25' : tier === 'rotating' ? '$0.08-0.12' : '$0.001-0.002'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ============================================================================
+// 🕒 WEEKLY SCHEDULING ENDPOINTS
+// ============================================================================
+
+// Start weekly automated discovery
+app.post('/schedule/start', async (req, res) => {
+  try {
+    console.log('🕒 Starting weekly automated discovery scheduling...');
+    
+    await weeklySchedulingService.startWeeklyScheduling();
+    
+    res.json({
+      success: true,
+      message: '🕒 Weekly scheduling activated!',
+      schedule: {
+        frequency: 'Every 7 days',
+        includes: [
+          'Phase 1: Competitor discovery',
+          'Phase 2: Crisis detection',
+          'Phase 3: JOLT rotation for cost control'
+        ],
+        estimated_cost_per_week: '$3-5',
+        first_run: 'Immediate (if needed) or in 7 days'
+      },
+      automation: 'Fully automated - no manual intervention required'
+    });
+    
+  } catch (error) {
+    console.error('❌ Weekly scheduling start failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Stop weekly scheduling
+app.post('/schedule/stop', async (req, res) => {
+  try {
+    weeklySchedulingService.stopScheduling();
+    
+    res.json({
+      success: true,
+      message: '🛑 Weekly scheduling stopped',
+      note: 'Manual discovery endpoints still available'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Get scheduling status
+app.get('/schedule/status', async (req, res) => {
+  try {
+    const status = weeklySchedulingService.getStatus();
+    
+    res.json({
+      scheduling: status,
+      manual_endpoints: {
+        discovery: 'POST /discover-competitors, POST /discover-crises',
+        jolt_management: 'GET /jolt/tiers, POST /jolt/rotate',
+        testing: 'GET /test-competitor/:domain, GET /test-crisis/:domain'
+      },
+      automation_status: status.active ? 'Active - running weekly' : 'Stopped - manual only'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
