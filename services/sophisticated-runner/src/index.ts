@@ -32,43 +32,38 @@ const SERVICE_MODE = 'comprehensive_all_models';
 
 const INDUSTRY_INTELLIGENCE_URL = process.env.INDUSTRY_INTELLIGENCE_URL || 'https://industry-intelligence.onrender.com';
 
-// 🔥 LOCAL JOLT FALLBACK - Key Crisis Domains for Immediate Testing
+// 🔥 COMPLETE 30-DOMAIN JOLT SYSTEM - Your Full Brand Crisis Benchmarks
 const LOCAL_JOLT_FALLBACK = {
-  'tesla.com': {
-    jolt: true,
-    type: 'leadership_crisis',
-    severity: 'critical',
-    additional_prompts: 3,
-    description: 'Ongoing CEO volatility and brand reputation challenges'
-  },
-  'apple.com': {
-    jolt: true,
-    type: 'leadership_change',
-    severity: 'critical',
-    additional_prompts: 4,
-    description: 'Steve Jobs death transition crisis - major brand vulnerability period'
-  },
-  'meta.com': {
-    jolt: true,
-    type: 'brand_transition',
-    severity: 'high',
-    additional_prompts: 2,
-    description: 'Facebook to Meta rebrand - massive corporate identity shift'
-  },
-  'facebook.com': {
-    jolt: true,
-    type: 'brand_transition',
-    severity: 'high',
-    additional_prompts: 2,
-    description: 'Facebook to Meta rebrand - legacy domain analysis'
-  },
-  'twitter.com': {
-    jolt: true,
-    type: 'brand_transition',
-    severity: 'critical',
-    additional_prompts: 3,
-    description: 'Twitter to X rebrand - complete brand destruction case'
-  }
+  'facebook.com': { jolt: true, type: 'brand_transition', severity: 'critical', additional_prompts: 3, description: 'Facebook → Meta corporate rebrand ($10B+ investment)' },
+  'twitter.com': { jolt: true, type: 'brand_transition', severity: 'critical', additional_prompts: 4, description: 'Twitter → X complete rebrand (Musk acquisition)' },
+  'google.com': { jolt: true, type: 'corporate_restructure', severity: 'high', additional_prompts: 2, description: 'Google → Alphabet corporate restructure' },
+  'weightwatchers.com': { jolt: true, type: 'brand_simplification', severity: 'medium', additional_prompts: 2, description: 'Weight Watchers → WW brand simplification' },
+  'dunkindonuts.com': { jolt: true, type: 'brand_simplification', severity: 'medium', additional_prompts: 2, description: 'Dunkin\' Donuts → Dunkin\' brand simplification' },
+  'comcast.com': { jolt: true, type: 'consumer_rebrand', severity: 'critical', additional_prompts: 4, description: 'Comcast → Xfinity consumer brand (ongoing confusion)' },
+  'altria.com': { jolt: true, type: 'reputation_rebrand', severity: 'critical', additional_prompts: 4, description: 'Philip Morris → Altria (reputation management)' },
+  'blackberry.com': { jolt: true, type: 'business_collapse', severity: 'critical', additional_prompts: 4, description: 'BlackBerry → BlackBerry Limited (mobile decline)' },
+  'netflix.com': { jolt: true, type: 'business_model_transition', severity: 'high', additional_prompts: 3, description: 'Netflix DVD → Streaming pivot (Qwikster crisis)' },
+  'ibm.com': { jolt: true, type: 'strategic_pivot', severity: 'high', additional_prompts: 3, description: 'IBM → Cloud/AI focus (Red Hat acquisition)' },
+  'xerox.com': { jolt: true, type: 'category_expansion', severity: 'high', additional_prompts: 3, description: 'Xerox → Document Technology solutions' },
+  'fedex.com': { jolt: true, type: 'brand_simplification', severity: 'medium', additional_prompts: 2, description: 'Federal Express → FedEx (successful simplification)' },
+  'bp.com': { jolt: true, type: 'strategic_rebrand', severity: 'medium', additional_prompts: 2, description: 'British Petroleum → BP \'Beyond Petroleum\'' },
+  'kfc.com': { jolt: true, type: 'brand_simplification', severity: 'medium', additional_prompts: 2, description: 'Kentucky Fried Chicken → KFC' },
+  'instagram.com': { jolt: true, type: 'acquisition_integration', severity: 'medium', additional_prompts: 2, description: 'Instagram independent → Facebook acquisition' },
+  'linkedin.com': { jolt: true, type: 'acquisition_integration', severity: 'medium', additional_prompts: 2, description: 'LinkedIn independent → Microsoft acquisition' },
+  'paypal.com': { jolt: true, type: 'spinoff_independence', severity: 'medium', additional_prompts: 2, description: 'PayPal eBay subsidiary → Independent company' },
+  'radioshack.com': { jolt: true, type: 'failed_rebrand', severity: 'low', additional_prompts: 1, description: 'RadioShack → The Shack (failed, reverted 2011)' },
+  'apple.com': { jolt: true, type: 'ceo_death_transition', severity: 'critical', additional_prompts: 4, description: 'Steve Jobs death → Tim Cook era transition' },
+  'theranos.com': { jolt: true, type: 'fraud_collapse', severity: 'critical', additional_prompts: 4, description: 'Theranos fraud scandal → Complete business collapse' },
+  'wework.com': { jolt: true, type: 'ceo_scandal_collapse', severity: 'critical', additional_prompts: 4, description: 'Adam Neumann scandal → WeWork IPO collapse' },
+  'ftx.com': { jolt: true, type: 'fraud_collapse', severity: 'critical', additional_prompts: 4, description: 'FTX collapse → Sam Bankman-Fried fraud conviction' },
+  'tesla.com': { jolt: true, type: 'ceo_controversy_ongoing', severity: 'high', additional_prompts: 3, description: 'Elon Musk Twitter acquisition → Tesla brand stress' },
+  'enron.com': { jolt: true, type: 'corporate_collapse', severity: 'high', additional_prompts: 3, description: 'Enron accounting scandal → Complete corporate collapse' },
+  'lehman.com': { jolt: true, type: 'financial_collapse', severity: 'high', additional_prompts: 3, description: 'Lehman Brothers collapse → Global financial crisis trigger' },
+  'starbucks.com': { jolt: true, type: 'ceo_transition_return', severity: 'medium', additional_prompts: 2, description: 'Howard Schultz return as CEO → Brand turnaround' },
+  'disney.com': { jolt: true, type: 'acquisition_spree', severity: 'medium', additional_prompts: 2, description: 'Disney mega-acquisitions → Marvel, Star Wars, Fox integration' },
+  'uber.com': { jolt: true, type: 'ceo_scandal_transition', severity: 'high', additional_prompts: 3, description: 'Travis Kalanick resignation → Multiple scandals fallout' },
+  'wells-fargo.com': { jolt: true, type: 'scandal_reputation_crisis', severity: 'high', additional_prompts: 3, description: 'Wells Fargo fake accounts scandal → Massive reputation damage' },
+  'meta.com': { jolt: true, type: 'brand_transition', severity: 'high', additional_prompts: 2, description: 'Facebook to Meta rebrand - new domain identity' }
 };
 
 interface JoltData {
