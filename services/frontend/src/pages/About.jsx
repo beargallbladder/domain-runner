@@ -201,7 +201,7 @@ function About() {
           Exploring the intersection of artificial intelligence, digital permanence, 
           and the future of memory itself.
         </p>
-        <div className="email">sam@llmpagerank.com</div>
+        <div className="email">samkim@samkim.com</div>
       </Contact>
     </Container>
   )
