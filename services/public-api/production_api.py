@@ -242,26 +242,27 @@ async def get_domain_intelligence(
     """
     try:
         async with pool.acquire() as conn:
-            # Get domain intelligence with fire alarm indicators
+            # Get domain intelligence - REAL DATA ONLY, no time filters that break the site
             domain_data = await conn.fetchrow("""
                 SELECT 
                     domain, domain_id, memory_score, ai_consensus_score, 
                     drift_delta, model_count,
                     
-                    -- FIRE ALARM INDICATORS
-                    reputation_risk_score,
-                    competitive_threat_level,
-                    brand_confusion_alert,
-                    perception_decline_alert,
-                    visibility_gap_alert,
+                    -- FIRE ALARM INDICATORS (optional columns)
+                    COALESCE(reputation_risk_score, 0.0) as reputation_risk_score,
+                    COALESCE(competitive_threat_level, 'low') as competitive_threat_level,
+                    COALESCE(brand_confusion_alert, false) as brand_confusion_alert,
+                    COALESCE(perception_decline_alert, false) as perception_decline_alert,
+                    COALESCE(visibility_gap_alert, false) as visibility_gap_alert,
                     
                     -- Business intelligence
                     business_focus, market_position, keywords, top_themes,
                     cache_data, updated_at
                     
                 FROM public_domain_cache 
-                WHERE (domain_id = $1 OR domain = $1) 
-                AND updated_at > NOW() - INTERVAL '72 hours'
+                WHERE (domain_id::text = $1 OR domain = $1)
+                ORDER BY updated_at DESC NULLS LAST
+                LIMIT 1
             """, domain_identifier)
         
         if not domain_data:
