@@ -904,10 +904,10 @@ app.get('/status', async (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
-    service_id: SERVICE_ID,
+    service_id: 'sophisticated_v1_comprehensive',
     database_schema: 'Compatible with raw-capture-runner',
     api_keys_configured: {
       openai: openaiClients.length,
@@ -919,6 +919,87 @@ app.get('/health', (req, res) => {
       grok: !!process.env.XAI_API_KEY
     }
   });
+});
+
+// JOLT MIGRATION ENDPOINT - Add JOLT metadata support to production database
+app.post('/migrate-jolt', async (req, res) => {
+  try {
+    console.log('🔧 Running JOLT metadata migration from sophisticated-runner...');
+    
+    // Run the migration SQL
+    await pool.query(`
+      BEGIN;
+      
+      -- Add JOLT metadata to domains table (all optional, defaults safe)
+      ALTER TABLE domains 
+      ADD COLUMN IF NOT EXISTS is_jolt BOOLEAN DEFAULT FALSE;
+      
+      ALTER TABLE domains 
+      ADD COLUMN IF NOT EXISTS jolt_type TEXT;
+      
+      ALTER TABLE domains 
+      ADD COLUMN IF NOT EXISTS jolt_severity TEXT 
+      CHECK (jolt_severity IS NULL OR jolt_severity IN ('low', 'medium', 'high', 'critical'));
+      
+      ALTER TABLE domains 
+      ADD COLUMN IF NOT EXISTS jolt_additional_prompts INTEGER DEFAULT 0;
+      
+      -- Add cost tracking to responses table (optional)
+      ALTER TABLE responses
+      ADD COLUMN IF NOT EXISTS cost_usd DECIMAL(10,6);
+      
+      -- Create index for JOLT queries (only affects JOLT domains)
+      CREATE INDEX IF NOT EXISTS idx_domains_jolt ON domains(is_jolt) WHERE is_jolt = TRUE;
+      
+      COMMIT;
+    `);
+    
+    // Insert key JOLT domains using our embedded JOLT system
+    const joltDomains = Object.entries(LOCAL_JOLT_FALLBACK).map(([domain, data]) => ({
+      domain,
+      type: data.type,
+      severity: data.severity,
+      prompts: data.additional_prompts,
+      description: data.description
+    }));
+    
+    let joltSeeded = 0;
+    for (const jolt of joltDomains) {
+      const result = await pool.query(`
+        INSERT INTO domains (domain, is_jolt, jolt_type, jolt_severity, jolt_additional_prompts)
+        VALUES ($1, TRUE, $2, $3, $4)
+        ON CONFLICT (domain) DO UPDATE SET
+          is_jolt = TRUE,
+          jolt_type = EXCLUDED.jolt_type,
+          jolt_severity = EXCLUDED.jolt_severity,
+          jolt_additional_prompts = EXCLUDED.jolt_additional_prompts
+        RETURNING (xmax = 0) AS inserted
+      `, [jolt.domain, jolt.type, jolt.severity, jolt.prompts]);
+      
+      if (result.rows[0].inserted) joltSeeded++;
+    }
+    
+    res.json({
+      success: true,
+      message: '🎉 JOLT metadata migration complete from sophisticated-runner!',
+      changes: [
+        'Added is_jolt, jolt_type, jolt_severity, jolt_additional_prompts to domains table',
+        'Added cost_usd to responses table',
+        'Created JOLT domain index'
+      ],
+      jolt_domains_seeded: joltSeeded,
+      total_jolt_domains: joltDomains.length,
+      note: 'All changes are optional - existing data unchanged'
+    });
+    
+  } catch (error) {
+    console.error('❌ JOLT migration failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'JOLT migration failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // 🔬 JOLT ANALYSIS ENDPOINTS
