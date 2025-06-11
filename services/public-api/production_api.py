@@ -1100,11 +1100,14 @@ async def migrate_timeseries():
     """
     try:
         async with pool.acquire() as conn:
-            # The exact columns we need for time-series
+            # The exact columns we need for time-series AND trends AND jolt benchmarks
             migrations = [
                 "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS memory_score_history JSONB DEFAULT '[]'",
                 "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS previous_memory_score REAL DEFAULT 0.0", 
-                "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS memory_score_trend TEXT DEFAULT 'stable'"
+                "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS memory_score_trend TEXT DEFAULT 'stable'",
+                "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS trend_percentage REAL DEFAULT 0.0",
+                "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS measurement_count INTEGER DEFAULT 1",
+                "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS last_measurement_date TIMESTAMP DEFAULT NOW()"
             ]
             
             results = []
@@ -1123,8 +1126,10 @@ async def migrate_timeseries():
                 count = await conn.execute("""
                     UPDATE public_domain_cache 
                     SET memory_score_history = '[]'::jsonb,
-                        previous_memory_score = memory_score
-                    WHERE memory_score_history IS NULL
+                        previous_memory_score = memory_score,
+                        measurement_count = 1,
+                        last_measurement_date = NOW()
+                    WHERE memory_score_history IS NULL OR measurement_count IS NULL
                 """)
                 results.append(f"✅ Initialized {count} domains")
             except Exception as e:
