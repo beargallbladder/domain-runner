@@ -1,13 +1,71 @@
 services:
+  # Frontend - Static Site
+  - type: web
+    name: llm-pagerank-frontend
+    env: static
+    buildCommand: cd services/frontend && npm install && npm run build
+    staticPublishPath: ./services/frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://llm-pagerank-public-api.onrender.com
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # Public API
+  - type: web
+    name: llm-pagerank-public-api
+    env: python
+    buildCommand: cd services/public-api && pip install -r requirements.txt
+    startCommand: cd services/public-api && python production_api.py
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        value: "postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db"
+
+  # Raw Capture Runner
   - type: web
     name: raw-capture-runner
     runtime: node
-    buildCommand: npm install && npm run build
-    startCommand: node dist/index.js
+    buildCommand: cd services/raw-capture-runner && npm cache clean --force && npm install && npm run build
+    startCommand: cd services/raw-capture-runner && node dist/index.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: OPENAI_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: raw-capture-db
+          property: connectionString
+
+  # Sophisticated Runner  
+  - type: web
+    name: sophisticated-runner
+    runtime: node
+    buildCommand: cd services/sophisticated-runner && npm cache clean --force && npm install && npm run build
+    startCommand: cd services/sophisticated-runner && node dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVICE_MODE
+        value: sophisticated_parallel
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
         sync: false
       - key: DATABASE_URL
         fromDatabase:
