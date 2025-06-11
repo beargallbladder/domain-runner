@@ -836,6 +836,86 @@ app.post('/seed', async (req: Request, res: Response) => {
   }
 });
 
+// JOLT MIGRATION ENDPOINT - Run once to add JOLT metadata support
+app.post('/migrate-jolt', async (req: Request, res: Response) => {
+  try {
+    console.log('🔧 Running JOLT metadata migration...');
+    
+    // Run the migration SQL
+    await query(`
+      BEGIN;
+      
+      -- Add JOLT metadata to domains table (all optional, defaults safe)
+      ALTER TABLE domains 
+      ADD COLUMN IF NOT EXISTS is_jolt BOOLEAN DEFAULT FALSE;
+      
+      ALTER TABLE domains 
+      ADD COLUMN IF NOT EXISTS jolt_type TEXT;
+      
+      ALTER TABLE domains 
+      ADD COLUMN IF NOT EXISTS jolt_severity TEXT 
+      CHECK (jolt_severity IS NULL OR jolt_severity IN ('low', 'medium', 'high', 'critical'));
+      
+      ALTER TABLE domains 
+      ADD COLUMN IF NOT EXISTS jolt_additional_prompts INTEGER DEFAULT 0;
+      
+      -- Add cost tracking to responses table (optional)
+      ALTER TABLE responses
+      ADD COLUMN IF NOT EXISTS cost_usd DECIMAL(10,6);
+      
+      -- Create index for JOLT queries (only affects JOLT domains)
+      CREATE INDEX IF NOT EXISTS idx_domains_jolt ON domains(is_jolt) WHERE is_jolt = TRUE;
+      
+      COMMIT;
+    `);
+    
+    // Insert key JOLT domains
+    const joltDomains = [
+      { domain: 'apple.com', type: 'leadership_change', severity: 'critical', prompts: 8 },
+      { domain: 'theranos.com', type: 'corporate_collapse', severity: 'critical', prompts: 7 },
+      { domain: 'facebook.com', type: 'brand_transition', severity: 'high', prompts: 6 },
+      { domain: 'twitter.com', type: 'brand_transition', severity: 'critical', prompts: 8 },
+      { domain: 'tesla.com', type: 'leadership_controversy', severity: 'high', prompts: 6 }
+    ];
+    
+    let joltSeeded = 0;
+    for (const jolt of joltDomains) {
+      const result = await query(`
+        INSERT INTO domains (domain, is_jolt, jolt_type, jolt_severity, jolt_additional_prompts)
+        VALUES ($1, TRUE, $2, $3, $4)
+        ON CONFLICT (domain) DO UPDATE SET
+          is_jolt = TRUE,
+          jolt_type = EXCLUDED.jolt_type,
+          jolt_severity = EXCLUDED.jolt_severity,
+          jolt_additional_prompts = EXCLUDED.jolt_additional_prompts
+        RETURNING (xmax = 0) AS inserted
+      `, [jolt.domain, jolt.type, jolt.severity, jolt.prompts]);
+      
+      if (result.rows[0].inserted) joltSeeded++;
+    }
+    
+    res.json({
+      success: true,
+      message: '🎉 JOLT metadata migration complete!',
+      changes: [
+        'Added is_jolt, jolt_type, jolt_severity, jolt_additional_prompts to domains table',
+        'Added cost_usd to responses table',
+        'Created JOLT domain index'
+      ],
+      jolt_domains_seeded: joltSeeded,
+      note: 'All changes are optional - existing data unchanged'
+    });
+    
+  } catch (error) {
+    console.error('❌ JOLT migration failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'JOLT migration failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 // API endpoints for metrics
 app.get('/api/stats', async (req: Request, res: Response) => {
   try {
@@ -1092,13 +1172,13 @@ async function processNextBatch(): Promise<void> {
                 const prompt = PROMPT_TEMPLATES[promptType](domain.domain);
                 const result = await callLLM(model, prompt, domain.domain);
                 
-                // Insert real response data
+                // Insert real response data (including JOLT cost tracking)
                 await query(`
                   INSERT INTO responses (
                     domain_id, model, prompt_type, interpolated_prompt, 
                     raw_response, token_count, prompt_tokens, completion_tokens,
-                    token_usage, total_cost_usd, latency_ms
-                  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    token_usage, total_cost_usd, latency_ms, cost_usd
+                  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 `, [
                   domain.id,
                   model,
@@ -1110,7 +1190,8 @@ async function processNextBatch(): Promise<void> {
                   (result.tokenUsage.completion_tokens || result.tokenUsage.output_tokens || 0),
                   JSON.stringify(result.tokenUsage),
                   result.cost,
-                  result.latency
+                  result.latency,
+                  result.cost  // Store cost in new JOLT cost tracking field
                 ]);
                 
                 console.log(`✅ ${model} ${promptType} completed for ${domain.domain} (${result.latency}ms, $${result.cost.toFixed(6)})`);
