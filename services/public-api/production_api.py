@@ -44,7 +44,12 @@ app = FastAPI(
 # CORS for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://llmpagerank.com", "https://app.llmpagerank.com"],
+    allow_origins=[
+        "https://llmpagerank.com", 
+        "https://www.llmpagerank.com",
+        "https://app.llmpagerank.com", 
+        "https://domain-runner.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
