@@ -324,6 +324,13 @@ const KeyMetrics = styled.div`
   }
 `
 
+const RelatedDomainsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+`
+
 const ShareableFooter = styled.div`
   background: ${Colors.white};
   padding: 60px 40px;
@@ -728,6 +735,199 @@ function Domain() {
           </Card>
         </SidePanel>
       </MainContent>
+
+      {/* Related Domains Section for interconnected navigation */}
+      <div style={{ 
+        background: '#f8f9fa', 
+        padding: '80px 40px',
+        borderTop: '1px solid #e5e5e5'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <motion.h2
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: '600',
+              color: Colors.black,
+              textAlign: 'center',
+              marginBottom: '20px',
+              letterSpacing: '-1px'
+            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
+          >
+            🏢 Related Domains
+          </motion.h2>
+          <p style={{
+            fontSize: '1.2rem',
+            color: Colors.darkGray,
+            textAlign: 'center',
+            marginBottom: '50px',
+            maxWidth: '600px',
+            marginLeft: 'auto',
+            marginRight: 'auto'
+          }}>
+            Explore similar domains in AI memory rankings
+          </p>
+          
+          <RelatedDomainsGrid>
+            {/* Related domains based on category/business focus */}
+            {[
+              { domain: 'facebook.com', score: 95, category: 'Social Media', change: '+0.2%' },
+              { domain: 'bloomberg.com', score: 95, category: 'Financial Media', change: '+0.1%' },
+              { domain: 'yahoo.com', score: 95, category: 'Web Portal', change: '+0.3%' },
+              { domain: 'google.es', score: 95, category: 'Search Engine', change: '+0.1%' },
+              { domain: 'synopsys.com', score: 95, category: 'Enterprise Software', change: '+0.1%' },
+            ].filter(d => d.domain !== domainName).slice(0, 4).map((domain, index) => (
+              <motion.div
+                key={domain.domain}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.0 + index * 0.1 }}
+              >
+                <Link
+                  to={`/domain/${domain.domain}`}
+                  style={{
+                    display: 'block',
+                    background: Colors.white,
+                    borderRadius: '16px',
+                    padding: '32px',
+                    textDecoration: 'none',
+                    border: '2px solid #f0f0f0',
+                    transition: 'all 0.3s ease',
+                    height: '100%'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-4px)';
+                    e.target.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.15)';
+                    e.target.style.borderColor = Colors.blue;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                    e.target.style.borderColor = '#f0f0f0';
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <h3 style={{
+                      fontSize: '1.3rem',
+                      fontWeight: '600',
+                      color: Colors.black,
+                      margin: '0'
+                    }}>
+                      {domain.domain}
+                    </h3>
+                    <div style={{
+                      fontSize: '1.5rem',
+                      fontWeight: '700',
+                      color: domain.change.startsWith('+') ? Colors.green : Colors.red
+                    }}>
+                      {domain.change.startsWith('+') ? '↗' : '↘'} {domain.change}
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    fontSize: '2.5rem',
+                    fontWeight: '700',
+                    color: domain.score >= 90 ? Colors.green : Colors.orange,
+                    marginBottom: '12px'
+                  }}>
+                    {domain.score}
+                  </div>
+                  
+                  <div style={{
+                    fontSize: '0.9rem',
+                    color: Colors.darkGray,
+                    marginBottom: '16px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    fontWeight: '500'
+                  }}>
+                    AI Memory Score
+                  </div>
+                  
+                  <div style={{
+                    display: 'inline-block',
+                    background: Colors.blue,
+                    color: Colors.white,
+                    padding: '6px 12px',
+                    borderRadius: '12px',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {domain.category}
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </RelatedDomainsGrid>
+          
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '50px'
+          }}>
+            <Link 
+              to="/rankings"
+              style={{
+                display: 'inline-block',
+                background: Colors.blue,
+                color: Colors.white,
+                padding: '16px 32px',
+                borderRadius: '30px',
+                textDecoration: 'none',
+                fontWeight: '600',
+                fontSize: '1.1rem',
+                transition: 'all 0.3s ease',
+                marginRight: '16px'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 10px 30px rgba(0, 122, 255, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = 'none';
+              }}
+            >
+              📊 View Full Rankings
+            </Link>
+            <Link 
+              to="/categories"
+              style={{
+                display: 'inline-block',
+                background: 'transparent',
+                color: Colors.blue,
+                border: `2px solid ${Colors.blue}`,
+                padding: '16px 32px',
+                borderRadius: '30px',
+                textDecoration: 'none',
+                fontWeight: '600',
+                fontSize: '1.1rem',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = Colors.blue;
+                e.target.style.color = Colors.white;
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+                e.target.style.color = Colors.blue;
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              🏢 Explore Categories
+            </Link>
+          </div>
+        </div>
+      </div>
 
       <ShareableFooter>
         <motion.div

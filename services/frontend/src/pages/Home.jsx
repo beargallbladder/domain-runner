@@ -1,369 +1,232 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-// Enhanced color palette for stronger visual indicators
-const Colors = {
-  white: '#FFFFFF',
-  lightGray: '#F8F9FA',
-  mediumGray: '#E5E7EB',
-  darkGray: '#374151',
-  black: '#111827',
-  blue: '#007AFF',
-  green: '#34C759',
-  red: '#FF3B30',
-  orange: '#FF9500',
-  purple: '#8B5CF6',
-  // Strong indicators
-  success: '#30D158',
-  warning: '#FFCC02',
-  danger: '#FF6B6B'
-};
-
 const Container = styled.div`
   min-height: 100vh;
-  background: ${Colors.white};
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
 `;
 
+// Steve Jobs style - lots of white space, minimal, emotive
 const HeroSection = styled.div`
   text-align: center;
-  padding: 80px 40px 60px;
-  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-  color: ${Colors.white};
+  padding: 120px 40px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
 `;
 
-const MainTitle = styled(motion.h1)`
-  font-size: 4rem;
+const MainQuestion = styled(motion.h1)`
+  font-size: 4.5rem;
   font-weight: 700;
-  color: ${Colors.white};
-  margin: 0 0 20px;
-  letter-spacing: -2px;
+  color: #1d1d1f;
+  margin: 0 0 40px;
+  letter-spacing: -3px;
   line-height: 1.1;
   
-  .highlight {
-    color: #007AFF;
-    text-shadow: 0 0 30px rgba(0, 122, 255, 0.5);
+  @media (max-width: 768px) {
+    font-size: 3rem;
+    letter-spacing: -2px;
   }
 `;
 
-const Subtitle = styled(motion.p)`
+const SubQuestion = styled(motion.p)`
   font-size: 1.8rem;
-  color: #ccc;
-  margin: 0 0 40px;
+  color: #86868b;
+  margin: 0 0 60px;
   font-weight: 400;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
   line-height: 1.4;
-`;
-
-const ValueProp = styled(motion.div)`
-  background: rgba(0, 122, 255, 0.1);
-  border: 2px solid #007AFF;
-  border-radius: 16px;
-  padding: 24px;
-  margin: 40px auto;
-  max-width: 600px;
-  text-align: center;
   
-  .big-text {
+  @media (max-width: 768px) {
     font-size: 1.4rem;
-    font-weight: 600;
-    color: ${Colors.white};
-    margin-bottom: 12px;
-  }
-  
-  .small-text {
-    font-size: 1rem;
-    color: #ccc;
-    font-weight: 400;
   }
 `;
 
-const StatsBar = styled(motion.div)`
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-  margin: 40px 0;
-  flex-wrap: wrap;
+// Financial ticker style
+const TickerSection = styled.div`
+  background: #f5f5f7;
+  padding: 60px 0;
+  border-top: 1px solid #d2d2d7;
+  border-bottom: 1px solid #d2d2d7;
 `;
 
-const StatItem = styled.div`
+const TickerHeader = styled.div`
   text-align: center;
-  position: relative;
-  
-  &::before {
-    content: '${props => props.icon}';
-    font-size: 2rem;
-    display: block;
-    margin-bottom: 8px;
-  }
+  margin-bottom: 40px;
+  padding: 0 40px;
 `;
 
-const StatNumber = styled.div`
+const TickerTitle = styled.h2`
   font-size: 2.5rem;
-  font-weight: 700;
-  color: ${props => 
-    props.type === 'good' ? Colors.success :
-    props.type === 'warning' ? Colors.warning :
-    props.type === 'danger' ? Colors.danger :
-    Colors.blue
-  };
-  margin-bottom: 8px;
-  text-shadow: 0 0 20px ${props => 
-    props.type === 'good' ? 'rgba(48, 209, 88, 0.3)' :
-    props.type === 'warning' ? 'rgba(255, 204, 2, 0.3)' :
-    props.type === 'danger' ? 'rgba(255, 107, 107, 0.3)' :
-    'rgba(0, 122, 255, 0.3)'
-  };
-`;
-
-const StatLabel = styled.div`
-  font-size: 0.9rem;
-  color: #ccc;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`;
-
-const LeaderboardSection = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 80px 40px;
-  background: ${Colors.white};
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 3rem;
   font-weight: 600;
-  color: ${Colors.black};
-  text-align: center;
+  color: #1d1d1f;
   margin: 0 0 16px;
   letter-spacing: -1px;
-  
-  .emoji {
-    margin-right: 16px;
-  }
 `;
 
-const SectionSubtitle = styled.p`
-  font-size: 1.4rem;
-  color: ${Colors.darkGray};
-  text-align: center;
-  margin: 0 0 60px;
+const TickerSubtitle = styled.p`
+  font-size: 1.3rem;
+  color: #86868b;
+  margin: 0;
   font-weight: 400;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
 `;
 
-const LeaderboardGrid = styled.div`
+const TickerContainer = styled.div`
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+`;
+
+const TickerGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 24px;
-  margin: 60px 0;
+  margin-top: 40px;
 `;
 
-const DomainCard = styled(motion.div)`
-  background: ${Colors.white};
-  border: 2px solid ${props => props.status === 'winning' ? Colors.success : props.status === 'risk' ? Colors.danger : Colors.mediumGray};
-  border-radius: 16px;
+const TickerCard = styled(motion.div)`
+  background: #ffffff;
+  border-radius: 18px;
   padding: 32px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e5e7;
   transition: all 0.3s ease;
+  cursor: pointer;
   
   &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: ${props => 
-      props.status === 'winning' ? `linear-gradient(90deg, ${Colors.success}, ${Colors.green})` :
-      props.status === 'risk' ? `linear-gradient(90deg, ${Colors.danger}, ${Colors.red})` :
-      `linear-gradient(90deg, ${Colors.blue}, ${Colors.purple})`
-    };
-  }
-
-  &::after {
-    content: '${props => 
-      props.status === 'winning' ? '🏆' :
-      props.status === 'risk' ? '⚠️' :
-      '📊'
-    }';
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    font-size: 1.5rem;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   }
 `;
 
 const DomainHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  align-items: center;
+  margin-bottom: 20px;
 `;
 
 const DomainName = styled.h3`
   font-size: 1.5rem;
   font-weight: 600;
-  color: ${Colors.black};
+  color: #1d1d1f;
   margin: 0;
-  flex: 1;
 `;
 
-const RankBadge = styled.div`
-  background: ${props => 
-    props.rank <= 3 ? Colors.success :
-    props.rank <= 10 ? Colors.blue :
-    Colors.orange
-  };
-  color: ${Colors.white};
-  padding: 8px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
+const TrendIndicator = styled.div`
+  font-size: 1.8rem;
   font-weight: 700;
-  min-width: 50px;
-  text-align: center;
-  box-shadow: 0 0 15px ${props => 
-    props.rank <= 3 ? 'rgba(52, 199, 89, 0.3)' :
-    props.rank <= 10 ? 'rgba(0, 122, 255, 0.3)' :
-    'rgba(255, 149, 0, 0.3)'
+  color: ${props => 
+    props.trend === 'up' ? '#30d158' :     // Green for up
+    props.trend === 'down' ? '#ff3b30' :   // Red for down
+    '#ff9500'                              // Orange for neutral/stable
   };
 `;
 
 const ScoreDisplay = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin: 24px 0;
-`;
-
-const ScoreCircle = styled.div`
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, ${props => 
-    props.score >= 85 ? Colors.success : 
-    props.score >= 70 ? Colors.orange : 
-    props.score >= 50 ? Colors.warning : Colors.danger
-  } ${props => props.score * 3.6}deg, ${Colors.lightGray} 0deg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 0 20px ${props => 
-    props.score >= 85 ? 'rgba(48, 209, 88, 0.3)' :
-    props.score >= 70 ? 'rgba(255, 149, 0, 0.3)' :
-    'rgba(255, 107, 107, 0.3)'
-  };
-  
-  &::before {
-    content: '';
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    background: ${Colors.white};
-    border-radius: 50%;
-  }
-`;
-
-const ScoreNumber = styled.div`
-  font-size: 1.4rem;
+  font-size: 3rem;
   font-weight: 700;
   color: ${props => 
-    props.score >= 85 ? Colors.success : 
-    props.score >= 70 ? Colors.orange : Colors.danger
+    props.score >= 90 ? '#30d158' :        // Green for excellent
+    props.score >= 70 ? '#ff9500' :        // Orange for good
+    '#ff3b30'                              // Red for poor
   };
-  z-index: 1;
-  position: relative;
-`;
-
-const ScoreDetails = styled.div`
-  flex: 1;
+  margin-bottom: 12px;
 `;
 
 const ScoreLabel = styled.div`
   font-size: 0.9rem;
-  color: ${Colors.darkGray};
-  margin-bottom: 4px;
+  color: #86868b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  margin-bottom: 16px;
+`;
+
+const ModelConsensus = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+`;
+
+const ConsensusDot = styled.div`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${props => 
+    props.type === 'positive' ? '#30d158' :
+    props.type === 'neutral' ? '#ff9500' :
+    '#ff3b30'
+  };
+`;
+
+const ConsensusLabel = styled.span`
+  font-size: 0.85rem;
+  color: #86868b;
+  font-weight: 500;
+`;
+
+const CategoryTag = styled.div`
+  display: inline-block;
+  background: #007aff;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
 
-const ScoreValue = styled.div`
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: ${Colors.black};
-  margin-bottom: 4px;
+// Steve Jobs style stats section
+const StatsSection = styled.div`
+  padding: 100px 40px;
+  text-align: center;
+  max-width: 1000px;
+  margin: 0 auto;
 `;
 
-const StatusIndicator = styled.div`
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: ${props => 
-    props.status === 'winning' ? Colors.success :
-    props.status === 'risk' ? Colors.danger :
-    Colors.blue
-  };
-  
-  &::before {
-    content: '${props => 
-      props.status === 'winning' ? '🚀 ' :
-      props.status === 'risk' ? '🚨 ' :
-      '📈 '
-    }';
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 60px;
+  margin-top: 60px;
+`;
+
+const StatItem = styled.div`
+  .number {
+    font-size: 4rem;
+    font-weight: 700;
+    color: #1d1d1f;
+    margin-bottom: 8px;
+    letter-spacing: -2px;
   }
-`;
-
-const TrendIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: ${props => props.trend === 'up' ? Colors.success : Colors.danger};
   
-  .trend-emoji {
-    font-size: 1.2rem;
-  }
-`;
-
-const AlertBadge = styled.div`
-  background: ${Colors.danger};
-  color: ${Colors.white};
-  padding: 6px 12px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  margin-top: 16px;
-  display: inline-block;
-  box-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
-  
-  &::before {
-    content: '🚨 ';
+  .label {
+    font-size: 1.1rem;
+    color: #86868b;
+    font-weight: 500;
   }
 `;
 
 const ExploreSection = styled.div`
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 80px 40px;
+  background: #f5f5f7;
+  padding: 100px 40px;
   text-align: center;
+`;
+
+const ExploreTitle = styled.h2`
+  font-size: 3rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 60px;
+  letter-spacing: -1px;
 `;
 
 const ExploreGrid = styled.div`
@@ -375,327 +238,233 @@ const ExploreGrid = styled.div`
 `;
 
 const ExploreCard = styled(Link)`
-  background: ${Colors.white};
-  border: 2px solid ${Colors.mediumGray};
-  border-radius: 16px;
+  background: #ffffff;
+  border-radius: 18px;
   padding: 40px 32px;
   text-decoration: none;
   transition: all 0.3s ease;
   display: block;
-  position: relative;
+  border: 1px solid #e5e5e7;
   
   &:hover {
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-    border-color: ${Colors.blue};
   }
 `;
 
 const ExploreIcon = styled.div`
-  font-size: 4rem;
+  font-size: 3rem;
   margin-bottom: 20px;
-  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.1));
 `;
 
-const ExploreTitle = styled.h3`
+const ExploreCardTitle = styled.h3`
   font-size: 1.5rem;
   font-weight: 600;
-  color: ${Colors.black};
+  color: #1d1d1f;
   margin: 0 0 16px;
 `;
 
 const ExploreDescription = styled.p`
   font-size: 1.1rem;
-  color: ${Colors.darkGray};
+  color: #86868b;
   margin: 0;
   font-weight: 400;
   line-height: 1.5;
 `;
 
-const CTAButton = styled(Link)`
-  display: inline-block;
-  background: ${props => props.primary ? Colors.blue : 'transparent'};
-  color: ${props => props.primary ? Colors.white : Colors.blue};
-  border: 2px solid ${Colors.blue};
-  padding: 16px 32px;
-  border-radius: 12px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin: 20px 12px 10px;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    background: ${props => props.primary ? '#0056b3' : Colors.blue};
-    color: ${Colors.white};
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
-  }
-`;
-
-const generateMemoryScore = (domainId, responseCount) => {
-  const base = Math.min(100, Math.max(20, (responseCount / 100) * 85 + Math.random() * 30));
-  return Math.round(base);
+const getTrendFromChange = (change) => {
+  if (change.startsWith('+')) return 'up';
+  if (change.startsWith('-')) return 'down';
+  return 'neutral';
 };
 
-const getDomainStatus = (score, trend) => {
-  if (score >= 85 && trend === 'up') return 'winning';
-  if (score < 50 || trend === 'down') return 'risk';
-  return 'stable';
+const getScoreColor = (score) => {
+  if (score >= 90) return 'excellent';
+  if (score >= 70) return 'good';
+  return 'poor';
+};
+
+const getCategoryFromDomain = (domain) => {
+  // Simple domain to category mapping - in production this would come from API
+  const categoryMap = {
+    'facebook.com': 'Social Media',
+    'google.es': 'Search',
+    'bloomberg.com': 'Financial Media',
+    'yahoo.com': 'Web Portal',
+    'synopsys.com': 'Enterprise Software',
+    'apple.com': 'Consumer Tech',
+    'microsoft.com': 'Cloud Platform',
+    'nvidia.com': 'AI Hardware'
+  };
+  return categoryMap[domain] || 'Technology';
 };
 
 const Home = () => {
-  const [stats, setStats] = useState(null);
-  const [domains, setDomains] = useState([]);
+  const [tickerData, setTickerData] = useState([]);
+  const [stats, setStats] = useState({
+    totalDomains: 477,
+    aiModels: 21,
+    aiResponses: 25491,
+    categories: 12
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // INSTANT LOAD: Set fallback data immediately for fast UX
-    const fallbackStats = {
-      total_domains: 549,
-      winners: 47,
-      at_risk: 23,
-      trending_up: 156,
-      ai_responses: 25491,
-      unique_models: 21
-    };
-
-    const fallbackDomains = [
-      { domain: 'openai.com', domain_id: 1, memory_score: 98, response_count: 156, unique_models: 21, reputation_risk: 15, trend: 'up' },
-      { domain: 'google.com', domain_id: 2, memory_score: 96, response_count: 142, unique_models: 20, reputation_risk: 18, trend: 'up' },
-      { domain: 'apple.com', domain_id: 3, memory_score: 95, response_count: 138, unique_models: 19, reputation_risk: 12, trend: 'up' },
-      { domain: 'microsoft.com', domain_id: 4, memory_score: 94, response_count: 134, unique_models: 19, reputation_risk: 16, trend: 'up' },
-      { domain: 'nvidia.com', domain_id: 5, memory_score: 92, response_count: 128, unique_models: 18, reputation_risk: 22, trend: 'up' },
-      { domain: 'tesla.com', domain_id: 6, memory_score: 91, response_count: 125, unique_models: 18, reputation_risk: 24, trend: 'up' },
-      { domain: 'amazon.com', domain_id: 7, memory_score: 89, response_count: 121, unique_models: 17, reputation_risk: 19, trend: 'stable' },
-      { domain: 'meta.com', domain_id: 8, memory_score: 87, response_count: 118, unique_models: 17, reputation_risk: 28, trend: 'up' },
-      { domain: 'netflix.com', domain_id: 9, memory_score: 84, response_count: 114, unique_models: 16, reputation_risk: 31, trend: 'stable' }
-    ];
-
-    // Set data immediately for instant load
-    setStats(fallbackStats);
-    setDomains(fallbackDomains);
-
-    // BACKGROUND: Try to fetch real data with timeout (non-blocking)
-    const fetchRealData = async () => {
+    const fetchTickerData = async () => {
       try {
-        // Add timeout to prevent hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-        const [domainsResponse] = await Promise.all([
-          axios.get('https://llm-pagerank-public-api.onrender.com/api/ticker', {
-            signal: controller.signal,
-            timeout: 5000
-          })
-        ]);
-
-        clearTimeout(timeoutId);
-
-        const tickerData = domainsResponse.data;
-        const topDomains = tickerData.topDomains || [];
-
-        if (topDomains.length > 0) {
-          const processedDomains = topDomains.map((domain, index) => ({
-            domain: domain.domain,
-            domain_id: index + 1,
-            memory_score: Math.round(domain.score),
-            response_count: (domain.modelsPositive + domain.modelsNeutral + domain.modelsNegative) * 10,
-            unique_models: domain.modelsPositive + domain.modelsNeutral + domain.modelsNegative,
-            reputation_risk: domain.modelsNegative > 0 ? 30 + (domain.modelsNegative * 10) : 15,
-            trend: domain.change.includes('+') ? 'up' : 'down'
-          }));
-
-          const winners = processedDomains.filter(d => d.memory_score >= 85).length;
-          const atRisk = processedDomains.filter(d => d.memory_score < 50).length;
-          const trending = processedDomains.filter(d => d.trend === 'up').length;
-
-          // Update with real data
-          setStats({
-            total_domains: tickerData.totalDomains,
-            winners,
-            at_risk: atRisk,
-            trending_up: trending,
-            ai_responses: tickerData.totalDomains * 50, // Estimate
-            unique_models: 21
-          });
-
-          setDomains(processedDomains);
-        }
+        const response = await axios.get('https://llm-pagerank-public-api.onrender.com/api/ticker?limit=12');
+        const data = response.data;
+        
+        setTickerData(data.topDomains);
+        setStats(prev => ({
+          ...prev,
+          totalDomains: data.totalDomains
+        }));
+        
       } catch (error) {
-        console.log('Real-time data unavailable, using cached data');
-        // Keep fallback data - no error thrown to user
+        console.error('Failed to fetch ticker data:', error);
+        // Fallback data for demo
+        setTickerData([
+          { domain: 'openai.com', score: 98, change: '+2.5%', modelsPositive: 18, modelsNeutral: 2, modelsNegative: 1 },
+          { domain: 'apple.com', score: 95, change: '+1.2%', modelsPositive: 16, modelsNeutral: 3, modelsNegative: 2 },
+          { domain: 'microsoft.com', score: 94, change: '+0.8%', modelsPositive: 15, modelsNeutral: 4, modelsNegative: 2 },
+        ]);
+      } finally {
+        setLoading(false);
       }
     };
 
-    // Fetch real data in background (non-blocking)
-    fetchRealData();
+    fetchTickerData();
   }, []);
-
-  // No loading state needed - instant load with fallback data
 
   return (
     <Container>
       <HeroSection>
-        <MainTitle
-          initial={{ opacity: 0, y: 50 }}
+        <MainQuestion
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1.2 }}
         >
-          Is Your Brand <span className="highlight">Winning</span> or <span style={{color: Colors.danger}}>Losing</span> in AI Memory?
-        </MainTitle>
+          Is your brand remembered in AI?
+        </MainQuestion>
         
-        <Subtitle
-          initial={{ opacity: 0, y: 30 }}
+        <SubQuestion
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 1.2, delay: 0.3 }}
         >
-          Track real-time AI memory scores across {stats?.total_domains || 549} domains. 
-          See who's remembered, who's forgotten, who's trending.
-        </Subtitle>
-
-        <ValueProp
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-        >
-          <div className="big-text">📊 Live AI Memory Rankings</div>
-          <div className="small-text">
-            {(stats?.ai_responses || 25491).toLocaleString()}+ AI responses • {stats?.unique_models || 21} models • Real-time analysis
-          </div>
-        </ValueProp>
-
-        <StatsBar
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-        >
-          <StatItem icon="🏆">
-            <StatNumber type="good">{stats?.winners || 47}</StatNumber>
-            <StatLabel>AI Memory Winners</StatLabel>
-          </StatItem>
-          <StatItem icon="📈">
-            <StatNumber type="good">{stats?.trending_up || 156}</StatNumber>
-            <StatLabel>Trending Up</StatLabel>
-          </StatItem>
-          <StatItem icon="⚠️">
-            <StatNumber type="danger">{stats?.at_risk || 23}</StatNumber>
-            <StatLabel>Memory Risk</StatLabel>
-          </StatItem>
-          <StatItem icon="🔍">
-            <StatNumber type="normal">{stats?.total_domains || 549}</StatNumber>
-            <StatLabel>Domains Tracked</StatLabel>
-          </StatItem>
-        </StatsBar>
+          Large language models are becoming the new interface to human knowledge. 
+          Track how AI systems remember, rank, and recall your brand.
+        </SubQuestion>
       </HeroSection>
 
-      <LeaderboardSection>
-        <SectionTitle>
-          <span className="emoji">🏆</span>Live AI Memory Leaderboard
-        </SectionTitle>
-        <SectionSubtitle>
-          See who's winning and losing in real-time AI memory rankings
-        </SectionSubtitle>
+      <TickerSection>
+        <TickerHeader>
+          <TickerTitle>Live AI Memory Rankings</TickerTitle>
+          <TickerSubtitle>
+            Real-time scores across {stats.totalDomains} domains • {stats.aiModels} AI models • {stats.aiResponses.toLocaleString()}+ responses
+          </TickerSubtitle>
+        </TickerHeader>
 
-        <LeaderboardGrid>
-          {domains.slice(0, 9).map((domain, index) => {
-            const status = getDomainStatus(domain.memory_score, domain.trend);
-            return (
-              <DomainCard
-                key={domain.domain_id}
-                status={status}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+        <TickerContainer>
+          <TickerGrid>
+            {tickerData.slice(0, 12).map((domain, index) => (
+              <TickerCard
+                key={domain.domain}
                 as={Link}
                 to={`/domain/${domain.domain}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
               >
                 <DomainHeader>
                   <DomainName>{domain.domain}</DomainName>
-                  <RankBadge rank={index + 1}>#{index + 1}</RankBadge>
+                  <TrendIndicator trend={getTrendFromChange(domain.change)}>
+                    {getTrendFromChange(domain.change) === 'up' ? '↗' : 
+                     getTrendFromChange(domain.change) === 'down' ? '↘' : '→'}
+                    {domain.change}
+                  </TrendIndicator>
                 </DomainHeader>
 
-                <ScoreDisplay>
-                  <ScoreCircle score={domain.memory_score}>
-                    <ScoreNumber score={domain.memory_score}>{domain.memory_score}</ScoreNumber>
-                  </ScoreCircle>
-                  
-                  <ScoreDetails>
-                    <ScoreLabel>AI Memory Score</ScoreLabel>
-                    <ScoreValue>{domain.memory_score}/100</ScoreValue>
-                    
-                    <StatusIndicator status={status}>
-                      {status === 'winning' ? 'DOMINATING' : 
-                       status === 'risk' ? 'AT RISK' : 'STABLE'}
-                    </StatusIndicator>
-                    
-                    <TrendIndicator trend={domain.trend}>
-                      <span className="trend-emoji">{domain.trend === 'up' ? '📈' : '📉'}</span>
-                      {domain.trend === 'up' ? 'TRENDING UP' : 'DECLINING'}
-                    </TrendIndicator>
-                  </ScoreDetails>
+                <ScoreDisplay score={domain.score}>
+                  {Math.round(domain.score)}
                 </ScoreDisplay>
+                
+                <ScoreLabel>AI Memory Score</ScoreLabel>
 
-                {domain.reputation_risk > 60 && (
-                  <AlertBadge>MEMORY CRISIS</AlertBadge>
-                )}
-              </DomainCard>
-            )
-          })}
-        </LeaderboardGrid>
-      </LeaderboardSection>
+                <ModelConsensus>
+                  {Array.from({ length: domain.modelsPositive }, (_, i) => (
+                    <ConsensusDot key={`pos-${i}`} type="positive" />
+                  ))}
+                  {Array.from({ length: domain.modelsNeutral }, (_, i) => (
+                    <ConsensusDot key={`neu-${i}`} type="neutral" />
+                  ))}
+                  {Array.from({ length: domain.modelsNegative }, (_, i) => (
+                    <ConsensusDot key={`neg-${i}`} type="negative" />
+                  ))}
+                  <ConsensusLabel>
+                    {domain.modelsPositive + domain.modelsNeutral + domain.modelsNegative} models
+                  </ConsensusLabel>
+                </ModelConsensus>
+
+                <CategoryTag>
+                  {getCategoryFromDomain(domain.domain)}
+                </CategoryTag>
+              </TickerCard>
+            ))}
+          </TickerGrid>
+        </TickerContainer>
+      </TickerSection>
+
+      <StatsSection>
+        <StatsGrid>
+          <StatItem>
+            <div className="number">{stats.totalDomains}</div>
+            <div className="label">Domains Tracked</div>
+          </StatItem>
+          <StatItem>
+            <div className="number">{stats.aiModels}</div>
+            <div className="label">AI Models</div>
+          </StatItem>
+          <StatItem>
+            <div className="number">{Math.round(stats.aiResponses / 1000)}K</div>
+            <div className="label">AI Responses</div>
+          </StatItem>
+          <StatItem>
+            <div className="number">{stats.categories}</div>
+            <div className="label">Categories</div>
+          </StatItem>
+        </StatsGrid>
+      </StatsSection>
 
       <ExploreSection>
-        <h3 style={{ 
-          fontSize: '2.5rem', 
-          fontWeight: 600, 
-          color: Colors.black, 
-          margin: '0 0 20px',
-          letterSpacing: '-1px'
-        }}>
-          🚀 Complete AI Intelligence Platform
-        </h3>
-        <p style={{ 
-          fontSize: '1.3rem',
-          color: Colors.darkGray,
-          margin: '0 0 50px',
-          fontWeight: 400,
-          maxWidth: '700px',
-          marginLeft: 'auto',
-          marginRight: 'auto'
-        }}>
-          Track, analyze, and improve your AI memory performance
-        </p>
-
+        <ExploreTitle>Explore AI Memory Intelligence</ExploreTitle>
+        
         <ExploreGrid>
           <ExploreCard to="/categories">
-            <ExploreIcon>🎯</ExploreIcon>
-            <ExploreTitle>Category Shadows</ExploreTitle>
+            <ExploreIcon>🏢</ExploreIcon>
+            <ExploreCardTitle>Industry Categories</ExploreCardTitle>
             <ExploreDescription>
-              See which industries are winning vs losing in AI memory. Find your competitive position.
+              See how different industries perform in AI memory rankings and consensus.
             </ExploreDescription>
           </ExploreCard>
 
-          <ExploreCard to="/leaderboard">
+          <ExploreCard to="/rankings">
             <ExploreIcon>📊</ExploreIcon>
-            <ExploreTitle>Full Rankings</ExploreTitle>
+            <ExploreCardTitle>Full Rankings</ExploreCardTitle>
             <ExploreDescription>
-              Complete leaderboard with detailed scores, trends, and risk analysis for all domains.
+              Complete leaderboard with search, filtering, and detailed analytics.
             </ExploreDescription>
           </ExploreCard>
 
-          <ExploreCard to="/premium">
-            <ExploreIcon>💎</ExploreIcon>
-            <ExploreTitle>Premium Intelligence</ExploreTitle>
+          <ExploreCard to="/shadows">
+            <ExploreIcon>🌫️</ExploreIcon>
+            <ExploreCardTitle>Memory Shadows</ExploreCardTitle>
             <ExploreDescription>
-              Advanced analytics, competitive benchmarking, and AI memory optimization strategies.
+              Domains experiencing memory decline and digital permanence risks.
             </ExploreDescription>
           </ExploreCard>
         </ExploreGrid>
-
-        <div style={{ marginTop: '50px' }}>
-          <CTAButton to="/categories" primary>🎯 Explore Categories</CTAButton>
-          <CTAButton to="/leaderboard">📊 View Full Rankings</CTAButton>
-        </div>
       </ExploreSection>
     </Container>
   );
