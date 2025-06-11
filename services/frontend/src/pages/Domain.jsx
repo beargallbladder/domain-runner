@@ -434,6 +434,7 @@ const getAlertLevel = (score, consensus) => {
 function Domain() {
   const { domainName } = useParams()
   const [domainData, setDomainData] = useState(null)
+  const [competitorData, setCompetitorData] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -468,6 +469,37 @@ function Domain() {
         };
         
         setDomainData(processedData);
+        
+        // Fetch competitor data for crisis rankings
+        try {
+          const categoriesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/categories`);
+          const categories = categoriesResponse.data.categories || [];
+          
+          // Find which category this domain belongs to
+          let domainCategory = null;
+          let competitors = [];
+          
+          for (const category of categories) {
+            if (category.topDomains && typeof category.topDomains === 'string') {
+              const domains = JSON.parse(category.topDomains);
+              if (domains.some(d => d.domain === domainName)) {
+                domainCategory = category.name;
+                competitors = domains.filter(d => d.domain !== domainName).slice(0, 6); // Top 6 competitors
+                break;
+              }
+            }
+          }
+          
+          setCompetitorData({
+            category: domainCategory,
+            competitors: competitors
+          });
+          
+        } catch (compError) {
+          console.log('Could not fetch competitor data:', compError);
+          setCompetitorData({ category: null, competitors: [] });
+        }
+        
         setLoading(false);
         
       } catch (error) {
@@ -765,9 +797,120 @@ function Domain() {
                     'Moderate vulnerability. Consider strengthening digital presence before any crisis events.' :
                     'High risk zone. Urgent action needed to build AI memory resilience.'
                 }
+                             </div>
+             </div>
+           </Card>
+
+          {/* Competitive Crisis Rankings */}
+          {competitorData.competitors && competitorData.competitors.length > 0 && (
+            <Card
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              style={{
+                background: `linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)`,
+                border: `2px solid #007AFF`
+              }}
+            >
+              <h3>🏆 Competitive Crisis Rankings</h3>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ 
+                  fontSize: '1rem', 
+                  color: Colors.darkGray,
+                  marginBottom: '20px'
+                }}>
+                  How do <strong>{competitorData.category}</strong> brands rank against <strong>Facebook Crisis</strong> baseline (52.0)?
+                </div>
+                
+                <div style={{ 
+                  background: '#ffffff',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  border: '1px solid #e5e5e5'
+                }}>
+                  <div style={{ 
+                    fontSize: '0.9rem',
+                    color: Colors.darkGray,
+                    marginBottom: '16px',
+                    textAlign: 'center',
+                    padding: '8px',
+                    background: '#f8f9fa',
+                    borderRadius: '6px'
+                  }}>
+                    🔥 <strong>Facebook Crisis Baseline: 52.0</strong>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {[...competitorData.competitors, { domain: domainName, score: domainData.memoryScore }]
+                      .sort((a, b) => b.score - a.score)
+                      .map((competitor, index) => {
+                        const isCurrentDomain = competitor.domain === domainName;
+                        const crisisBuffer = competitor.score - 52.0;
+                        const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '  ';
+                        
+                        return (
+                          <div 
+                            key={competitor.domain}
+                            style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center',
+                              padding: '12px 16px',
+                              background: isCurrentDomain ? '#e3f2fd' : '#ffffff',
+                              border: isCurrentDomain ? '2px solid #007AFF' : '1px solid #f0f0f0',
+                              borderRadius: '8px',
+                              fontWeight: isCurrentDomain ? '600' : '400'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <span style={{ fontSize: '1.2rem', minWidth: '30px' }}>
+                                {rankEmoji} #{index + 1}
+                              </span>
+                              <span style={{ color: isCurrentDomain ? '#007AFF' : Colors.black }}>
+                                {competitor.domain} {isCurrentDomain ? '(YOU)' : ''}
+                              </span>
+                            </div>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                              <span style={{ 
+                                fontSize: '1.1rem',
+                                fontWeight: '600',
+                                color: competitor.score >= 90 ? '#34C759' : competitor.score >= 70 ? '#FF9500' : '#FF3B30'
+                              }}>
+                                {competitor.score}
+                              </span>
+                              <span style={{ 
+                                fontSize: '0.9rem',
+                                color: crisisBuffer > 0 ? '#34C759' : '#FF3B30',
+                                fontWeight: '600',
+                                minWidth: '60px',
+                                textAlign: 'right'
+                              }}>
+                                {crisisBuffer > 0 ? '+' : ''}{crisisBuffer.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                  
+                  <div style={{ 
+                    marginTop: '20px',
+                    padding: '16px',
+                    background: '#f8f9fa',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    color: Colors.darkGray,
+                    textAlign: 'center'
+                  }}>
+                    <strong>Your Position:</strong> You rank <strong>#{[...competitorData.competitors, { domain: domainName, score: domainData.memoryScore }]
+                      .sort((a, b) => b.score - a.score)
+                      .findIndex(c => c.domain === domainName) + 1}</strong> out of <strong>{competitorData.competitors.length + 1}</strong> {competitorData.category} brands for crisis resilience
+                  </div>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )}
         </PrimaryPanel>
 
         <SidePanel>
