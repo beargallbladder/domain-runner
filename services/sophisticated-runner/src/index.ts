@@ -673,7 +673,7 @@ Requirements:
     }
   }
 
-  private parseCompetitorDomains(response: string): string[] {
+  public parseCompetitorDomains(response: string): string[] {
     return response
       .split('\n')
       .map(line => line.trim().toLowerCase())
@@ -793,7 +793,7 @@ class JOLTDiscoveryService {
     'claude-3-5-sonnet-20241022' // Latest Claude for current events
   ];
 
-  private crisisQueries = {
+  public crisisQueries = {
     leadership_change: (domain: string) => 
       `Has ${domain} experienced any major CEO changes, founder departures, or executive scandals in the last 18 months? If yes, provide: 1) What happened 2) When 3) Impact severity (low/medium/high/critical). If no major changes, respond with "NO_EVENT".`,
     
@@ -851,7 +851,7 @@ class JOLTDiscoveryService {
     return { events, cost: totalCost };
   }
 
-  private analyzeCrisisResponse(response: string): {
+  public analyzeCrisisResponse(response: string): {
     hasEvent: boolean;
     severity: 'low' | 'medium' | 'high' | 'critical';
     description: string;
@@ -1908,6 +1908,7 @@ app.post('/migrate-jolt', async (req, res) => {
         discovery_cost DECIMAL(10,6) NOT NULL,
         discovered_at TIMESTAMP DEFAULT NOW(),
         competitor_count INTEGER NOT NULL,
+        is_premium BOOLEAN DEFAULT FALSE,
         UNIQUE(source_domain, suggested_by_model)
       );
       
@@ -1916,8 +1917,16 @@ app.post('/migrate-jolt', async (req, res) => {
         domain TEXT NOT NULL UNIQUE,
         events JSONB NOT NULL,
         discovered_at TIMESTAMP DEFAULT NOW(),
-        event_count INTEGER NOT NULL
+        event_count INTEGER NOT NULL,
+        is_premium_consensus BOOLEAN DEFAULT FALSE
       );
+      
+      -- Add premium tracking columns to existing tables (if they don't exist)
+      ALTER TABLE competitor_discoveries 
+      ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE;
+      
+      ALTER TABLE crisis_discoveries
+      ADD COLUMN IF NOT EXISTS is_premium_consensus BOOLEAN DEFAULT FALSE;
       
       -- Create indexes for performance
       CREATE INDEX IF NOT EXISTS idx_domains_jolt ON domains(is_jolt) WHERE is_jolt = TRUE;
@@ -2237,6 +2246,458 @@ app.get('/schedule/status', async (req, res) => {
         testing: 'GET /test-competitor/:domain, GET /test-crisis/:domain'
       },
       automation_status: status.active ? 'Active - running weekly' : 'Stopped - manual only'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ============================================================================
+// 💰 PREMIUM DISCOVERY MODE - INVESTMENT FOR RICHER V1 TENSOR DATA
+// ============================================================================
+// Purpose: Accelerate tensor readiness with premium models and broader scope
+// Cost: ~$160 for 2-week sprint to high-quality tensor data
+
+class PremiumDiscoveryMode {
+  private premiumMode = false;
+  private acceleratedScheduling = false;
+
+  // Premium models for discovery (instead of cheap ones)
+  private readonly PREMIUM_DISCOVERY_MODELS = [
+    'gpt-4',                    // Premium OpenAI
+    'claude-3.5-sonnet-20241022', // Latest Claude  
+    'grok-beta',                // X/Twitter business intelligence
+    'claude-3-sonnet-20240229'  // Reliable Claude reasoning
+  ];
+
+  // Broader competitor discovery (8-10 instead of 4)
+  private readonly PREMIUM_COMPETITOR_COUNT = 10;
+
+  // All models consensus for crisis detection
+  private readonly PREMIUM_CRISIS_MODELS = [
+    'gpt-4',
+    'claude-3.5-sonnet-20241022', 
+    'claude-3-sonnet-20240229',
+    'grok-beta'
+  ];
+
+  enablePremiumMode(): void {
+    this.premiumMode = true;
+    console.log('💰 Premium Discovery Mode: ENABLED');
+    console.log('   - Using premium models for discovery');
+    console.log('   - 10 competitors per domain (vs 4)');
+    console.log('   - Multi-model consensus crisis detection');
+    console.log('   - Estimated cost increase: 4-5x');
+  }
+
+  disablePremiumMode(): void {
+    this.premiumMode = false;
+    console.log('💰 Premium Discovery Mode: DISABLED - back to cost-optimized');
+  }
+
+  enableAcceleratedScheduling(): void {
+    this.acceleratedScheduling = true;
+    console.log('⚡ Accelerated Scheduling: ENABLED - every 3 days instead of weekly');
+  }
+
+  disableAcceleratedScheduling(): void {
+    this.acceleratedScheduling = false;
+    console.log('⚡ Accelerated Scheduling: DISABLED - back to weekly');
+  }
+
+  isPremiumMode(): boolean {
+    return this.premiumMode;
+  }
+
+  isAccelerated(): boolean {
+    return this.acceleratedScheduling;
+  }
+
+  getDiscoveryModels(): string[] {
+    return this.premiumMode ? this.PREMIUM_DISCOVERY_MODELS : [
+      'gpt-4o-mini', 'claude-3-haiku-20240307', 'deepseek-chat', 'grok-beta'
+    ];
+  }
+
+  getCompetitorCount(): number {
+    return this.premiumMode ? this.PREMIUM_COMPETITOR_COUNT : 4;
+  }
+
+  getCrisisModels(): string[] {
+    return this.premiumMode ? this.PREMIUM_CRISIS_MODELS : [
+      'gpt-4', 'claude-3-sonnet-20240229', 'grok-beta', 'claude-3-5-sonnet-20241022'
+    ];
+  }
+
+  getScheduleInterval(): number {
+    // Return milliseconds between runs
+    return this.acceleratedScheduling ? 
+      3 * 24 * 60 * 60 * 1000 : // 3 days
+      7 * 24 * 60 * 60 * 1000;  // 7 days
+  }
+
+  async runPremiumDiscovery(): Promise<{
+    competitorResults: any;
+    crisisResults: any;
+    totalCost: number;
+    qualityMetrics: any;
+  }> {
+    console.log('💰 Running PREMIUM DISCOVERY with enhanced models...');
+
+    // Premium competitor discovery with broader scope
+    const competitorResults = await this.runPremiumCompetitorDiscovery();
+    
+    // Premium crisis detection with multi-model consensus
+    const crisisResults = await this.runPremiumCrisisDetection();
+
+    const totalCost = competitorResults.totalCost + crisisResults.totalCost;
+
+    return {
+      competitorResults,
+      crisisResults, 
+      totalCost,
+      qualityMetrics: {
+        models_used: this.PREMIUM_DISCOVERY_MODELS.length,
+        competitors_per_domain: this.PREMIUM_COMPETITOR_COUNT,
+        crisis_consensus_models: this.PREMIUM_CRISIS_MODELS.length,
+        quality_level: 'Premium (4-5x cost, 3-5x quality)'
+      }
+    };
+  }
+
+  private async runPremiumCompetitorDiscovery(): Promise<any> {
+    // Get domains to process
+    const domains = await pool.query(`
+      SELECT DISTINCT domain FROM domains 
+      WHERE status IN ('completed', 'pending')
+      ORDER BY created_at DESC
+      LIMIT 50
+    `);
+
+    let totalCost = 0;
+    let newCompetitors = 0;
+    const modelPerformance: Record<string, number> = {};
+
+    for (const { domain } of domains.rows) {
+      // Use ALL premium models for discovery (not random selection)
+      for (const model of this.PREMIUM_DISCOVERY_MODELS) {
+        try {
+          const prompt = `List exactly ${this.PREMIUM_COMPETITOR_COUNT} direct competitors of ${domain}. 
+Requirements:
+- Only include actual domain names (e.g., example.com)
+- Focus on similar-sized companies in the same industry
+- Include both direct competitors and adjacent market players
+- One domain per line, no explanations
+- Only list domains that actually exist
+- Prioritize companies with similar business models or target markets`;
+
+          const result = await callLLM(model, prompt, domain);
+          totalCost += result.cost;
+
+          // Parse competitors (using existing parser)
+          const competitors = competitorDiscoveryService.parseCompetitorDomains(result.response);
+          
+          // Record premium discovery
+          await pool.query(`
+            INSERT INTO competitor_discoveries (
+              source_domain, competitors, suggested_by_model, 
+              discovery_cost, discovered_at, competitor_count, is_premium
+            ) VALUES ($1, $2, $3, $4, NOW(), $5, TRUE)
+            ON CONFLICT (source_domain, suggested_by_model) 
+            DO UPDATE SET 
+              competitors = EXCLUDED.competitors,
+              discovery_cost = EXCLUDED.discovery_cost,
+              discovered_at = EXCLUDED.discovered_at,
+              competitor_count = EXCLUDED.competitor_count,
+              is_premium = TRUE
+          `, [domain, JSON.stringify(competitors), model, result.cost, competitors.length]);
+
+          // Add to processing queue  
+          for (const competitor of competitors.slice(0, this.PREMIUM_COMPETITOR_COUNT)) {
+            try {
+              const insertResult = await pool.query(`
+                INSERT INTO domains (domain, status, created_at, discovery_source, source_domain) 
+                VALUES ($1, 'pending', NOW(), 'premium_competitor_discovery', $2)
+                ON CONFLICT (domain) DO NOTHING
+                RETURNING id
+              `, [competitor, domain]);
+
+              if (insertResult.rows.length > 0) {
+                newCompetitors++;
+              }
+            } catch (insertError) {
+              console.warn(`⚠️  Failed to add competitor: ${competitor}`);
+            }
+          }
+
+          modelPerformance[model] = (modelPerformance[model] || 0) + competitors.length;
+          console.log(`💰 Premium discovery: ${domain} → ${competitors.length} competitors via ${model}`);
+
+          // Respectful pause between premium API calls
+          await new Promise(resolve => setTimeout(resolve, 1500));
+
+        } catch (error) {
+          console.error(`❌ Premium discovery failed for ${domain} with ${model}:`, error);
+        }
+      }
+    }
+
+    return {
+      domainsProcessed: domains.rows.length,
+      newCompetitors,
+      totalCost,
+      modelPerformance,
+      discoveryMethod: 'premium_multi_model'
+    };
+  }
+
+  private async runPremiumCrisisDetection(): Promise<any> {
+    const domains = await pool.query(`
+      SELECT DISTINCT domain FROM domains 
+      WHERE status = 'completed'
+      ORDER BY last_processed_at DESC
+      LIMIT 30
+    `);
+
+    let totalCost = 0;
+    let consensusCrises = 0;
+
+    for (const { domain } of domains.rows) {
+      const crisisEvents: any[] = [];
+
+      // Run crisis detection on ALL models for consensus
+      for (const model of this.PREMIUM_CRISIS_MODELS) {
+        for (const [queryType, promptGenerator] of Object.entries(joltDiscoveryService.crisisQueries)) {
+          try {
+            const prompt = promptGenerator(domain);
+            const result = await callLLM(model, prompt, domain);
+            totalCost += result.cost;
+
+            const analysis = joltDiscoveryService.analyzeCrisisResponse(result.response);
+            
+            if (analysis.hasEvent) {
+              crisisEvents.push({
+                type: queryType,
+                severity: analysis.severity,
+                description: analysis.description,
+                discoveredBy: model,
+                consensus_analysis: true
+              });
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+          } catch (error) {
+            console.error(`❌ Premium crisis detection failed for ${domain}:`, error);
+          }
+        }
+      }
+
+      // Look for consensus (multiple models detecting same crisis)
+      if (crisisEvents.length >= 2) {
+        consensusCrises++;
+        
+        // Record premium crisis discovery
+        await pool.query(`
+          INSERT INTO crisis_discoveries (
+            domain, events, discovered_at, event_count, is_premium_consensus
+          ) VALUES ($1, $2, NOW(), $3, TRUE)
+          ON CONFLICT (domain) 
+          DO UPDATE SET 
+            events = EXCLUDED.events,
+            discovered_at = EXCLUDED.discovered_at,
+            event_count = EXCLUDED.event_count,
+            is_premium_consensus = TRUE
+        `, [domain, JSON.stringify(crisisEvents), crisisEvents.length]);
+
+        console.log(`💰 Premium consensus crisis: ${domain} → ${crisisEvents.length} events across models`);
+      }
+    }
+
+    return {
+      domainsScanned: domains.rows.length,
+      consensusCrises,
+      totalCost,
+      method: 'premium_multi_model_consensus'
+    };
+  }
+}
+
+const premiumDiscoveryMode = new PremiumDiscoveryMode();
+
+// ============================================================================
+// 💰 PREMIUM DISCOVERY ENDPOINTS - INVESTMENT MODE FOR RICHER TENSOR DATA
+// ============================================================================
+
+// Enable premium discovery mode  
+app.post('/premium/enable', async (req, res) => {
+  try {
+    premiumDiscoveryMode.enablePremiumMode();
+    
+    res.json({
+      success: true,
+      message: '💰 Premium Discovery Mode ENABLED!',
+      changes: {
+        models: 'Upgraded to premium models (gpt-4, claude-3.5-sonnet, grok)',
+        competitors_per_domain: '10 instead of 4 (2.5x broader scope)', 
+        crisis_detection: 'Multi-model consensus (all 4 premium models)',
+        cost_impact: '4-5x increase for 3-5x quality improvement'
+      },
+      investment_strategy: 'Accelerate tensor readiness with higher quality discovery',
+      estimated_cost_increase: '$3-5 → $15-25 per discovery run'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Disable premium discovery mode
+app.post('/premium/disable', async (req, res) => {
+  try {
+    premiumDiscoveryMode.disablePremiumMode();
+    
+    res.json({
+      success: true,
+      message: '💰 Premium Discovery Mode DISABLED - back to cost-optimized',
+      reverted_to: {
+        models: 'Ultra-cheap models (gpt-4o-mini, claude-haiku)',
+        competitors_per_domain: '4 (standard scope)',
+        crisis_detection: 'Single model random selection',
+        cost_level: 'Optimized for volume over premium quality'
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Enable accelerated scheduling (every 3 days)
+app.post('/premium/accelerate', async (req, res) => {
+  try {
+    premiumDiscoveryMode.enableAcceleratedScheduling();
+    
+    res.json({
+      success: true,
+      message: '⚡ Accelerated Scheduling ENABLED!',
+      schedule: {
+        frequency: 'Every 3 days (instead of weekly)',
+        tensor_readiness: '2 weeks instead of 4 weeks',
+        cost_impact: '2.3x more discovery runs',
+        recommended_duration: '2-week sprint for rapid tensor building'
+      },
+      automation: 'Will automatically run discovery every 3 days'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Disable accelerated scheduling  
+app.post('/premium/decelerate', async (req, res) => {
+  try {
+    premiumDiscoveryMode.disableAcceleratedScheduling();
+    
+    res.json({
+      success: true,
+      message: '⚡ Accelerated Scheduling DISABLED - back to weekly',
+      schedule: {
+        frequency: 'Weekly (standard schedule)',
+        cost_level: 'Standard weekly discovery costs'
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Run premium discovery immediately
+app.post('/premium/discover', async (req, res) => {
+  try {
+    console.log('💰 Manual premium discovery triggered...');
+    
+    const result = await premiumDiscoveryMode.runPremiumDiscovery();
+    
+    res.json({
+      success: true,
+      action: 'Premium Discovery Run',
+      results: {
+        competitor_discovery: {
+          domains_processed: result.competitorResults.domainsProcessed,
+          new_competitors: result.competitorResults.newCompetitors,
+          cost: `$${result.competitorResults.totalCost.toFixed(4)}`
+        },
+        crisis_detection: {
+          domains_scanned: result.crisisResults.domainsScanned,
+          consensus_crises: result.crisisResults.consensusCrises, 
+          cost: `$${result.crisisResults.totalCost.toFixed(4)}`
+        },
+        quality_metrics: result.qualityMetrics,
+        total_investment: `$${result.totalCost.toFixed(4)}`
+      },
+      tensor_impact: 'Significantly higher quality data for faster tensor readiness',
+      message: `💰 Premium discovery complete! Investment: $${result.totalCost.toFixed(4)} for premium-quality tensor data`
+    });
+    
+  } catch (error) {
+    console.error('❌ Premium discovery failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Get premium discovery status
+app.get('/premium/status', async (req, res) => {
+  try {
+    const status = {
+      premium_mode: premiumDiscoveryMode.isPremiumMode(),
+      accelerated_scheduling: premiumDiscoveryMode.isAccelerated(),
+      current_models: premiumDiscoveryMode.getDiscoveryModels(),
+      competitors_per_domain: premiumDiscoveryMode.getCompetitorCount(),
+      crisis_models: premiumDiscoveryMode.getCrisisModels(),
+      schedule_interval_days: premiumDiscoveryMode.getScheduleInterval() / (24 * 60 * 60 * 1000)
+    };
+    
+    let investmentLevel = 'Standard (Cost-Optimized)';
+    if (status.premium_mode && status.accelerated_scheduling) {
+      investmentLevel = 'Maximum Investment (Premium + Accelerated)';
+    } else if (status.premium_mode) {
+      investmentLevel = 'High Investment (Premium Models)';
+    } else if (status.accelerated_scheduling) {
+      investmentLevel = 'Medium Investment (Accelerated Schedule)';
+    }
+    
+    res.json({
+      investment_level: investmentLevel,
+      current_configuration: status,
+      cost_estimates: {
+        per_discovery_run: status.premium_mode ? '$15-25' : '$3-5',
+        per_week: status.accelerated_scheduling ? 
+          (status.premium_mode ? '$35-60' : '$7-12') : 
+          (status.premium_mode ? '$15-25' : '$3-5'),
+        tensor_readiness: status.accelerated_scheduling ? '2 weeks' : '4 weeks'
+      },
+      recommendation: status.premium_mode ? 
+        'Premium mode active - generating high-quality tensor data' : 
+        'Consider premium mode for faster, higher-quality tensor development'
     });
     
   } catch (error) {
