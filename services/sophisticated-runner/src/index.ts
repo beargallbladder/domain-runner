@@ -87,33 +87,7 @@ class JoltService {
       return this.joltCache.get(domain)!;
     }
 
-    try {
-      const response = await axios.get(`${INDUSTRY_INTELLIGENCE_URL}/jolt/check/${domain}`, {
-        timeout: 5000
-      });
-
-      if (response.data && typeof response.data === 'object' && 'success' in response.data && response.data.success) {
-        const responseData = response.data as any;
-        const joltData: JoltData = {
-          jolt: responseData.data.is_jolt,
-          additional_prompts: responseData.data.additional_prompts,
-          ...responseData.data.metadata
-        };
-        
-        this.joltCache.set(domain, joltData);
-        this.lastCacheUpdate = Date.now();
-        
-        if (joltData.jolt) {
-          console.log(`⚡ JOLT detected for ${domain}: ${joltData.additional_prompts} additional prompts (${joltData.severity} severity)`);
-        }
-        
-        return joltData;
-      }
-    } catch (error) {
-      console.warn(`⚠️  Industry-intelligence unavailable for ${domain}, checking local fallback...`);
-    }
-
-    // 🔥 LOCAL FALLBACK: Check if domain is in local JOLT dataset
+    // 🔥 DIRECT JOLT LOOKUP: Use embedded 30-domain JOLT system (no external service calls)
     if (LOCAL_JOLT_FALLBACK[domain as keyof typeof LOCAL_JOLT_FALLBACK]) {
       const localData = LOCAL_JOLT_FALLBACK[domain as keyof typeof LOCAL_JOLT_FALLBACK];
       const joltData: JoltData = {
@@ -125,32 +99,20 @@ class JoltService {
       };
       
       this.joltCache.set(domain, joltData);
-      console.log(`🔥 LOCAL JOLT FALLBACK: ${domain} - ${joltData.additional_prompts} additional prompts (${joltData.severity} severity)`);
+      console.log(`🔥 JOLT DOMAIN: ${domain} - ${joltData.additional_prompts} additional prompts (${joltData.severity} severity)`);
       
       return joltData;
     }
 
-    // Final fallback: not a JOLT domain
-    const fallbackData: JoltData = { jolt: false, additional_prompts: 0 };
-    this.joltCache.set(domain, fallbackData);
-    return fallbackData;
+    // Not a JOLT domain - regular processing
+    const regularData: JoltData = { jolt: false, additional_prompts: 0 };
+    this.joltCache.set(domain, regularData);
+    return regularData;
   }
 
   async getJoltDomainList(): Promise<string[]> {
-    try {
-      const response = await axios.get(`${INDUSTRY_INTELLIGENCE_URL}/jolt/domains`, {
-        timeout: 5000
-      });
-
-      if (response.data && typeof response.data === 'object' && 'success' in response.data && response.data.success) {
-        const responseData = response.data as any;
-        return responseData.data.domains;
-      }
-    } catch (error) {
-      console.warn('⚠️  Industry-intelligence unavailable, using local JOLT fallback domains');
-    }
-
-    // 🔥 Return local JOLT fallback domains when service is unavailable
+    // 🔥 DIRECT RETURN: Use embedded 30-domain JOLT system (no external service calls)
+    console.log(`✅ Using embedded JOLT system: ${Object.keys(LOCAL_JOLT_FALLBACK).length} crisis domains`);
     return Object.keys(LOCAL_JOLT_FALLBACK);
   }
 

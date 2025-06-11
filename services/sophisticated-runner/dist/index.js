@@ -34,19 +34,207 @@ const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const axios_1 = __importDefault(require("axios"));
 dotenv.config();
 // ============================================================================
-// SOPHISTICATED RUNNER - REAL LLM PROCESSING (NO PROCESSOR_ID DEPENDENCIES)
+// SOPHISTICATED RUNNER - COMPREHENSIVE MODE (JOLT + ALL MODELS)
 // ============================================================================
-// 🎯 Mission: Run parallel to raw-capture-runner with REAL LLM API calls
-// 🎯 Strategy: Pure cheap + middle tier models (no expensive models yet)  
+// 🎯 Mission: Full comprehensive analysis with ALL models and JOLT enhancement
+// 🎯 Strategy: Complete cost spectrum - ultra cheap to premium models  
 // 🎯 Database: SAME EXACT schema as raw-capture-runner - NO processor_id!
-// 🎯 FORCE DEPLOY: 2025-06-09T23:49:00Z - Fixed processor_id caching issue
+// 🎯 COMPREHENSIVE MODE: 2025-06-10 - ALL MODELS + JOLT ADDITIONAL PROMPTS
 // ============================================================================
-console.log('🚀 SOPHISTICATED RUNNER STARTING');
-console.log('   Service ID: sophisticated_v1');
-console.log('   Mode: sophisticated_parallel');
-console.log('   Parallel to: raw-capture-runner');
-const SERVICE_ID = 'sophisticated_v1';
-const SERVICE_MODE = 'sophisticated_parallel';
+console.log('🚀 SOPHISTICATED RUNNER STARTING - COMPREHENSIVE MODE');
+console.log('   Service ID: sophisticated_v1_comprehensive');
+console.log('   Mode: comprehensive_all_models');
+console.log('   JOLT Integration: ACTIVE');
+const SERVICE_ID = 'sophisticated_v1_comprehensive';
+const SERVICE_MODE = 'comprehensive_all_models';
+// ============================================================================
+// 🔗 INDUSTRY INTELLIGENCE INTEGRATION
+// ============================================================================
+// Purpose: Dynamic JOLT detection via industry-intelligence API
+// Benefit: Modular, configurable, testable JOLT management
+const INDUSTRY_INTELLIGENCE_URL = process.env.INDUSTRY_INTELLIGENCE_URL || 'https://industry-intelligence.onrender.com';
+// 🔥 COMPLETE 30-DOMAIN JOLT SYSTEM - Your Full Brand Crisis Benchmarks
+const LOCAL_JOLT_FALLBACK = {
+    'facebook.com': { jolt: true, type: 'brand_transition', severity: 'critical', additional_prompts: 3, description: 'Facebook → Meta corporate rebrand ($10B+ investment)' },
+    'twitter.com': { jolt: true, type: 'brand_transition', severity: 'critical', additional_prompts: 4, description: 'Twitter → X complete rebrand (Musk acquisition)' },
+    'google.com': { jolt: true, type: 'corporate_restructure', severity: 'high', additional_prompts: 2, description: 'Google → Alphabet corporate restructure' },
+    'weightwatchers.com': { jolt: true, type: 'brand_simplification', severity: 'medium', additional_prompts: 2, description: 'Weight Watchers → WW brand simplification' },
+    'dunkindonuts.com': { jolt: true, type: 'brand_simplification', severity: 'medium', additional_prompts: 2, description: 'Dunkin\' Donuts → Dunkin\' brand simplification' },
+    'comcast.com': { jolt: true, type: 'consumer_rebrand', severity: 'critical', additional_prompts: 4, description: 'Comcast → Xfinity consumer brand (ongoing confusion)' },
+    'altria.com': { jolt: true, type: 'reputation_rebrand', severity: 'critical', additional_prompts: 4, description: 'Philip Morris → Altria (reputation management)' },
+    'blackberry.com': { jolt: true, type: 'business_collapse', severity: 'critical', additional_prompts: 4, description: 'BlackBerry → BlackBerry Limited (mobile decline)' },
+    'netflix.com': { jolt: true, type: 'business_model_transition', severity: 'high', additional_prompts: 3, description: 'Netflix DVD → Streaming pivot (Qwikster crisis)' },
+    'ibm.com': { jolt: true, type: 'strategic_pivot', severity: 'high', additional_prompts: 3, description: 'IBM → Cloud/AI focus (Red Hat acquisition)' },
+    'xerox.com': { jolt: true, type: 'category_expansion', severity: 'high', additional_prompts: 3, description: 'Xerox → Document Technology solutions' },
+    'fedex.com': { jolt: true, type: 'brand_simplification', severity: 'medium', additional_prompts: 2, description: 'Federal Express → FedEx (successful simplification)' },
+    'bp.com': { jolt: true, type: 'strategic_rebrand', severity: 'medium', additional_prompts: 2, description: 'British Petroleum → BP \'Beyond Petroleum\'' },
+    'kfc.com': { jolt: true, type: 'brand_simplification', severity: 'medium', additional_prompts: 2, description: 'Kentucky Fried Chicken → KFC' },
+    'instagram.com': { jolt: true, type: 'acquisition_integration', severity: 'medium', additional_prompts: 2, description: 'Instagram independent → Facebook acquisition' },
+    'linkedin.com': { jolt: true, type: 'acquisition_integration', severity: 'medium', additional_prompts: 2, description: 'LinkedIn independent → Microsoft acquisition' },
+    'paypal.com': { jolt: true, type: 'spinoff_independence', severity: 'medium', additional_prompts: 2, description: 'PayPal eBay subsidiary → Independent company' },
+    'radioshack.com': { jolt: true, type: 'failed_rebrand', severity: 'low', additional_prompts: 1, description: 'RadioShack → The Shack (failed, reverted 2011)' },
+    'apple.com': { jolt: true, type: 'ceo_death_transition', severity: 'critical', additional_prompts: 4, description: 'Steve Jobs death → Tim Cook era transition' },
+    'theranos.com': { jolt: true, type: 'fraud_collapse', severity: 'critical', additional_prompts: 4, description: 'Theranos fraud scandal → Complete business collapse' },
+    'wework.com': { jolt: true, type: 'ceo_scandal_collapse', severity: 'critical', additional_prompts: 4, description: 'Adam Neumann scandal → WeWork IPO collapse' },
+    'ftx.com': { jolt: true, type: 'fraud_collapse', severity: 'critical', additional_prompts: 4, description: 'FTX collapse → Sam Bankman-Fried fraud conviction' },
+    'tesla.com': { jolt: true, type: 'ceo_controversy_ongoing', severity: 'high', additional_prompts: 3, description: 'Elon Musk Twitter acquisition → Tesla brand stress' },
+    'enron.com': { jolt: true, type: 'corporate_collapse', severity: 'high', additional_prompts: 3, description: 'Enron accounting scandal → Complete corporate collapse' },
+    'lehman.com': { jolt: true, type: 'financial_collapse', severity: 'high', additional_prompts: 3, description: 'Lehman Brothers collapse → Global financial crisis trigger' },
+    'starbucks.com': { jolt: true, type: 'ceo_transition_return', severity: 'medium', additional_prompts: 2, description: 'Howard Schultz return as CEO → Brand turnaround' },
+    'disney.com': { jolt: true, type: 'acquisition_spree', severity: 'medium', additional_prompts: 2, description: 'Disney mega-acquisitions → Marvel, Star Wars, Fox integration' },
+    'uber.com': { jolt: true, type: 'ceo_scandal_transition', severity: 'high', additional_prompts: 3, description: 'Travis Kalanick resignation → Multiple scandals fallout' },
+    'wells-fargo.com': { jolt: true, type: 'scandal_reputation_crisis', severity: 'high', additional_prompts: 3, description: 'Wells Fargo fake accounts scandal → Massive reputation damage' },
+    'meta.com': { jolt: true, type: 'brand_transition', severity: 'high', additional_prompts: 2, description: 'Facebook to Meta rebrand - new domain identity' }
+};
+class JoltService {
+    constructor() {
+        this.joltCache = new Map();
+        this.lastCacheUpdate = 0;
+        this.cacheValidityMs = 300000; // 5 minutes
+    }
+    async getJoltData(domain) {
+        // Check cache first
+        if (this.joltCache.has(domain) && Date.now() - this.lastCacheUpdate < this.cacheValidityMs) {
+            return this.joltCache.get(domain);
+        }
+        // 🔥 DIRECT JOLT LOOKUP: Use embedded 30-domain JOLT system (no external service calls)
+        if (LOCAL_JOLT_FALLBACK[domain]) {
+            const localData = LOCAL_JOLT_FALLBACK[domain];
+            const joltData = {
+                jolt: localData.jolt,
+                type: localData.type,
+                severity: localData.severity,
+                additional_prompts: localData.additional_prompts,
+                description: localData.description
+            };
+            this.joltCache.set(domain, joltData);
+            console.log(`🔥 JOLT DOMAIN: ${domain} - ${joltData.additional_prompts} additional prompts (${joltData.severity} severity)`);
+            return joltData;
+        }
+        // Not a JOLT domain - regular processing
+        const regularData = { jolt: false, additional_prompts: 0 };
+        this.joltCache.set(domain, regularData);
+        return regularData;
+    }
+    async getJoltDomainList() {
+        // 🔥 DIRECT RETURN: Use embedded 30-domain JOLT system (no external service calls)
+        console.log(`✅ Using embedded JOLT system: ${Object.keys(LOCAL_JOLT_FALLBACK).length} crisis domains`);
+        return Object.keys(LOCAL_JOLT_FALLBACK);
+    }
+    clearCache() {
+        this.joltCache.clear();
+        this.lastCacheUpdate = 0;
+    }
+}
+const joltService = new JoltService();
+// ============================================================================
+// 🎯 COMPREHENSIVE MODEL SELECTION - ALL TIERS (COMPLETE COST SPECTRUM)
+// ============================================================================
+// 💎 ULTRA-CHEAP TIER ($0.0001-$0.001) - Maximum efficiency
+const ULTRA_CHEAP_MODELS = [
+    'claude-3-haiku-20240307',
+    'deepseek-chat',
+    'gpt-4o-mini',
+    'meta-llama/Meta-Llama-3-8B-Instruct',
+    'gemini-1.5-flash',
+    'mistral-small-latest', // European alt: $0.000002  
+];
+// ⚖️ MIDDLE TIER ($0.001-$0.005) - Balanced performance/cost
+const MIDDLE_TIER_MODELS = [
+    'gpt-3.5-turbo',
+    'claude-3-sonnet-20240229',
+    'deepseek-coder',
+    'meta-llama/Meta-Llama-3.1-70B-Instruct',
+    'mistralai/Mixtral-8x7B-Instruct-v0.1', // Mixture of experts: $0.0025
+];
+// 🔥 PREMIUM TIER ($0.005-$0.05) - High-end models
+const PREMIUM_MODELS = [
+    'gpt-4',
+    'claude-3-opus-20240229',
+    'gpt-4-turbo',
+    'claude-3-5-sonnet-20241022', // Claude 3.5: $0.003
+];
+// 💰 ALL AVAILABLE MODELS (Complete Cost Spectrum)
+const ALL_COMPREHENSIVE_MODELS = [
+    ...ULTRA_CHEAP_MODELS,
+    ...MIDDLE_TIER_MODELS,
+    ...PREMIUM_MODELS
+];
+// 🎯 COMPREHENSIVE PROMPT TYPES
+const COMPREHENSIVE_PROMPTS = {
+    business_analysis: (domain) => `Analyze the business intelligence value of ${domain}. Provide insights on:
+1. Primary business model and revenue streams
+2. Key technology stack and competitive advantages  
+3. Market position and growth trajectory
+4. Strategic partnerships and ecosystem
+5. Future opportunities and risks
+Focus on actionable business intelligence for investment and partnership decisions.`,
+    technical_assessment: (domain) => `Conduct a comprehensive technical assessment of ${domain}:
+1. Technology stack and architecture patterns
+2. Development practices and engineering culture
+3. Open source contributions and technical leadership
+4. API design and developer experience
+5. Technical innovation and research capabilities
+Provide technical due diligence insights for technology partnerships.`,
+    brand_memory_analysis: (domain) => `Analyze the brand memory and recognition patterns for ${domain}:
+1. Brand recall strength and market positioning
+2. Historical brand evolution and major transitions
+3. Consumer sentiment and brand associations
+4. Competitive brand differentiation
+5. Brand vulnerability and crisis resilience
+Focus on measuring AI and human memory decay patterns for this brand.`,
+    market_intelligence: (domain) => `Provide comprehensive market intelligence for ${domain}:
+1. Industry landscape and competitive positioning
+2. Market share analysis and growth trajectories
+3. Strategic threats and opportunities
+4. Regulatory environment and compliance status
+5. Macroeconomic factors affecting business
+Generate insights for strategic planning and market entry decisions.`
+};
+// Model selection strategies for comprehensive analysis
+function selectModelsForDomain(joltData) {
+    if (joltData.jolt) {
+        // 🔥 JOLT DOMAINS: Expensive comprehensive analysis for benchmarking
+        const baseModels = 2; // Always use 2 base models
+        const joltModels = joltData.additional_prompts || 0; // Additional models for JOLT domains
+        const totalModels = baseModels + joltModels;
+        // Distribute across ALL tiers for comprehensive analysis
+        const selectedModels = [];
+        // Include premium models for JOLT domains (this is where we spend money)
+        selectedModels.push(...PREMIUM_MODELS.slice(0, Math.max(1, Math.floor(totalModels * 0.4))));
+        // Add middle tier for quality
+        selectedModels.push(...MIDDLE_TIER_MODELS.slice(0, Math.max(1, Math.floor(totalModels * 0.4))));
+        // Always include some ultra-cheap for cost balance
+        selectedModels.push(...ULTRA_CHEAP_MODELS.slice(0, Math.max(1, Math.floor(totalModels * 0.2))));
+        // Ensure we don't exceed available models and return exact count needed
+        const uniqueModels = [...new Set(selectedModels)];
+        return uniqueModels.slice(0, totalModels);
+    }
+    else {
+        // 💰 REGULAR DOMAINS: Cheap coverage only
+        return [ULTRA_CHEAP_MODELS[Math.floor(Math.random() * ULTRA_CHEAP_MODELS.length)]];
+    }
+}
+function selectPromptsForDomain(joltData) {
+    if (joltData.jolt) {
+        // 🔬 JOLT domains get comprehensive prompts for benchmarking
+        const basePrompts = ['business_analysis', 'technical_assessment'];
+        const joltPrompts = ['brand_memory_analysis', 'market_intelligence'];
+        return [...basePrompts, ...joltPrompts.slice(0, joltData.additional_prompts || 1)];
+    }
+    else {
+        // 📊 Regular domains get basic coverage
+        return ['business_analysis'];
+    }
+}
+function selectOptimalModel() {
+    // For backward compatibility - select from ultra-cheap tier
+    return ULTRA_CHEAP_MODELS[Math.floor(Math.random() * ULTRA_CHEAP_MODELS.length)];
+}
+// ============================================================================
+// PREMIUM DOMAINS - DYNAMIC JOLT INTEGRATION
+// ============================================================================
+// JOLT domains are now loaded dynamically from industry-intelligence service
 // Database connection
 const pool = new pg_1.Pool({
     connectionString: process.env.DATABASE_URL,
@@ -105,25 +293,6 @@ const grokClient = axios_1.default.create({
     },
     timeout: 30000
 });
-// 🎯 COST-OPTIMIZED MODEL SELECTION (Cheap + Middle Tier Only)
-const ULTRA_CHEAP_MODELS = [
-    'claude-3-haiku-20240307',
-    'deepseek-chat',
-    'gpt-4o-mini',
-    'meta-llama/Meta-Llama-3-8B-Instruct', // Together AI: $0.0000008
-];
-const MIDDLE_TIER_MODELS = [
-    'gpt-3.5-turbo',
-    'mistral-small-latest',
-    'gemini-1.5-flash',
-    'grok-beta', // Alternative perspective
-];
-// Combined model pool (ultra-cheap prioritized)
-const ALL_AVAILABLE_MODELS = [...ULTRA_CHEAP_MODELS, ...MIDDLE_TIER_MODELS];
-function selectOptimalModel() {
-    // Priority: ultra-cheap first, then middle tier
-    return ULTRA_CHEAP_MODELS[Math.floor(Math.random() * ULTRA_CHEAP_MODELS.length)];
-}
 // Real LLM API call function (ported from raw-capture-runner)
 async function callLLM(model, prompt, domain) {
     const startTime = Date.now();
@@ -290,7 +459,7 @@ async function callLLM(model, prompt, domain) {
         throw error;
     }
 }
-// 100 NEW Premium Domains for Business Intelligence Analysis (NO OVERLAPS with existing 437)
+// 100+ Premium Domains for Business Intelligence Analysis 
 const PREMIUM_DOMAINS = [
     // 🏥 BIOTECH/PHARMACEUTICALS ($4T+ market cap) - MAJOR GAP!
     'moderna.com', 'pfizer.com', 'johnson.com', 'merck.com', 'novartis.com',
@@ -332,35 +501,114 @@ const PREMIUM_DOMAINS = [
 ];
 class SophisticatedRunner {
     constructor() {
+        this.joltDomainCount = 0;
         this.domains = PREMIUM_DOMAINS;
-        console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
+        this.initializeWithJoltDomains();
     }
+    async initializeWithJoltDomains() {
+        try {
+            // Load JOLT domains from industry-intelligence service
+            const joltDomains = await joltService.getJoltDomainList();
+            // Add JOLT domains to the beginning (priority)
+            const combinedDomains = [...joltDomains, ...this.domains];
+            // Remove duplicates while preserving order
+            this.domains = [...new Set(combinedDomains)];
+            this.joltDomainCount = joltDomains.length;
+            console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
+            console.log(`🔬 Including ${this.joltDomainCount} JOLT benchmark domains`);
+        }
+        catch (error) {
+            console.warn('⚠️  Failed to load JOLT domains, using standard domains only');
+            console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
+        }
+    }
+    // 🔬 JOLT-ENHANCED SEED DOMAINS (Backwards Compatible)
     async seedDomains() {
-        console.log('🌱 Seeding premium domains...');
+        console.log('🌱 Seeding premium domains with jolt metadata...');
         let inserted = 0;
         let skipped = 0;
+        let joltInserted = 0;
         for (const domain of this.domains) {
             try {
-                // Use exact same schema as raw-capture-runner - NO processor_id
-                const result = await pool.query(`
-          INSERT INTO domains (domain, status, created_at) 
-          VALUES ($1, 'pending', NOW())
-          ON CONFLICT (domain) DO NOTHING
-          RETURNING id
-        `, [domain]);
-                if (result.rows.length > 0) {
-                    inserted++;
+                // Check if this domain has jolt metadata
+                const joltData = await joltService.getJoltData(domain);
+                const isJoltDomain = joltData.jolt;
+                if (isJoltDomain) {
+                    // For jolt domains, try to add to a jolt_metadata table if it exists
+                    // But fall back gracefully to standard insertion if table doesn't exist
+                    try {
+                        // Try advanced insertion with jolt metadata (if schema supports it)
+                        const result = await pool.query(`
+              INSERT INTO domains (domain, status, created_at, jolt, jolt_type, jolt_date, jolt_description, paired_domain, jolt_severity) 
+              VALUES ($1, 'pending', NOW(), $2, $3, $4, $5, $6, $7)
+              ON CONFLICT (domain) DO UPDATE SET
+                jolt = EXCLUDED.jolt,
+                jolt_type = EXCLUDED.jolt_type,
+                jolt_date = EXCLUDED.jolt_date,
+                jolt_description = EXCLUDED.jolt_description,
+                paired_domain = EXCLUDED.paired_domain,
+                jolt_severity = EXCLUDED.jolt_severity
+              RETURNING id
+            `, [
+                            domain,
+                            joltData.jolt,
+                            joltData.type,
+                            joltData.date,
+                            joltData.description,
+                            joltData.paired_domain,
+                            joltData.severity
+                        ]);
+                        if (result.rows.length > 0) {
+                            inserted++;
+                            joltInserted++;
+                            console.log(`🔬 Jolt domain inserted: ${domain} (${joltData.type})`);
+                        }
+                        else {
+                            skipped++;
+                        }
+                    }
+                    catch (joltError) {
+                        // If jolt columns don't exist, fall back to standard insertion
+                        console.log(`⚠️  Jolt columns not found, falling back to standard insertion for: ${domain}`);
+                        const result = await pool.query(`
+              INSERT INTO domains (domain, status, created_at) 
+              VALUES ($1, 'pending', NOW())
+              ON CONFLICT (domain) DO NOTHING
+              RETURNING id
+            `, [domain]);
+                        if (result.rows.length > 0) {
+                            inserted++;
+                            console.log(`✅ Standard insertion (jolt fallback): ${domain}`);
+                        }
+                        else {
+                            skipped++;
+                        }
+                    }
                 }
                 else {
-                    skipped++;
+                    // Standard domain insertion (non-jolt)
+                    const result = await pool.query(`
+            INSERT INTO domains (domain, status, created_at) 
+            VALUES ($1, 'pending', NOW())
+            ON CONFLICT (domain) DO NOTHING
+            RETURNING id
+          `, [domain]);
+                    if (result.rows.length > 0) {
+                        inserted++;
+                    }
+                    else {
+                        skipped++;
+                    }
                 }
             }
             catch (error) {
                 // Skip duplicates or errors
                 skipped++;
+                console.log(`⚠️  Skipped domain due to error: ${domain}`);
             }
         }
-        console.log(`✅ Seeded ${inserted} domains`);
+        console.log(`✅ Seeded ${inserted} domains (${joltInserted} jolt domains)`);
+        console.log(`🔬 Jolt domains provide ground truth benchmarks for brand transition analysis`);
     }
     async processNextBatch() {
         try {
@@ -379,36 +627,61 @@ class SophisticatedRunner {
             console.log(`🎯 Processing: ${domain} (${SERVICE_ID})`);
             // Mark as processing - same as raw-capture-runner
             await pool.query('UPDATE domains SET status = $1, last_processed_at = NOW() WHERE id = $2', ['processing', id]);
-            // Select optimal model (cost-optimized)
-            const selectedModel = selectOptimalModel();
-            // Create sophisticated prompt
-            const prompt = `Analyze the business intelligence value of ${domain}. Provide insights on:
-1. Primary business model and revenue streams
-2. Key technology stack and competitive advantages  
-3. Market position and growth trajectory
-4. Strategic partnerships and ecosystem
-5. Future opportunities and risks
-
-Focus on actionable business intelligence for investment and partnership decisions.`;
-            // Make real LLM API call
-            const llmResult = await callLLM(selectedModel, prompt, domain);
-            // Store response using EXACT same schema as raw-capture-runner - NO processor_id
-            await pool.query(`
-        INSERT INTO responses (
-          domain_id, model, prompt_type, interpolated_prompt, 
-          raw_response, token_count, prompt_tokens, completion_tokens,
-          token_usage, total_cost_usd, latency_ms, captured_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
-      `, [
-                id, selectedModel, 'business_intelligence', prompt, llmResult.response,
-                (llmResult.tokenUsage.total_tokens || llmResult.tokenUsage.prompt_tokens + llmResult.tokenUsage.completion_tokens || 0),
-                (llmResult.tokenUsage.prompt_tokens || llmResult.tokenUsage.input_tokens || 0),
-                (llmResult.tokenUsage.completion_tokens || llmResult.tokenUsage.output_tokens || 0),
-                JSON.stringify(llmResult.tokenUsage), llmResult.cost, llmResult.latency
-            ]);
+            // 🔬 Get JOLT data for intelligent processing strategy
+            const joltData = await joltService.getJoltData(domain);
+            // 🎯 Select models and prompts based on JOLT status
+            const selectedModels = selectModelsForDomain(joltData);
+            const selectedPrompts = selectPromptsForDomain(joltData);
+            console.log(`📊 ${domain} analysis plan: ${selectedModels.length} models × ${selectedPrompts.length} prompts = ${selectedModels.length * selectedPrompts.length} total API calls`);
+            if (joltData.jolt) {
+                console.log(`🔥 JOLT BENCHMARK: ${domain} - Comprehensive analysis with premium models`);
+            }
+            else {
+                console.log(`💰 COVERAGE: ${domain} - Basic analysis with ultra-cheap models`);
+            }
+            // 🚀 Process all model-prompt combinations
+            for (const promptType of selectedPrompts) {
+                for (const model of selectedModels) {
+                    try {
+                        const prompt = COMPREHENSIVE_PROMPTS[promptType](domain);
+                        // Make real LLM API call
+                        const llmResult = await callLLM(model, prompt, domain);
+                        // Store response using EXACT same schema as raw-capture-runner - NO processor_id
+                        await pool.query(`
+              INSERT INTO responses (
+                domain_id, model, prompt_type, interpolated_prompt, 
+                raw_response, token_count, prompt_tokens, completion_tokens,
+                token_usage, total_cost_usd, latency_ms, captured_at
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+            `, [
+                            id, model, promptType, prompt, llmResult.response,
+                            (llmResult.tokenUsage.total_tokens || llmResult.tokenUsage.prompt_tokens + llmResult.tokenUsage.completion_tokens || 0),
+                            (llmResult.tokenUsage.prompt_tokens || llmResult.tokenUsage.input_tokens || 0),
+                            (llmResult.tokenUsage.completion_tokens || llmResult.tokenUsage.output_tokens || 0),
+                            JSON.stringify(llmResult.tokenUsage), llmResult.cost, llmResult.latency
+                        ]);
+                        console.log(`✅ ${model} ${promptType} completed for ${domain} ($${llmResult.cost.toFixed(6)})`);
+                        // Brief pause between API calls to be respectful
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                    catch (modelError) {
+                        console.error(`❌ ${model} ${promptType} failed for ${domain}:`, modelError.message);
+                        // Log error but continue with other models
+                        await pool.query(`
+              INSERT INTO processing_logs (domain_id, event_type, details)
+              VALUES ($1, $2, $3)
+            `, [id, 'model_error', {
+                                model,
+                                prompt_type: promptType,
+                                error: modelError.message,
+                                domain: domain
+                            }]);
+                    }
+                }
+            }
             // Mark as completed - same as raw-capture-runner
             await pool.query('UPDATE domains SET status = $1, last_processed_at = NOW() WHERE id = $2', ['completed', id]);
-            console.log(`✅ Completed: ${domain} (${SERVICE_ID})`);
+            console.log(`✅ Completed comprehensive processing: ${domain} (${SERVICE_ID})`);
         }
         catch (error) {
             console.error('❌ Processing error:', error);
@@ -540,6 +813,166 @@ app.get('/health', (req, res) => {
             grok: !!process.env.XAI_API_KEY
         }
     });
+});
+// 🔬 JOLT ANALYSIS ENDPOINTS
+app.get('/jolt', async (req, res) => {
+    try {
+        // Get JOLT domains from industry-intelligence service
+        const joltDomains = await joltService.getJoltDomainList();
+        // Try to get jolt data from database if schema supports it
+        let databaseJoltData = [];
+        try {
+            const result = await pool.query(`
+        SELECT domain, jolt, jolt_type, jolt_date, jolt_description, paired_domain, jolt_severity
+        FROM domains 
+        WHERE jolt = true
+      `);
+            databaseJoltData = result.rows;
+        }
+        catch (error) {
+            // Schema doesn't support jolt columns yet
+            databaseJoltData = [];
+        }
+        res.json({
+            jolt_feature: 'Ground Truth Benchmarking for Brand Transitions',
+            total_jolt_domains: joltDomains.length,
+            jolt_domains: joltDomains,
+            database_jolt_data: databaseJoltData,
+            schema_support: databaseJoltData.length > 0 ? 'full' : 'fallback',
+            analysis_capabilities: {
+                brand_transition_tracking: 'Monitor AI memory decay during corporate rebrands',
+                comparative_analysis: 'Compare before/after domains for transition effectiveness',
+                benchmark_metrics: 'Ground truth data for academic research',
+                predictive_modeling: 'Training data for brand transition success prediction'
+            }
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.get('/jolt/transitions', async (req, res) => {
+    try {
+        // Get transition data from industry-intelligence service
+        const joltDomains = await joltService.getJoltDomainList();
+        const transitions = [];
+        // Get detailed data for each JOLT domain
+        for (const domain of joltDomains) {
+            try {
+                const joltData = await joltService.getJoltData(domain);
+                if (joltData.type === 'brand_transition' && joltData.paired_domain) {
+                    transitions.push({
+                        old_brand: domain,
+                        new_brand: joltData.paired_domain,
+                        transition_date: joltData.date,
+                        description: joltData.description,
+                        severity: joltData.severity
+                    });
+                }
+            }
+            catch (error) {
+                // Skip this domain if we can't get its data
+                continue;
+            }
+        }
+        res.json({
+            total_transitions: transitions.length,
+            transitions: transitions,
+            analysis_note: 'These represent confirmed major brand transitions for ground truth benchmarking'
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// 🔧 DATABASE SCHEMA MIGRATION HELPER
+app.post('/migrate/jolt-schema', async (req, res) => {
+    try {
+        console.log('🔧 Attempting to add jolt columns to domains table...');
+        // Try to add jolt columns (will fail gracefully if they already exist)
+        const migrations = [
+            'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt BOOLEAN DEFAULT FALSE',
+            'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_type VARCHAR(50)',
+            'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_date DATE',
+            'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_description TEXT',
+            'ALTER TABLE domains ADD COLUMN IF NOT EXISTS paired_domain VARCHAR(255)',
+            'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_severity VARCHAR(20)'
+        ];
+        const results = [];
+        for (const migration of migrations) {
+            try {
+                await pool.query(migration);
+                results.push({ sql: migration, status: 'success' });
+            }
+            catch (error) {
+                results.push({ sql: migration, status: 'failed', error: error.message });
+            }
+        }
+        console.log('✅ Jolt schema migration completed');
+        res.json({
+            message: 'Jolt schema migration completed',
+            results: results,
+            next_step: 'Re-run seedDomains to populate jolt metadata'
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// 🚀 MANUAL COMPREHENSIVE PROCESSING ACTIVATION
+app.post('/jolt/activate', async (req, res) => {
+    try {
+        console.log('🔥 MANUAL JOLT ACTIVATION TRIGGERED');
+        // Reset some domains to trigger comprehensive processing
+        const resetDomains = ['tesla.com', 'apple.com', 'meta.com', 'facebook.com', 'twitter.com'];
+        let resetCount = 0;
+        for (const domain of resetDomains) {
+            try {
+                await pool.query('UPDATE domains SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE domain = $2 AND processor_id = $3', ['pending', domain, 'sophisticated_v1_comprehensive']);
+                resetCount++;
+                console.log(`✅ Reset ${domain} for comprehensive processing`);
+            }
+            catch (error) {
+                console.log(`⚠️  Failed to reset ${domain}:`, error.message);
+            }
+        }
+        res.json({
+            success: true,
+            message: 'Comprehensive JOLT processing activated',
+            reset_domains: resetCount,
+            jolt_fallback_domains: Object.keys(LOCAL_JOLT_FALLBACK),
+            comprehensive_mode: true,
+            timestamp: new Date().toISOString()
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+// Get JOLT status and configuration
+app.get('/jolt/status', async (req, res) => {
+    try {
+        const joltDomains = await joltService.getJoltDomainList();
+        res.json({
+            success: true,
+            jolt_domains: joltDomains,
+            local_fallback_domains: Object.keys(LOCAL_JOLT_FALLBACK),
+            comprehensive_mode: true,
+            industry_intelligence_status: 'fallback_active',
+            timestamp: new Date().toISOString()
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
 });
 // Main execution
 async function main() {
