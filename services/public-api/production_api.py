@@ -388,18 +388,14 @@ async def get_memory_ticker(limit: int = Query(5, le=20)):
     """
     try:
         async with pool.acquire() as conn:
-            # Get top domains with trend data
+            # Get top domains with trend data - NO TIME FILTERS, show ALL data
             top_domains = await conn.fetch("""
                 SELECT 
                     domain, memory_score, model_count, drift_delta,
                     ai_consensus_score, reputation_risk_score,
                     updated_at
                 FROM public_domain_cache 
-                ORDER BY 
-                    CASE WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 1
-                         WHEN updated_at > NOW() - INTERVAL '7 days' THEN 2  
-                         ELSE 3 END,
-                    memory_score DESC
+                ORDER BY memory_score DESC
                 LIMIT $1
             """, limit)
             
@@ -525,7 +521,6 @@ async def get_industry_categories():
                 FROM (
                     SELECT *, ROW_NUMBER() OVER (PARTITION BY business_focus ORDER BY memory_score DESC) as row_number
                     FROM public_domain_cache 
-                    WHERE updated_at > NOW() - INTERVAL '24 hours'
                 ) ranked
                 WHERE row_number <= 5
                 GROUP BY business_focus
@@ -576,7 +571,6 @@ async def get_memory_shadows():
                     GREATEST(1, FLOOR(model_count * 0.3)::int) as models_forgetting
                 FROM public_domain_cache 
                 WHERE drift_delta < -0.5  -- Only declining domains
-                AND updated_at > NOW() - INTERVAL '24 hours'
                 ORDER BY ABS(drift_delta) DESC
                 LIMIT 20
             """)
@@ -622,17 +616,9 @@ async def get_full_rankings(
             where_clause += f" AND domain ILIKE '%{search}%'"
         
         if sort == "score":
-            order_clause = """ORDER BY 
-                CASE WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 1
-                     WHEN updated_at > NOW() - INTERVAL '7 days' THEN 2  
-                     ELSE 3 END,
-                memory_score DESC"""
+            order_clause = "ORDER BY memory_score DESC"
         elif sort == "consensus":
-            order_clause = """ORDER BY 
-                CASE WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 1
-                     WHEN updated_at > NOW() - INTERVAL '7 days' THEN 2  
-                     ELSE 3 END,
-                ai_consensus_score DESC"""
+            order_clause = "ORDER BY ai_consensus_score DESC"
         elif sort == "trend":
             order_clause = "ORDER BY drift_delta DESC"
         else:  # alphabetical
@@ -711,7 +697,7 @@ async def get_competitive_analysis(domain_identifier: str):
             if not domain_data:
                 raise HTTPException(status_code=404, detail="Domain not found")
             
-            # Get competitive benchmarks
+            # Get competitive benchmarks - include ALL data for proper comparisons
             benchmarks = await conn.fetchrow("""
                 SELECT 
                     AVG(memory_score) as avg_memory_score,
@@ -719,8 +705,7 @@ async def get_competitive_analysis(domain_identifier: str):
                     AVG(reputation_risk_score) as avg_risk,
                     PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY memory_score) as top_10_memory,
                     PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY memory_score) as top_25_memory
-                FROM public_domain_cache 
-                WHERE updated_at > NOW() - INTERVAL '24 hours'
+                FROM public_domain_cache
             """)
         
         # Calculate competitive positioning
@@ -795,13 +780,12 @@ async def get_competitive_context(memory_score: float, consensus_score: float, r
     }
 
 async def get_percentile_rank(value: float, column: str) -> float:
-    """Calculate percentile rank for competitive analysis"""
+    """Calculate percentile rank for competitive analysis - include ALL data"""
     async with pool.acquire() as conn:
         result = await conn.fetchval(f"""
             SELECT percent_rank() OVER (ORDER BY {column}) * 100
             FROM (
                 SELECT {column} FROM public_domain_cache 
-                WHERE updated_at > NOW() - INTERVAL '24 hours'
                 UNION ALL
                 SELECT $1
             ) t
