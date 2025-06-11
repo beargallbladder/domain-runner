@@ -35,6 +35,7 @@ app.get('/', (req, res) => {
     version: service.getVersion(),
     description: 'Foundational service for industry mapping, benchmark analysis, and strategic domain targeting',
     uptime: service.getUptime(),
+    deployment_timestamp: '2025-06-11T00:20:00Z',
     endpoints: {
       health: '/health',
       industries: '/industries',
