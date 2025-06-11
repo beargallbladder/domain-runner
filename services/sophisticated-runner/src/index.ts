@@ -514,72 +514,467 @@ async function callLLM(model: string, prompt: string, domain: string): Promise<{
   }
 }
 
-// 100+ Premium Domains for Business Intelligence Analysis 
-const PREMIUM_DOMAINS = [
-  // 🏥 BIOTECH/PHARMACEUTICALS ($4T+ market cap) - MAJOR GAP!
-  'moderna.com', 'pfizer.com', 'johnson.com', 'merck.com', 'novartis.com', 
-  'gsk.com', 'sanofi.com', 'abbvie.com', 'amgen.com', 'gilead.com',
-  'biogen.com', 'regeneron.com', 'vertex.com', 'ginkgobioworks.com', 'benchling.com',
-  
-  // 🛡️ AEROSPACE/DEFENSE ($800B+ market cap) - COMPLETELY MISSING!
-  'lockheedmartin.com', 'boeing.com', 'northropgrumman.com', 'raytheon.com', 
-  'generaldynamics.com', 'airbus.com', 'rolls-royce.com', 'safran-group.com',
-  'embraer.com', 'bombardier.com', 'prattwhitney.com', 'aerovironment.com',
-  
-  // ⚡ ENERGY/CLIMATE TECH ($2T+ market cap) - MAJOR GAP!
-  'exxonmobil.com', 'chevron.com', 'shell.com', 'bp.com', 'totalenergies.com',
-  'conocophillips.com', 'nextera.com', 'enphase.com', 'solaredge.com', 'firstsolar.com',
-  'vestas.com', 'orsted.com', 'ge.com', 'siemens-energy.com', 'climeworks.com',
-  
-  // 📱 SEMICONDUCTORS/HARDWARE (Expand $500B sector) - MISSING KEY PLAYERS!
-  'tsmc.com', 'asml.com', 'applied-materials.com', 'lam-research.com', 'kla.com',
-  'synopsys.com', 'cadence.com', 'ansys.com', 'keysight.com', 'teradyne.com',
-  'groq.com', 'graphcore.ai', 'cerebras.ai', 'sambanova.ai', 'd-wave.com',
-  
-  // 📞 TELECOM/COMMUNICATIONS ($1.5T+ missing)
-  'verizon.com', 'att.com', 't-mobile.com', 'comcast.com', 'charter.com',
-  'ericsson.com', 'nokia.com', 'cisco.com', 'juniper.net', 'arista.com',
-  
-  // 🌾 FOOD/AGRICULTURE ($1T+ missing)
-  'cargill.com', 'adm.com', 'bunge.com', 'tyson.com', 'nestle.com',
-  'unilever.com', 'pepsico.com', 'mondelez.com', 'kellogg.com', 'generalmills.com',
-  'indigo.ag', 'plenty.ag', 'aerofarms.com', 'boweryfarming.com', 'appharvest.com',
-  
-  // 🏭 MANUFACTURING/INDUSTRIAL ($2T+ missing)
-  '3m.com', 'honeywell.com', 'emerson.com', 'rockwellautomation.com', 'eaton.com',
-  'parker.com', 'danaher.com', 'illinois-tool.com', 'stanley-black-decker.com', 'dover.com',
-  
-  // 🌍 INTERNATIONAL GIANTS (Fix US bias)
-  'tencent.com', 'xiaomi.com', 'byd.com', 'meituan.com', 'bytedance.com',
-  'kuaishou.com', 'bilibili.com', 'netease.com', 'sina.com', 'sohu.com',
-  
-  // ✈️ TRAVEL/HOSPITALITY ($800B missing)
-  'marriott.com', 'hilton.com', 'ihg.com', 'hyatt.com', 'accor.com',
-  'carnival.com', 'royal-caribbean.com', 'norwegian.com', 'delta.com', 'united.com',
-  'american.com', 'southwest.com', 'jetblue.com', 'alaska.com',
-  
-  // 🛍️ RETAIL/CONSUMER (Beyond e-commerce platforms)
-  'costco.com', 'homedepot.com', 'lowes.com', 'macys.com', 'nordstrom.com',
-  'tjx.com', 'ross.com', 'gap.com', 'under-armour.com', 'lululemon.com',
-  'patagonia.com', 'rei.com', 'dicks.com', 'footlocker.com'
-];
+// ============================================================================
+// 🎯 DOMAIN CURATION SERVICE - DYNAMIC DISCOVERY
+// ============================================================================
+// Purpose: Replace hardcoded PREMIUM_DOMAINS with intelligent domain discovery
+// Strategy: Find competitors, trending domains, crisis-adjacent domains
+
+const DOMAIN_CURATION_URL = process.env.DOMAIN_CURATION_URL || 'http://localhost:3005';
+
+class DomainCurationService {
+  private domainCache: string[] = [];
+  private lastCacheUpdate: number = 0;
+  private cacheValidityMs: number = 3600000; // 1 hour
+
+  async getCuratedDomains(): Promise<string[]> {
+    // Check cache first
+    if (this.domainCache.length > 0 && Date.now() - this.lastCacheUpdate < this.cacheValidityMs) {
+      return this.domainCache;
+    }
+
+    try {
+      // Try to fetch from domain curation service
+      const response = await axios.get(`${DOMAIN_CURATION_URL}/api/curated-domains`);
+      const curatedDomains = (response.data as any).domains || [];
+      
+      if (curatedDomains.length > 0) {
+        this.domainCache = curatedDomains;
+        this.lastCacheUpdate = Date.now();
+        console.log(`✅ Loaded ${curatedDomains.length} curated domains from curation service`);
+        return curatedDomains;
+      }
+    } catch (error) {
+      console.warn('⚠️  Domain curation service unavailable, using fallback list');
+    }
+
+    // Fallback to strategic seed domains if service unavailable
+    const fallbackDomains = [
+      // 🏥 BIOTECH/PHARMACEUTICALS - High-value targets
+      'moderna.com', 'pfizer.com', 'johnson.com', 'merck.com', 'novartis.com',
+      
+      // 📱 AI/TECH - Core intelligence targets  
+      'openai.com', 'anthropic.com', 'deepmind.com', 'huggingface.co',
+      
+      // 🏢 MEGACORPS - Benchmark standards
+      'microsoft.com', 'google.com', 'amazon.com', 'apple.com',
+      
+      // 🛡️ DEFENSE/AEROSPACE - Strategic importance
+      'lockheedmartin.com', 'boeing.com', 'northropgrumman.com',
+      
+      // ⚡ ENERGY/CLIMATE - Market disruption
+      'tesla.com', 'nextera.com', 'enphase.com'
+    ];
+    
+    this.domainCache = fallbackDomains;
+    this.lastCacheUpdate = Date.now();
+    console.log(`✅ Using fallback domain list: ${fallbackDomains.length} strategic domains`);
+    return fallbackDomains;
+  }
+
+  async findCompetitors(domain: string): Promise<string[]> {
+    try {
+      const response = await axios.get(`${DOMAIN_CURATION_URL}/api/competitors/${domain}`);
+      return (response.data as any).competitors || [];
+    } catch (error) {
+      console.warn(`⚠️  Failed to find competitors for ${domain}`);
+      return [];
+    }
+  }
+
+  clearCache(): void {
+    this.domainCache = [];
+    this.lastCacheUpdate = 0;
+  }
+}
+
+const domainCurationService = new DomainCurationService();
+
+// ============================================================================
+// 🎯 PHASE 1: COMPETITOR DISCOVERY SERVICE  
+// ============================================================================
+// Purpose: 3x domain coverage by finding LLM-suggested competitors
+// Strategy: Round-robin LLMs, track which models give best suggestions
+
+class CompetitorDiscoveryService {
+  private availableModels = [
+    'gpt-4o-mini',           // Ultra cheap OpenAI
+    'claude-3-haiku-20240307', // Ultra cheap Anthropic  
+    'deepseek-chat',         // Ultra cheap specialized
+    'grok-beta',              // Grok for business intelligence
+  ];
+
+  async discoverCompetitors(sourceDomain: string): Promise<{
+    competitors: string[];
+    suggestedBy: string;
+    cost: number;
+  }> {
+    // Round-robin model selection for A/B testing
+    const model = this.availableModels[Math.floor(Math.random() * this.availableModels.length)];
+    
+    const prompt = `List exactly 4 direct competitors of ${sourceDomain}. 
+Requirements:
+- Only include actual domain names (e.g., example.com)
+- Focus on similar-sized companies in the same industry
+- One domain per line, no explanations
+- Only list domains that actually exist`;
+
+    try {
+      const result = await callLLM(model, prompt, sourceDomain);
+      const competitors = this.parseCompetitorDomains(result.response);
+      
+      // Store discovery metadata for performance tracking
+      await this.recordDiscovery(sourceDomain, competitors, model, result.cost);
+      
+      return {
+        competitors: competitors.slice(0, 4), // Ensure max 4
+        suggestedBy: model,
+        cost: result.cost
+      };
+      
+    } catch (error) {
+      console.error(`❌ Competitor discovery failed for ${sourceDomain} with ${model}:`, error);
+      return { competitors: [], suggestedBy: model, cost: 0 };
+    }
+  }
+
+  private parseCompetitorDomains(response: string): string[] {
+    return response
+      .split('\n')
+      .map(line => line.trim().toLowerCase())
+      .filter(line => line.includes('.'))
+      .map(line => {
+        // Extract domain from various formats
+        const match = line.match(/([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/);
+        return match ? match[1] : null;
+      })
+      .filter((domain): domain is string => Boolean(domain))
+      .filter(domain => domain.length > 3);
+  }
+
+  private async recordDiscovery(sourceDomain: string, competitors: string[], model: string, cost: number): Promise<void> {
+    try {
+      await pool.query(`
+        INSERT INTO competitor_discoveries (
+          source_domain, competitors, suggested_by_model, 
+          discovery_cost, discovered_at, competitor_count
+        ) VALUES ($1, $2, $3, $4, NOW(), $5)
+        ON CONFLICT (source_domain, suggested_by_model) 
+        DO UPDATE SET 
+          competitors = EXCLUDED.competitors,
+          discovery_cost = EXCLUDED.discovery_cost,
+          discovered_at = EXCLUDED.discovered_at,
+          competitor_count = EXCLUDED.competitor_count
+      `, [sourceDomain, JSON.stringify(competitors), model, cost, competitors.length]);
+    } catch (error) {
+      // Table might not exist yet - graceful fallback
+      console.log(`📊 Competitor discovery tracking: ${sourceDomain} → ${competitors.length} competitors via ${model}`);
+    }
+  }
+
+  async expandAllDomains(): Promise<{
+    processed: number;
+    newCompetitors: number;
+    totalCost: number;
+    modelPerformance: Record<string, number>;
+  }> {
+    const existingDomains = await pool.query(`
+      SELECT DISTINCT domain FROM domains 
+      WHERE status IN ('completed', 'pending')
+      ORDER BY created_at DESC
+    `);
+
+    let processed = 0;
+    let newCompetitors = 0;
+    let totalCost = 0;
+    const modelPerformance: Record<string, number> = {};
+
+    for (const { domain } of existingDomains.rows) {
+      try {
+        const discovery = await this.discoverCompetitors(domain);
+        processed++;
+        totalCost += discovery.cost;
+        
+        // Track model performance
+        modelPerformance[discovery.suggestedBy] = (modelPerformance[discovery.suggestedBy] || 0) + discovery.competitors.length;
+
+        // Add new competitors to processing queue
+        for (const competitor of discovery.competitors) {
+          try {
+            const result = await pool.query(`
+              INSERT INTO domains (domain, status, created_at, discovery_source, source_domain) 
+              VALUES ($1, 'pending', NOW(), 'competitor_discovery', $2)
+              ON CONFLICT (domain) DO NOTHING
+              RETURNING id
+            `, [competitor, domain]);
+
+            if (result.rows.length > 0) {
+              newCompetitors++;
+              console.log(`✅ New competitor: ${competitor} (from ${domain} via ${discovery.suggestedBy})`);
+            }
+          } catch (insertError) {
+            // Column might not exist - fallback to basic insert
+            try {
+              const result = await pool.query(`
+                INSERT INTO domains (domain, status, created_at) 
+                VALUES ($1, 'pending', NOW())
+                ON CONFLICT (domain) DO NOTHING
+                RETURNING id
+              `, [competitor]);
+
+              if (result.rows.length > 0) {
+                newCompetitors++;
+                console.log(`✅ New competitor: ${competitor} (from ${domain})`);
+              }
+            } catch (fallbackError) {
+              console.warn(`⚠️  Failed to add competitor: ${competitor}`);
+            }
+          }
+        }
+
+        // Brief pause between API calls
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+      } catch (error) {
+        console.error(`❌ Failed to process ${domain}:`, error);
+      }
+    }
+
+    return { processed, newCompetitors, totalCost, modelPerformance };
+  }
+}
+
+// ============================================================================
+// 🔥 PHASE 2: JOLT CRISIS DISCOVERY SERVICE
+// ============================================================================
+// Purpose: Find emerging crisis events for new JOLT benchmarks
+// Strategy: Multi-LLM crisis detection with severity scoring
+
+class JOLTDiscoveryService {
+  private crisisModels = [
+    'gpt-4',                    // Premium for complex analysis
+    'claude-3-sonnet-20240229', // Premium reasoning
+    'grok-beta',                // X/Twitter integration for real-time
+    'claude-3-5-sonnet-20241022' // Latest Claude for current events
+  ];
+
+  private crisisQueries = {
+    leadership_change: (domain: string) => 
+      `Has ${domain} experienced any major CEO changes, founder departures, or executive scandals in the last 18 months? If yes, provide: 1) What happened 2) When 3) Impact severity (low/medium/high/critical). If no major changes, respond with "NO_EVENT".`,
+    
+    rebranding_activity: (domain: string) =>
+      `Is ${domain} planning or has recently completed any major rebrand, name changes, or corporate restructuring in the last 2 years? If yes, provide: 1) What changed 2) When 3) Market reception (low/medium/high/critical). If no rebranding, respond with "NO_EVENT".`,
+    
+    crisis_events: (domain: string) =>
+      `What major scandals, controversies, or business crises has ${domain} faced in the last 2 years? If any, provide: 1) Nature of crisis 2) Timeline 3) Business impact (low/medium/high/critical). If no major crises, respond with "NO_EVENT".`,
+    
+    acquisition_activity: (domain: string) =>
+      `Has ${domain} been acquired, merged, or made major acquisitions in the last 2 years that might affect brand recognition? If yes, provide: 1) Transaction details 2) Date 3) Brand confusion risk (low/medium/high/critical). If no major M&A, respond with "NO_EVENT".`
+  };
+
+  async scanForCrisisEvents(domain: string): Promise<{
+    events: Array<{
+      type: string;
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      description: string;
+      discoveredBy: string;
+    }>;
+    cost: number;
+  }> {
+    const events = [];
+    let totalCost = 0;
+
+    for (const [queryType, promptGenerator] of Object.entries(this.crisisQueries)) {
+      const model = this.crisisModels[Math.floor(Math.random() * this.crisisModels.length)];
+      const prompt = promptGenerator(domain);
+
+      try {
+        const result = await callLLM(model, prompt, domain);
+        totalCost += result.cost;
+
+        const analysis = this.analyzeCrisisResponse(result.response);
+        
+        if (analysis.hasEvent) {
+          events.push({
+            type: queryType,
+            severity: analysis.severity,
+            description: analysis.description,
+            discoveredBy: model
+          });
+
+          console.log(`🔥 CRISIS DETECTED: ${domain} - ${queryType} (${analysis.severity}) via ${model}`);
+        }
+
+        // Brief pause between crisis queries
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+      } catch (error) {
+        console.error(`❌ Crisis scan failed for ${domain} (${queryType}) with ${model}:`, error);
+      }
+    }
+
+    return { events, cost: totalCost };
+  }
+
+  private analyzeCrisisResponse(response: string): {
+    hasEvent: boolean;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    description: string;
+  } {
+    const cleanResponse = response.trim().toUpperCase();
+    
+    if (cleanResponse.includes('NO_EVENT') || cleanResponse.includes('NO MAJOR') || response.length < 20) {
+      return { hasEvent: false, severity: 'low', description: '' };
+    }
+
+    // Severity detection based on keywords
+    let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+    
+    if (cleanResponse.includes('CRITICAL') || cleanResponse.includes('COLLAPSE') || cleanResponse.includes('BANKRUPTCY')) {
+      severity = 'critical';
+    } else if (cleanResponse.includes('HIGH') || cleanResponse.includes('SCANDAL') || cleanResponse.includes('FRAUD')) {
+      severity = 'high';
+    } else if (cleanResponse.includes('MEDIUM') || cleanResponse.includes('CONTROVERSY') || cleanResponse.includes('DEPARTURE')) {
+      severity = 'medium';
+    }
+
+    return {
+      hasEvent: true,
+      severity,
+      description: response.substring(0, 500) // Truncate for storage
+    };
+  }
+
+  async discoverEmergingJOLTEvents(): Promise<{
+    scannedDomains: number;
+    potentialJOLTEvents: number;
+    newJOLTDomains: string[];
+    totalCost: number;
+    modelPerformance: Record<string, number>;
+  }> {
+    const domains = await pool.query(`
+      SELECT DISTINCT domain FROM domains 
+      WHERE status = 'completed'
+      ORDER BY last_processed_at DESC
+      LIMIT 50
+    `);
+
+    let scannedDomains = 0;
+    let potentialJOLTEvents = 0;
+    const newJOLTDomains: string[] = [];
+    let totalCost = 0;
+    const modelPerformance: Record<string, number> = {};
+
+    for (const { domain } of domains.rows) {
+      try {
+        const crisisResult = await this.scanForCrisisEvents(domain);
+        scannedDomains++;
+        totalCost += crisisResult.cost;
+
+        if (crisisResult.events.length > 0) {
+          potentialJOLTEvents += crisisResult.events.length;
+
+          // Check if this should become a JOLT domain
+          const hasCriticalEvent = crisisResult.events.some(e => e.severity === 'critical');
+          const hasMultipleEvents = crisisResult.events.length >= 2;
+
+          if (hasCriticalEvent || hasMultipleEvents) {
+            newJOLTDomains.push(domain);
+            
+            // Add to JOLT system
+            await this.promoteToJOLTDomain(domain, crisisResult.events);
+          }
+
+          // Track model performance
+          crisisResult.events.forEach(event => {
+            modelPerformance[event.discoveredBy] = (modelPerformance[event.discoveredBy] || 0) + 1;
+          });
+
+          // Record crisis events
+          await this.recordCrisisEvents(domain, crisisResult.events);
+        }
+
+        // Pause between domain scans
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+      } catch (error) {
+        console.error(`❌ Crisis discovery failed for ${domain}:`, error);
+      }
+    }
+
+    return {
+      scannedDomains,
+      potentialJOLTEvents,
+      newJOLTDomains,
+      totalCost,
+      modelPerformance
+    };
+  }
+
+  private async promoteToJOLTDomain(domain: string, events: any[]): Promise<void> {
+    const primaryEvent = events.find(e => e.severity === 'critical') || events[0];
+    
+    try {
+      await pool.query(`
+        UPDATE domains 
+        SET is_jolt = TRUE, 
+            jolt_type = $2, 
+            jolt_severity = $3,
+            jolt_additional_prompts = $4
+        WHERE domain = $1
+      `, [
+        domain, 
+        primaryEvent.type,
+        primaryEvent.severity,
+        primaryEvent.severity === 'critical' ? 4 : primaryEvent.severity === 'high' ? 3 : 2
+      ]);
+      
+      console.log(`🔥 PROMOTED TO JOLT: ${domain} (${primaryEvent.severity} ${primaryEvent.type})`);
+    } catch (error) {
+      console.log(`🔥 JOLT CANDIDATE: ${domain} - schema not ready for JOLT promotion`);
+    }
+  }
+
+  private async recordCrisisEvents(domain: string, events: any[]): Promise<void> {
+    try {
+      await pool.query(`
+        INSERT INTO crisis_discoveries (
+          domain, events, discovered_at, event_count
+        ) VALUES ($1, $2, NOW(), $3)
+        ON CONFLICT (domain) 
+        DO UPDATE SET 
+          events = EXCLUDED.events,
+          discovered_at = EXCLUDED.discovered_at,
+          event_count = EXCLUDED.event_count
+      `, [domain, JSON.stringify(events), events.length]);
+    } catch (error) {
+      console.log(`📊 Crisis tracking: ${domain} → ${events.length} events`);
+    }
+  }
+}
+
+const competitorDiscoveryService = new CompetitorDiscoveryService();
+const joltDiscoveryService = new JOLTDiscoveryService();
 
 class SophisticatedRunner {
   private domains: string[];
   private joltDomainCount: number = 0;
   
   constructor() {
-    this.domains = PREMIUM_DOMAINS;
-    this.initializeWithJoltDomains();
+    this.domains = []; // Will be populated by initializeWithCuratedDomains
+    this.initializeWithCuratedDomains();
   }
 
-  private async initializeWithJoltDomains(): Promise<void> {
+  private async initializeWithCuratedDomains(): Promise<void> {
     try {
+      // Load curated domains from domain curation service
+      const curatedDomains = await domainCurationService.getCuratedDomains();
+      
       // Load JOLT domains from industry-intelligence service
       const joltDomains = await joltService.getJoltDomainList();
       
-      // Add JOLT domains to the beginning (priority)
-      const combinedDomains = [...joltDomains, ...this.domains];
+      // Add JOLT domains to the beginning (priority), then curated domains
+      const combinedDomains = [...joltDomains, ...curatedDomains];
       
       // Remove duplicates while preserving order
       this.domains = [...new Set(combinedDomains)];
@@ -587,9 +982,20 @@ class SophisticatedRunner {
       
       console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
       console.log(`🔬 Including ${this.joltDomainCount} JOLT benchmark domains`);
+      console.log(`🎯 Including ${curatedDomains.length} curated domains from discovery service`);
     } catch (error) {
-      console.warn('⚠️  Failed to load JOLT domains, using standard domains only');
-      console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} domains`);
+      console.warn('⚠️  Failed to load domains from services, using JOLT domains only');
+      
+      // Fallback to just JOLT domains if everything fails
+      try {
+        const joltDomains = await joltService.getJoltDomainList();
+        this.domains = joltDomains;
+        this.joltDomainCount = joltDomains.length;
+        console.log(`✅ Sophisticated Runner initialized with ${this.domains.length} JOLT domains only`);
+      } catch (joltError) {
+        console.error('❌ Failed to load any domains:', joltError);
+        this.domains = [];
+      }
     }
   }
 
@@ -921,10 +1327,228 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 🎯 DOMAIN MANAGEMENT ENDPOINTS
+app.post('/add-domains', async (req, res) => {
+  try {
+    const { domains } = req.body;
+    
+    if (!Array.isArray(domains)) {
+      return res.status(400).json({ error: 'domains must be an array' });
+    }
+
+    let inserted = 0;
+    for (const domain of domains) {
+      try {
+        const result = await pool.query(`
+          INSERT INTO domains (domain, status, created_at) 
+          VALUES ($1, 'pending', NOW())
+          ON CONFLICT (domain) DO NOTHING
+          RETURNING id
+        `, [domain]);
+        
+        if (result.rows.length > 0) {
+          inserted++;
+        }
+      } catch (error) {
+        console.warn(`⚠️  Failed to insert domain: ${domain}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Added ${inserted} new domains for processing`,
+      total_submitted: domains.length,
+      newly_inserted: inserted
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/refresh-domains', async (req, res) => {
+  try {
+    // Clear domain curation cache to force refresh
+    domainCurationService.clearCache();
+    
+    // Re-initialize with fresh domains
+    const runner = new SophisticatedRunner();
+    
+    res.json({
+      success: true,
+      message: 'Domain list refreshed from curation service'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ============================================================================
+// 🎯 PHASE 1 & 2 ENDPOINTS - COMPETITOR & CRISIS DISCOVERY
+// ============================================================================
+
+// PHASE 1: Competitor Discovery
+app.post('/discover-competitors', async (req, res) => {
+  try {
+    console.log('🚀 Starting Phase 1: Competitor Discovery...');
+    
+    const result = await competitorDiscoveryService.expandAllDomains();
+    
+    res.json({
+      success: true,
+      phase: 'Phase 1 - Competitor Discovery',
+      results: {
+        domains_processed: result.processed,
+        new_competitors_found: result.newCompetitors,
+        coverage_multiplier: `${Math.round((result.newCompetitors / result.processed) * 10) / 10}x`,
+        total_cost: `$${result.totalCost.toFixed(4)}`,
+        model_performance: result.modelPerformance
+      },
+      message: `🎉 Phase 1 Complete! Found ${result.newCompetitors} new competitors from ${result.processed} domains`,
+      next_step: 'Run /discover-crises for Phase 2 JOLT discovery'
+    });
+    
+  } catch (error) {
+    console.error('❌ Phase 1 failed:', error);
+    res.status(500).json({ 
+      success: false,
+      phase: 'Phase 1 - Competitor Discovery',
+      error: (error as Error).message 
+    });
+  }
+});
+
+// PHASE 2: Crisis Discovery for JOLT Events
+app.post('/discover-crises', async (req, res) => {
+  try {
+    console.log('🔥 Starting Phase 2: JOLT Crisis Discovery...');
+    
+    const result = await joltDiscoveryService.discoverEmergingJOLTEvents();
+    
+    res.json({
+      success: true,
+      phase: 'Phase 2 - JOLT Crisis Discovery',
+      results: {
+        domains_scanned: result.scannedDomains,
+        crisis_events_found: result.potentialJOLTEvents,
+        new_jolt_domains: result.newJOLTDomains,
+        jolt_expansion: `${result.newJOLTDomains.length} new JOLT benchmarks`,
+        total_cost: `$${result.totalCost.toFixed(4)}`,
+        model_performance: result.modelPerformance
+      },
+      crisis_domains: result.newJOLTDomains,
+      message: `🔥 Phase 2 Complete! Discovered ${result.potentialJOLTEvents} crisis events, promoted ${result.newJOLTDomains.length} domains to JOLT status`,
+      note: 'New JOLT domains will get premium model analysis automatically'
+    });
+    
+  } catch (error) {
+    console.error('❌ Phase 2 failed:', error);
+    res.status(500).json({ 
+      success: false,
+      phase: 'Phase 2 - JOLT Crisis Discovery',
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Test single domain competitor discovery
+app.get('/test-competitor/:domain', async (req, res) => {
+  try {
+    const domain = req.params.domain;
+    const result = await competitorDiscoveryService.discoverCompetitors(domain);
+    
+    res.json({
+      source_domain: domain,
+      competitors: result.competitors,
+      suggested_by: result.suggestedBy,
+      cost: `$${result.cost.toFixed(6)}`,
+      test_mode: true
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Test single domain crisis scanning
+app.get('/test-crisis/:domain', async (req, res) => {
+  try {
+    const domain = req.params.domain;
+    const result = await joltDiscoveryService.scanForCrisisEvents(domain);
+    
+    res.json({
+      domain: domain,
+      crisis_events: result.events,
+      total_cost: `$${result.cost.toFixed(6)}`,
+      jolt_potential: result.events.length > 0 ? 'HIGH' : 'LOW',
+      test_mode: true
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Combined Phase 1 + 2 Discovery Pipeline
+app.post('/full-discovery-pipeline', async (req, res) => {
+  try {
+    console.log('🚀 Starting Full Discovery Pipeline (Phase 1 + 2)...');
+    
+    // Phase 1: Competitor Discovery
+    console.log('📈 Phase 1: Expanding domain coverage...');
+    const competitorResult = await competitorDiscoveryService.expandAllDomains();
+    
+    // Brief pause between phases
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
+    // Phase 2: Crisis Discovery  
+    console.log('🔥 Phase 2: Scanning for JOLT events...');
+    const crisisResult = await joltDiscoveryService.discoverEmergingJOLTEvents();
+    
+    const totalCost = competitorResult.totalCost + crisisResult.totalCost;
+    
+    res.json({
+      success: true,
+      pipeline: 'Full Discovery Pipeline (Phase 1 + 2)',
+      phase_1_results: {
+        new_competitors: competitorResult.newCompetitors,
+        coverage_expansion: `${Math.round((competitorResult.newCompetitors / competitorResult.processed) * 10) / 10}x`,
+        cost: `$${competitorResult.totalCost.toFixed(4)}`
+      },
+      phase_2_results: {
+        crisis_events: crisisResult.potentialJOLTEvents,
+        new_jolt_domains: crisisResult.newJOLTDomains.length,
+        cost: `$${crisisResult.totalCost.toFixed(4)}`
+      },
+      summary: {
+        total_cost: `$${totalCost.toFixed(4)}`,
+        domain_expansion: `${competitorResult.newCompetitors} new competitors`,
+        jolt_expansion: `${crisisResult.newJOLTDomains.length} new JOLT benchmarks`,
+        processing_queue: 'Updated with new domains for comprehensive analysis'
+      },
+      message: `🎉 Full pipeline complete! Expanded coverage by ${competitorResult.newCompetitors} domains and discovered ${crisisResult.potentialJOLTEvents} crisis events`,
+      recommendation: 'Your sophisticated-runner will now process the expanded domain list with intelligent JOLT benchmarking'
+    });
+    
+  } catch (error) {
+    console.error('❌ Full discovery pipeline failed:', error);
+    res.status(500).json({ 
+      success: false,
+      pipeline: 'Full Discovery Pipeline',
+      error: (error as Error).message 
+    });
+  }
+});
+
+// ============================================================================
+// 🔧 DATABASE SCHEMA MANAGEMENT - JOLT & DISCOVERY TABLES
+// ============================================================================
+
 // JOLT MIGRATION ENDPOINT - Add JOLT metadata support to production database
 app.post('/migrate-jolt', async (req, res) => {
   try {
-    console.log('🔧 Running JOLT metadata migration from sophisticated-runner...');
+    console.log('🔧 Running JOLT + Discovery metadata migration...');
     
     // Run the migration SQL
     await pool.query(`
@@ -944,12 +1568,42 @@ app.post('/migrate-jolt', async (req, res) => {
       ALTER TABLE domains 
       ADD COLUMN IF NOT EXISTS jolt_additional_prompts INTEGER DEFAULT 0;
       
+      -- Add discovery tracking columns  
+      ALTER TABLE domains
+      ADD COLUMN IF NOT EXISTS discovery_source TEXT;
+      
+      ALTER TABLE domains
+      ADD COLUMN IF NOT EXISTS source_domain TEXT;
+      
       -- Add cost tracking to responses table (optional)
       ALTER TABLE responses
       ADD COLUMN IF NOT EXISTS cost_usd DECIMAL(10,6);
       
-      -- Create index for JOLT queries (only affects JOLT domains)
+      -- Create discovery tracking tables
+      CREATE TABLE IF NOT EXISTS competitor_discoveries (
+        id SERIAL PRIMARY KEY,
+        source_domain TEXT NOT NULL,
+        competitors JSONB NOT NULL,
+        suggested_by_model TEXT NOT NULL,
+        discovery_cost DECIMAL(10,6) NOT NULL,
+        discovered_at TIMESTAMP DEFAULT NOW(),
+        competitor_count INTEGER NOT NULL,
+        UNIQUE(source_domain, suggested_by_model)
+      );
+      
+      CREATE TABLE IF NOT EXISTS crisis_discoveries (
+        id SERIAL PRIMARY KEY,
+        domain TEXT NOT NULL UNIQUE,
+        events JSONB NOT NULL,
+        discovered_at TIMESTAMP DEFAULT NOW(),
+        event_count INTEGER NOT NULL
+      );
+      
+      -- Create indexes for performance
       CREATE INDEX IF NOT EXISTS idx_domains_jolt ON domains(is_jolt) WHERE is_jolt = TRUE;
+      CREATE INDEX IF NOT EXISTS idx_domains_discovery ON domains(discovery_source);
+      CREATE INDEX IF NOT EXISTS idx_competitor_discoveries_domain ON competitor_discoveries(source_domain);
+      CREATE INDEX IF NOT EXISTS idx_crisis_discoveries_domain ON crisis_discoveries(domain);
       
       COMMIT;
     `);
@@ -965,213 +1619,95 @@ app.post('/migrate-jolt', async (req, res) => {
     
     let joltSeeded = 0;
     for (const jolt of joltDomains) {
-      const result = await pool.query(`
-        INSERT INTO domains (domain, is_jolt, jolt_type, jolt_severity, jolt_additional_prompts)
-        VALUES ($1, TRUE, $2, $3, $4)
-        ON CONFLICT (domain) DO UPDATE SET
-          is_jolt = TRUE,
-          jolt_type = EXCLUDED.jolt_type,
-          jolt_severity = EXCLUDED.jolt_severity,
-          jolt_additional_prompts = EXCLUDED.jolt_additional_prompts
-        RETURNING (xmax = 0) AS inserted
-      `, [jolt.domain, jolt.type, jolt.severity, jolt.prompts]);
-      
-      if (result.rows[0].inserted) joltSeeded++;
+      try {
+        const result = await pool.query(`
+          INSERT INTO domains (domain, is_jolt, jolt_type, jolt_severity, jolt_additional_prompts)
+          VALUES ($1, TRUE, $2, $3, $4)
+          ON CONFLICT (domain) DO UPDATE SET
+            is_jolt = TRUE,
+            jolt_type = EXCLUDED.jolt_type,
+            jolt_severity = EXCLUDED.jolt_severity,
+            jolt_additional_prompts = EXCLUDED.jolt_additional_prompts
+          RETURNING (xmax = 0) AS inserted
+        `, [jolt.domain, jolt.type, jolt.severity, jolt.prompts]);
+        
+        if (result.rows[0].inserted) joltSeeded++;
+      } catch (insertError) {
+        console.warn(`⚠️  Failed to seed JOLT domain: ${jolt.domain}`);
+      }
     }
     
     res.json({
       success: true,
-      message: '🎉 JOLT metadata migration complete from sophisticated-runner!',
+      message: '🎉 JOLT + Discovery metadata migration complete!',
       changes: [
-        'Added is_jolt, jolt_type, jolt_severity, jolt_additional_prompts to domains table',
-        'Added cost_usd to responses table',
-        'Created JOLT domain index'
+        'Added JOLT columns to domains table',
+        'Added discovery tracking columns to domains table',
+        'Added cost tracking to responses table',
+        'Created competitor_discoveries table',
+        'Created crisis_discoveries table',
+        'Created performance indexes'
       ],
       jolt_domains_seeded: joltSeeded,
       total_jolt_domains: joltDomains.length,
-      note: 'All changes are optional - existing data unchanged'
+      note: 'All changes are optional - existing data unchanged',
+      ready_for: 'Phase 1 & 2 Discovery Services'
     });
     
   } catch (error) {
-    console.error('❌ JOLT migration failed:', error);
+    console.error('❌ Migration failed:', error);
     res.status(500).json({
       success: false,
-      error: 'JOLT migration failed',
+      error: 'Migration failed',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
-// 🔬 JOLT ANALYSIS ENDPOINTS
-app.get('/jolt', async (req, res) => {
+// Discovery Performance Analytics
+app.get('/discovery/performance', async (req, res) => {
   try {
-    // Get JOLT domains from industry-intelligence service
-    const joltDomains = await joltService.getJoltDomainList();
-    
-    // Try to get jolt data from database if schema supports it
-    let databaseJoltData = [];
-    try {
-      const result = await pool.query(`
-        SELECT domain, jolt, jolt_type, jolt_date, jolt_description, paired_domain, jolt_severity
-        FROM domains 
-        WHERE jolt = true
-      `);
-      databaseJoltData = result.rows;
-    } catch (error) {
-      // Schema doesn't support jolt columns yet
-      databaseJoltData = [];
-    }
-    
+    // Get competitor discovery performance
+    const competitorPerf = await pool.query(`
+      SELECT 
+        suggested_by_model,
+        COUNT(*) as discovery_count,
+        SUM(competitor_count) as total_competitors,
+        AVG(competitor_count) as avg_competitors_per_discovery,
+        SUM(discovery_cost) as total_cost,
+        AVG(discovery_cost) as avg_cost_per_discovery
+      FROM competitor_discoveries 
+      GROUP BY suggested_by_model
+      ORDER BY total_competitors DESC
+    `);
+
+    // Get crisis discovery performance  
+    const crisisPerf = await pool.query(`
+      SELECT 
+        COUNT(*) as domains_scanned,
+        SUM(event_count) as total_events,
+        AVG(event_count) as avg_events_per_domain
+      FROM crisis_discoveries
+    `);
+
     res.json({
-      jolt_feature: 'Ground Truth Benchmarking for Brand Transitions',
-      total_jolt_domains: joltDomains.length,
-      jolt_domains: joltDomains,
-      database_jolt_data: databaseJoltData,
-      schema_support: databaseJoltData.length > 0 ? 'full' : 'fallback',
-      analysis_capabilities: {
-        brand_transition_tracking: 'Monitor AI memory decay during corporate rebrands',
-        comparative_analysis: 'Compare before/after domains for transition effectiveness',
-        benchmark_metrics: 'Ground truth data for academic research',
-        predictive_modeling: 'Training data for brand transition success prediction'
-      }
+      competitor_discovery: {
+        by_model: competitorPerf.rows,
+        summary: competitorPerf.rows.length > 0 ? {
+          best_model: competitorPerf.rows[0]?.suggested_by_model,
+          total_discoveries: competitorPerf.rows.reduce((sum, row) => sum + parseInt(row.discovery_count), 0),
+          total_competitors_found: competitorPerf.rows.reduce((sum, row) => sum + parseInt(row.total_competitors), 0)
+        } : null
+      },
+      crisis_discovery: {
+        summary: crisisPerf.rows[0] || {},
+        performance_note: 'Crisis discovery tracks emerging JOLT events for benchmark expansion'
+      },
+      message: 'Discovery performance analytics - track which LLMs perform best'
     });
+
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.get('/jolt/transitions', async (req, res) => {
-  try {
-    // Get transition data from industry-intelligence service
-    const joltDomains = await joltService.getJoltDomainList();
-    const transitions = [];
-    
-    // Get detailed data for each JOLT domain
-    for (const domain of joltDomains) {
-      try {
-        const joltData = await joltService.getJoltData(domain);
-        if (joltData.type === 'brand_transition' && joltData.paired_domain) {
-          transitions.push({
-            old_brand: domain,
-            new_brand: joltData.paired_domain,
-            transition_date: joltData.date,
-            description: joltData.description,
-            severity: joltData.severity
-          });
-        }
-      } catch (error) {
-        // Skip this domain if we can't get its data
-        continue;
-      }
-    }
-    
-    res.json({
-      total_transitions: transitions.length,
-      transitions: transitions,
-      analysis_note: 'These represent confirmed major brand transitions for ground truth benchmarking'
-    });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// 🔧 DATABASE SCHEMA MIGRATION HELPER
-app.post('/migrate/jolt-schema', async (req, res) => {
-  try {
-    console.log('🔧 Attempting to add jolt columns to domains table...');
-    
-    // Try to add jolt columns (will fail gracefully if they already exist)
-    const migrations = [
-      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt BOOLEAN DEFAULT FALSE',
-      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_type VARCHAR(50)',
-      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_date DATE',
-      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_description TEXT',
-      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS paired_domain VARCHAR(255)',
-      'ALTER TABLE domains ADD COLUMN IF NOT EXISTS jolt_severity VARCHAR(20)'
-    ];
-    
-    const results = [];
-    for (const migration of migrations) {
-      try {
-        await pool.query(migration);
-        results.push({ sql: migration, status: 'success' });
-      } catch (error) {
-        results.push({ sql: migration, status: 'failed', error: (error as Error).message });
-      }
-    }
-    
-    console.log('✅ Jolt schema migration completed');
-    
-    res.json({
-      message: 'Jolt schema migration completed',
-      results: results,
-      next_step: 'Re-run seedDomains to populate jolt metadata'
-    });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// 🚀 MANUAL COMPREHENSIVE PROCESSING ACTIVATION
-app.post('/jolt/activate', async (req, res) => {
-  try {
-    console.log('🔥 MANUAL JOLT ACTIVATION TRIGGERED');
-    
-    // Reset some domains to trigger comprehensive processing
-    const resetDomains = ['tesla.com', 'apple.com', 'meta.com', 'facebook.com', 'twitter.com'];
-    let resetCount = 0;
-    
-    for (const domain of resetDomains) {
-      try {
-        await pool.query(
-          'UPDATE domains SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE domain = $2 AND processor_id = $3',
-          ['pending', domain, 'sophisticated_v1_comprehensive']
-        );
-        resetCount++;
-        console.log(`✅ Reset ${domain} for comprehensive processing`);
-      } catch (error) {
-        console.log(`⚠️  Failed to reset ${domain}:`, (error as Error).message);
-      }
-    }
-    
-    res.json({
-      success: true,
-      message: 'Comprehensive JOLT processing activated',
-      reset_domains: resetCount,
-      jolt_fallback_domains: Object.keys(LOCAL_JOLT_FALLBACK),
-      comprehensive_mode: true,
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Get JOLT status and configuration
-app.get('/jolt/status', async (req, res) => {
-  try {
-    const joltDomains = await joltService.getJoltDomainList();
-    
-    res.json({
-      success: true,
-      jolt_domains: joltDomains,
-      local_fallback_domains: Object.keys(LOCAL_JOLT_FALLBACK),
-      comprehensive_mode: true,
-      industry_intelligence_status: 'fallback_active',
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-      timestamp: new Date().toISOString()
-    });
   }
 });
 
