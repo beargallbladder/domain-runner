@@ -1025,7 +1025,7 @@ class TieredJOLTManager {
   async getActiveRotatingJOLT(): Promise<string[]> {
     try {
       const result = await pool.query(`
-        SELECT domain FROM domains 
+        SELECT domain, jolt_severity, jolt_activated_at FROM domains 
         WHERE is_jolt = TRUE 
         AND domain NOT IN (${this.CORE_BENCHMARK_JOLT.map((_, i) => `$${i + 1}`).join(',')})
         AND (jolt_activated_at IS NULL OR jolt_activated_at > NOW() - INTERVAL '${this.ROTATION_DAYS} days')
@@ -1063,7 +1063,7 @@ class TieredJOLTManager {
     try {
       // Find candidates to rotate out (old discovered JOLT domains)
       const rotateOutCandidates = await pool.query(`
-        SELECT domain FROM domains 
+        SELECT domain, jolt_activated_at FROM domains 
         WHERE is_jolt = TRUE 
         AND domain NOT IN (${this.CORE_BENCHMARK_JOLT.map((_, i) => `$${i + 1}`).join(',')})
         AND jolt_activated_at < NOW() - INTERVAL '${this.ROTATION_DAYS} days'
