@@ -11,7 +11,7 @@ Creates stunning, urgent insights that make brands realize they NEED monitoring
 
 from fastapi import FastAPI, HTTPException, Response, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 import asyncpg
 import os
 import json
@@ -74,8 +74,102 @@ async def shutdown():
     if pool:
         await pool.close()
 
-@app.get("/")
-def root():
+@app.get("/", response_class=HTMLResponse)
+def emergency_frontend():
+    """
+    🚨 EMERGENCY FRONTEND - Simple HTML interface while main frontend deploys
+    """
+    return HTMLResponse(content="""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Memory Rankings - Live Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #000; margin-bottom: 10px; font-size: 28px; font-weight: 700; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 16px; }
+        .ticker { background: #000; color: #00ff00; padding: 20px; border-radius: 4px; font-family: monospace; margin-bottom: 30px; }
+        .domain { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; }
+        .domain:hover { background: #f9f9f9; }
+        .score { font-weight: bold; font-size: 18px; }
+        .trend { font-size: 14px; color: #666; }
+        .positive { color: #00aa00; }
+        .negative { color: #aa0000; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 20px; color: #007AFF; text-decoration: none; font-weight: 500; }
+        .nav a:hover { text-decoration: underline; }
+        .status { background: #e3f2fd; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 AI Memory Rankings</h1>
+        <p class="subtitle">Real-time tracking of how AI models remember your brand</p>
+        
+        <div class="status">
+            <strong>🚀 System Status:</strong> Live tracking 549 domains across 18+ AI models
+        </div>
+        
+        <div class="nav">
+            <a href="/" onclick="loadTicker(); return false;">Live Ticker</a>
+            <a href="/api/trends/degradation" target="_blank">Degrading Domains</a>
+            <a href="/api/trends/improvement" target="_blank">Improving Domains</a>
+            <a href="/health" target="_blank">API Health</a>
+        </div>
+        
+        <div class="ticker">
+            📈 LIVE AI MEMORY TICKER - Updating every 30 seconds
+        </div>
+        
+        <div id="content" class="loading">
+            Loading top domains...
+        </div>
+    </div>
+
+    <script>
+        async function loadTicker() {
+            try {
+                const response = await fetch('/api/ticker?limit=10');
+                const data = await response.json();
+                
+                let html = '';
+                data.topDomains.forEach(domain => {
+                    const trendClass = domain.change.startsWith('+') ? 'positive' : 'negative';
+                    html += `
+                        <div class="domain">
+                            <div>
+                                <strong>${domain.domain}</strong><br>
+                                <span class="trend">Models: ${domain.modelsPositive} positive, ${domain.modelsNeutral} neutral, ${domain.modelsNegative} negative</span>
+                            </div>
+                            <div>
+                                <div class="score">${domain.score}</div>
+                                <div class="trend ${trendClass}">${domain.change}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('content').innerHTML = html;
+            } catch (error) {
+                document.getElementById('content').innerHTML = '<div class="loading">Error loading data. API may be starting up...</div>';
+                setTimeout(loadTicker, 5000); // Retry in 5 seconds
+            }
+        }
+        
+        // Load data immediately and refresh every 30 seconds
+        loadTicker();
+        setInterval(loadTicker, 30000);
+    </script>
+</body>
+</html>
+    """)
+
+@app.get("/api/status")
+def api_status():
     """API status with fire alarm capabilities"""
     return {
         "service": "AI Brand Intelligence Platform",
