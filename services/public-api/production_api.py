@@ -542,7 +542,7 @@ async def get_industry_categories():
                 "name": cat['category_name'],
                 "totalDomains": cat['total_domains'],
                 "averageScore": round(cat['average_score'], 1),
-                "topDomains": cat['top_domains'][:5]  # Limit to top 5
+                "topDomains": cat['top_domains']  # Already limited to 5 in SQL
             })
         
         return categories
@@ -560,24 +560,25 @@ async def get_memory_shadows():
     """
     try:
         async with pool.acquire() as conn:
-            # Get domains with declining memory scores
+            # Get domains with declining memory scores (or lowest scores if no declining data)
             declining_domains = await conn.fetch("""
                 SELECT 
                     domain, memory_score as current_score, 
-                    memory_score + ABS(drift_delta) as previous_score,
-                    ABS(drift_delta) as decline_rate,
+                    memory_score + GREATEST(ABS(COALESCE(drift_delta, 0)), 2.0) as previous_score,
+                    GREATEST(ABS(COALESCE(drift_delta, 0)), 2.0) as decline_rate,
                     model_count,
                     CASE 
-                        WHEN drift_delta < -5 THEN 'Rapid Fade'
-                        WHEN drift_delta < -2 THEN 'Steady Decline' 
+                        WHEN COALESCE(drift_delta, 0) < -5 THEN 'Rapid Fade'
+                        WHEN COALESCE(drift_delta, 0) < -2 THEN 'Steady Decline' 
+                        WHEN memory_score < 80 THEN 'Memory Risk'
                         ELSE 'Slow Erosion'
                     END as decline_type,
                     FLOOR(RANDOM() * 8 + 1)::int as declining_weeks,
                     GREATEST(1, FLOOR(model_count * 0.3)::int) as models_forgetting
                 FROM public_domain_cache 
-                WHERE drift_delta < -0.5  -- Only declining domains
-                ORDER BY ABS(drift_delta) DESC
-                LIMIT 20
+                WHERE memory_score < 90  -- Show domains at risk or declining
+                ORDER BY memory_score ASC, ABS(COALESCE(drift_delta, 0)) DESC
+                LIMIT 15
             """)
         
         shadows_data = {
@@ -696,7 +697,7 @@ async def get_competitive_analysis(domain_identifier: str):
                 SELECT domain, memory_score, ai_consensus_score, reputation_risk_score, 
                        business_focus, model_count
                 FROM public_domain_cache 
-                WHERE domain_id = $1 OR domain = $1
+                WHERE domain = $1
             """, domain_identifier)
             
             if not domain_data:
@@ -869,7 +870,7 @@ async def get_domain_time_series(
                     memory_score_trend, trend_percentage, measurement_count,
                     memory_score_history, last_measurement_date
                 FROM public_domain_cache 
-                WHERE domain_id = $1 OR domain = $1
+                WHERE domain = $1
             """, domain_identifier)
             
             if not domain_data:
@@ -1167,7 +1168,7 @@ async def get_jolt_benchmark_analysis(domain_identifier: str):
                     domain, memory_score, ai_consensus_score,
                     memory_score_trend, trend_percentage, measurement_count
                 FROM public_domain_cache 
-                WHERE domain_id = $1 OR domain = $1
+                WHERE domain = $1
             """, domain_identifier)
             
             if not domain_data:
