@@ -745,6 +745,252 @@ def generate_improvement_recommendations(domain_data: Dict, benchmarks: Dict) ->
     
     return recommendations
 
+@app.get("/api/time-series/{domain_identifier}")
+async def get_domain_time_series(
+    domain_identifier: str,
+    days: int = Query(30, ge=1, le=365, description="Number of days of history")
+):
+    """
+    📈 TIME-SERIES ANALYSIS - Historical Memory Score Tracking
+    
+    T1 vs T0 analysis showing memory score degradation/improvement over time
+    """
+    try:
+        async with pool.acquire() as conn:
+            # Get domain current data with history
+            domain_data = await conn.fetchrow("""
+                SELECT 
+                    domain, memory_score, previous_memory_score,
+                    memory_score_trend, trend_percentage, measurement_count,
+                    memory_score_history, last_measurement_date
+                FROM public_domain_cache 
+                WHERE domain_id = $1 OR domain = $1
+            """, domain_identifier)
+            
+            if not domain_data:
+                raise HTTPException(status_code=404, detail="Domain not found")
+            
+            # Get historical responses for detailed timeline
+            historical_responses = await conn.fetch("""
+                SELECT 
+                    DATE(captured_at) as measurement_date,
+                    AVG(CASE 
+                        WHEN LENGTH(raw_response) > 100 THEN 1.0
+                        WHEN LENGTH(raw_response) > 50 THEN 0.7
+                        ELSE 0.3
+                    END) as daily_memory_score,
+                    COUNT(*) as response_count,
+                    COUNT(DISTINCT model) as model_count
+                FROM responses r
+                JOIN domains d ON r.domain_id = d.id
+                WHERE d.domain = $1 AND captured_at > NOW() - INTERVAL '%s days'
+                GROUP BY DATE(captured_at)
+                ORDER BY measurement_date
+            """, domain_identifier, days)
+            
+            # Build time series response
+            time_series = {
+                "domain": domain_data['domain'],
+                "analysis_period_days": days,
+                "current_metrics": {
+                    "memory_score": domain_data['memory_score'],
+                    "previous_score": domain_data['previous_memory_score'],
+                    "trend": domain_data['memory_score_trend'],
+                    "change_percentage": domain_data['trend_percentage'],
+                    "total_measurements": domain_data['measurement_count']
+                },
+                "historical_timeline": [],
+                "trend_analysis": {
+                    "overall_direction": domain_data['memory_score_trend'],
+                    "volatility": "high" if abs(domain_data['trend_percentage'] or 0) > 15 else "low",
+                    "data_quality": "good" if domain_data['measurement_count'] > 5 else "limited"
+                }
+            }
+            
+            # Add historical data points
+            for day in historical_responses:
+                time_series["historical_timeline"].append({
+                    "date": day['measurement_date'].isoformat(),
+                    "memory_score": round(day['daily_memory_score'] * 100, 1),
+                    "response_count": day['response_count'],
+                    "model_coverage": day['model_count']
+                })
+            
+            # Parse memory score history if available
+            if domain_data['memory_score_history']:
+                import json
+                history = json.loads(domain_data['memory_score_history'])
+                time_series["stored_history"] = history[:10]  # Last 10 measurements
+            
+            return time_series
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Time series analysis failed for {domain_identifier}: {e}")
+        raise HTTPException(status_code=500, detail=f"Time series analysis failed: {e}")
+
+@app.get("/api/trends/degradation")
+async def get_degradation_trends(limit: int = Query(20, le=50)):
+    """
+    📉 DEGRADATION ANALYSIS - Domains Losing AI Memory
+    
+    Identifies domains showing consistent memory score degradation
+    """
+    try:
+        async with pool.acquire() as conn:
+            degrading_domains = await conn.fetch("""
+                SELECT 
+                    domain, memory_score, previous_memory_score,
+                    memory_score_trend, trend_percentage, measurement_count,
+                    last_measurement_date,
+                    CASE 
+                        WHEN trend_percentage < -15 THEN 'CRITICAL'
+                        WHEN trend_percentage < -10 THEN 'HIGH' 
+                        WHEN trend_percentage < -5 THEN 'MODERATE'
+                        ELSE 'LOW'
+                    END as degradation_severity
+                FROM public_domain_cache
+                WHERE memory_score_trend = 'degrading' 
+                AND measurement_count > 1
+                ORDER BY trend_percentage ASC
+                LIMIT $1
+            """, limit)
+            
+            degradation_analysis = {
+                "total_degrading_domains": len(degrading_domains),
+                "analysis_timestamp": datetime.now().isoformat() + 'Z',
+                "degrading_domains": []
+            }
+            
+            for domain in degrading_domains:
+                degradation_analysis["degrading_domains"].append({
+                    "domain": domain['domain'],
+                    "current_score": round(domain['memory_score'], 1),
+                    "previous_score": round(domain['previous_memory_score'] or 0, 1),
+                    "decline_percentage": domain['trend_percentage'],
+                    "severity": domain['degradation_severity'],
+                    "measurements": domain['measurement_count'],
+                    "last_updated": domain['last_measurement_date'].isoformat()
+                })
+            
+            return degradation_analysis
+            
+    except Exception as e:
+        logger.error(f"Degradation analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Degradation analysis failed: {e}")
+
+@app.get("/api/trends/improvement")
+async def get_improvement_trends(limit: int = Query(20, le=50)):
+    """
+    📈 IMPROVEMENT ANALYSIS - Domains Gaining AI Memory
+    
+    Identifies domains showing consistent memory score improvement
+    """
+    try:
+        async with pool.acquire() as conn:
+            improving_domains = await conn.fetch("""
+                SELECT 
+                    domain, memory_score, previous_memory_score,
+                    memory_score_trend, trend_percentage, measurement_count,
+                    last_measurement_date
+                FROM public_domain_cache
+                WHERE memory_score_trend = 'improving'
+                AND measurement_count > 1
+                ORDER BY trend_percentage DESC
+                LIMIT $1
+            """, limit)
+            
+            improvement_analysis = {
+                "total_improving_domains": len(improving_domains),
+                "analysis_timestamp": datetime.now().isoformat() + 'Z',
+                "improving_domains": []
+            }
+            
+            for domain in improving_domains:
+                improvement_analysis["improving_domains"].append({
+                    "domain": domain['domain'],
+                    "current_score": round(domain['memory_score'], 1),
+                    "previous_score": round(domain['previous_memory_score'] or 0, 1),
+                    "improvement_percentage": domain['trend_percentage'],
+                    "measurements": domain['measurement_count'],
+                    "last_updated": domain['last_measurement_date'].isoformat()
+                })
+            
+            return improvement_analysis
+            
+    except Exception as e:
+        logger.error(f"Improvement analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Improvement analysis failed: {e}")
+
+@app.get("/api/jolt-benchmark/{domain_identifier}")
+async def get_jolt_benchmark_analysis(domain_identifier: str):
+    """
+    🔬 JOLT BENCHMARK ANALYSIS - Compare Against Crisis Benchmarks
+    
+    Shows how domain compares to known brand crisis benchmarks
+    """
+    try:
+        # Check if this is a JOLT domain
+        jolt_domains = {
+            'facebook.com': {'baseline': 52.0, 'crisis_type': 'brand_transition'},
+            'google.com': {'baseline': 55.7, 'crisis_type': 'corporate_restructure'},
+            'apple.com': {'baseline': 89.2, 'crisis_type': 'ceo_death_transition'},
+            'twitter.com': {'baseline': 45.0, 'crisis_type': 'brand_transition'},
+            'theranos.com': {'baseline': 25.0, 'crisis_type': 'fraud_collapse'}
+        }
+        
+        async with pool.acquire() as conn:
+            domain_data = await conn.fetchrow("""
+                SELECT 
+                    domain, memory_score, ai_consensus_score,
+                    memory_score_trend, trend_percentage, measurement_count
+                FROM public_domain_cache 
+                WHERE domain_id = $1 OR domain = $1
+            """, domain_identifier)
+            
+            if not domain_data:
+                raise HTTPException(status_code=404, detail="Domain not found")
+            
+            benchmark_analysis = {
+                "domain": domain_data['domain'],
+                "is_jolt_domain": domain_identifier in jolt_domains,
+                "current_memory_score": domain_data['memory_score'],
+                "trend": domain_data['memory_score_trend'],
+                "benchmark_comparisons": []
+            }
+            
+            if domain_identifier in jolt_domains:
+                # This is a JOLT benchmark domain
+                jolt_info = jolt_domains[domain_identifier]
+                benchmark_analysis.update({
+                    "baseline_score": jolt_info['baseline'],
+                    "crisis_type": jolt_info['crisis_type'],
+                    "recovery_analysis": {
+                        "score_change": round(domain_data['memory_score'] - jolt_info['baseline'], 1),
+                        "recovery_status": "recovered" if domain_data['memory_score'] > jolt_info['baseline'] else "still_impacted"
+                    }
+                })
+            else:
+                # Compare against all JOLT benchmarks
+                for jolt_domain, jolt_info in jolt_domains.items():
+                    comparison_score = abs(domain_data['memory_score'] - jolt_info['baseline'])
+                    benchmark_analysis["benchmark_comparisons"].append({
+                        "benchmark_domain": jolt_domain,
+                        "benchmark_score": jolt_info['baseline'],
+                        "crisis_type": jolt_info['crisis_type'],
+                        "score_difference": round(domain_data['memory_score'] - jolt_info['baseline'], 1),
+                        "similarity": "high" if comparison_score < 10 else "medium" if comparison_score < 20 else "low"
+                    })
+            
+            return benchmark_analysis
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"JOLT benchmark analysis failed for {domain_identifier}: {e}")
+        raise HTTPException(status_code=500, detail=f"JOLT benchmark analysis failed: {e}")
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get('PORT', 8000))
