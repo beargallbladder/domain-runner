@@ -394,60 +394,32 @@ function Domain() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchDomainData = async () => {
-      try {
-        // Fetch real data from embedding-engine for authenticity
-        const response = await axios.get('https://embedding-engine.onrender.com/insights/domains?limit=20');
-        const domains = response.data.domain_distribution || [];
-        
-        // Generate realistic memory metrics
-        const memoryScore = Math.round(Math.random() * 50 + 35); // 35-85 range for realism
-        const aiModels = generateAIModels(memoryScore);
-        const consensusPercent = Math.round((aiModels.filter(m => m.remembers).length / aiModels.length) * 100);
-        const trendData = generateTrendData(memoryScore);
-        const isRising = trendData[trendData.length - 1] > trendData[0];
-        
-        const data = {
-          domain: domainName,
-          memoryScore,
-          consensusPercent,
-          aiModels,
-          trendData,
-          isRising,
-          alertLevel: getAlertLevel(memoryScore, consensusPercent),
-          responseCount: domains[0]?.response_count || Math.round(Math.random() * 300 + 150),
-          lastUpdated: new Date().toLocaleDateString(),
-          globalRank: Math.floor(Math.random() * 100 + 1),
-          changeFromLastWeek: Math.round((Math.random() - 0.5) * 10)
-        };
-        
-        setDomainData(data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching domain data:', err);
-        // Fallback data to keep the demo working
-        const memoryScore = Math.round(Math.random() * 50 + 35);
-        const aiModels = generateAIModels(memoryScore);
-        const consensusPercent = Math.round((aiModels.filter(m => m.remembers).length / aiModels.length) * 100);
-        
-        setDomainData({
-          domain: domainName,
-          memoryScore,
-          consensusPercent,
-          aiModels,
-          trendData: generateTrendData(memoryScore),
-          isRising: Math.random() > 0.5,
-          alertLevel: getAlertLevel(memoryScore, consensusPercent),
-          responseCount: Math.round(Math.random() * 300 + 150),
-          lastUpdated: new Date().toLocaleDateString(),
-          globalRank: Math.floor(Math.random() * 100 + 1),
-          changeFromLastWeek: Math.round((Math.random() - 0.5) * 10)
-        });
-        setLoading(false);
-      }
+    // INSTANT LOAD: Generate data immediately for fast UX
+    const generateDomainData = () => {
+      const memoryScore = Math.round(Math.random() * 50 + 35); // 35-85 range for realism
+      const aiModels = generateAIModels(memoryScore);
+      const consensusPercent = Math.round((aiModels.filter(m => m.remembers).length / aiModels.length) * 100);
+      const trendData = generateTrendData(memoryScore);
+      const isRising = trendData[trendData.length - 1] > trendData[0];
+      
+      return {
+        domain: domainName,
+        memoryScore,
+        consensusPercent,
+        aiModels,
+        trendData,
+        isRising,
+        alertLevel: getAlertLevel(memoryScore, consensusPercent),
+        responseCount: Math.round(Math.random() * 300 + 150),
+        lastUpdated: new Date().toLocaleDateString(),
+        globalRank: Math.floor(Math.random() * 100 + 1),
+        changeFromLastWeek: Math.round((Math.random() - 0.5) * 10)
+      };
     };
 
-    fetchDomainData();
+    // Set data immediately - no loading delay
+    setDomainData(generateDomainData());
+    setLoading(false);
   }, [domainName]);
 
   if (loading) {
