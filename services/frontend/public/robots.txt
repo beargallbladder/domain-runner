@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# SEO-optimized domain analysis pages
+Allow: /analyze/
+Allow: /crisis-score/
+Allow: /competitive/
+Allow: /domain/
+Allow: /rankings
+Allow: /categories
+Allow: /shadows
+Allow: /about
+
+# Sitemap location
+Sitemap: https://www.llmpagerank.com/sitemap.xml
+
+# Main pages to crawl
+Crawl-delay: 1 

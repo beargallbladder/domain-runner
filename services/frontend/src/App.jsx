@@ -13,6 +13,7 @@ import Leaderboard from './pages/Leaderboard'
 import ComingSoon from './pages/ComingSoon'
 import Shadows from './pages/Shadows'
 import Rankings from './pages/Rankings'
+import DomainSEO from './pages/DomainSEO'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -143,6 +144,12 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/domains" element={<DomainDirectory />} />
           <Route path="/domain/:domainName" element={<Domain />} />
+          
+          {/* SEO-optimized domain analysis pages */}
+          <Route path="/analyze/:domainName" element={<DomainSEO />} />
+          <Route path="/crisis-score/:domainName" element={<DomainSEO />} />
+          <Route path="/competitive/:domainName" element={<DomainSEO />} />
+          
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/categories/:category" element={<Categories />} />
