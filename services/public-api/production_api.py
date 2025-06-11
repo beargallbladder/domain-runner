@@ -202,9 +202,10 @@ async def health():
                     COUNT(*) FILTER (WHERE reputation_risk_score > 50) as high_risk_domains,
                     COUNT(*) FILTER (WHERE brand_confusion_alert = true) as confusion_alerts,
                     COUNT(*) FILTER (WHERE perception_decline_alert = true) as decline_alerts,
+                    COUNT(*) FILTER (WHERE updated_at > NOW() - INTERVAL '24 hours') as fresh_domains,
+                    COUNT(*) FILTER (WHERE updated_at > NOW() - INTERVAL '7 days') as recent_domains,
                     MAX(updated_at) as last_update
-                FROM public_domain_cache 
-                WHERE updated_at > NOW() - INTERVAL '24 hours'
+                FROM public_domain_cache
             """)
         
         return {
@@ -213,9 +214,12 @@ async def health():
             "performance": "sub-200ms responses",
             "monitoring_stats": {
                 "domains_monitored": cache_stats['total_domains'],
+                "fresh_domains": cache_stats['fresh_domains'],
+                "recent_domains": cache_stats['recent_domains'],
                 "high_risk_domains": cache_stats['high_risk_domains'],
                 "active_alerts": cache_stats['confusion_alerts'] + cache_stats['decline_alerts'],
-                "last_update": cache_stats['last_update'].isoformat() + 'Z' if cache_stats['last_update'] else None
+                "last_update": cache_stats['last_update'].isoformat() + 'Z' if cache_stats['last_update'] else None,
+                "data_freshness": "fresh" if cache_stats['fresh_domains'] > 100 else "recent" if cache_stats['recent_domains'] > 100 else "stale_but_available"
             }
         }
     except Exception as e:
@@ -390,16 +394,18 @@ async def get_memory_ticker(limit: int = Query(5, le=20)):
                     ai_consensus_score, reputation_risk_score,
                     updated_at
                 FROM public_domain_cache 
-                WHERE updated_at > NOW() - INTERVAL '24 hours'
-                ORDER BY memory_score DESC
+                ORDER BY 
+                    CASE WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 1
+                         WHEN updated_at > NOW() - INTERVAL '7 days' THEN 2  
+                         ELSE 3 END,
+                    memory_score DESC
                 LIMIT $1
             """, limit)
             
             # Get total domain count
             total_count = await conn.fetchval("""
                 SELECT COUNT(*) 
-                FROM public_domain_cache 
-                WHERE updated_at > NOW() - INTERVAL '24 hours'
+                FROM public_domain_cache
             """)
         
         # Build ticker response
@@ -610,14 +616,22 @@ async def get_full_rankings(
         offset = (page - 1) * limit
         
         # Build dynamic query based on sort and search
-        where_clause = "WHERE updated_at > NOW() - INTERVAL '24 hours'"
+        where_clause = "WHERE 1=1"  # Show all data
         if search:
             where_clause += f" AND domain ILIKE '%{search}%'"
         
         if sort == "score":
-            order_clause = "ORDER BY memory_score DESC"
+            order_clause = """ORDER BY 
+                CASE WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 1
+                     WHEN updated_at > NOW() - INTERVAL '7 days' THEN 2  
+                     ELSE 3 END,
+                memory_score DESC"""
         elif sort == "consensus":
-            order_clause = "ORDER BY ai_consensus_score DESC"
+            order_clause = """ORDER BY 
+                CASE WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 1
+                     WHEN updated_at > NOW() - INTERVAL '7 days' THEN 2  
+                     ELSE 3 END,
+                ai_consensus_score DESC"""
         elif sort == "trend":
             order_clause = "ORDER BY drift_delta DESC"
         else:  # alphabetical
@@ -635,7 +649,12 @@ async def get_full_rankings(
             domains = await conn.fetch(f"""
                 SELECT 
                     domain, memory_score, ai_consensus_score, drift_delta,
-                    model_count, reputation_risk_score
+                    model_count, reputation_risk_score, updated_at,
+                    CASE 
+                        WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 'fresh'
+                        WHEN updated_at > NOW() - INTERVAL '7 days' THEN 'recent'
+                        ELSE 'stale'
+                    END as data_freshness
                 FROM public_domain_cache 
                 {where_clause}
                 {order_clause}
@@ -660,7 +679,9 @@ async def get_full_rankings(
                 "trend": change_str,
                 "modelsPositive": max(1, int(domain['model_count'] * 0.7)),
                 "modelsNeutral": max(1, int(domain['model_count'] * 0.2)),
-                "modelsNegative": max(0, int(domain['model_count'] * 0.1))
+                "modelsNegative": max(0, int(domain['model_count'] * 0.1)),
+                "dataFreshness": domain['data_freshness'],
+                "lastUpdated": domain['updated_at'].isoformat() + 'Z'
             })
         
         return rankings_data
@@ -1016,6 +1037,117 @@ async def get_improvement_trends(limit: int = Query(20, le=50)):
     except Exception as e:
         logger.error(f"Improvement analysis failed: {e}")
         raise HTTPException(status_code=500, detail=f"Improvement analysis failed: {e}")
+
+@app.get("/api/test-db-permissions")
+async def test_db_permissions():
+    """
+    🔧 TEST DATABASE PERMISSIONS
+    
+    Tests what database operations we can actually perform
+    """
+    try:
+        async with pool.acquire() as conn:
+            results = []
+            
+            # Test 1: Can we see table structure?
+            try:
+                columns = await conn.fetch("""
+                    SELECT column_name, data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'public_domain_cache'
+                    ORDER BY ordinal_position
+                """)
+                results.append(f"✅ Can read table schema: {len(columns)} columns found")
+                existing_columns = [col['column_name'] for col in columns]
+                
+                # Check which columns we need
+                needed_columns = ['memory_score_history', 'previous_memory_score', 'memory_score_trend']
+                missing_columns = [col for col in needed_columns if col not in existing_columns]
+                
+                if missing_columns:
+                    results.append(f"❌ Missing columns: {missing_columns}")
+                else:
+                    results.append(f"✅ All needed columns exist!")
+                    
+            except Exception as e:
+                results.append(f"❌ Cannot read schema: {str(e)}")
+            
+            # Test 2: Can we ALTER TABLE?
+            try:
+                # Try adding a harmless test column
+                await conn.execute("ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS test_column_temp TEXT DEFAULT 'test'")
+                results.append("✅ ALTER TABLE works - we have schema modification rights!")
+                
+                # Clean up test column
+                await conn.execute("ALTER TABLE public_domain_cache DROP COLUMN IF EXISTS test_column_temp")
+                results.append("✅ Can also DROP columns")
+                
+            except Exception as e:
+                results.append(f"❌ ALTER TABLE failed: {str(e)}")
+            
+            # Test 3: Current user privileges
+            try:
+                user_info = await conn.fetchrow("SELECT current_user, session_user")
+                results.append(f"ℹ️ Connected as: {user_info['current_user']}")
+            except Exception as e:
+                results.append(f"❌ Cannot get user info: {str(e)}")
+        
+        return {
+            "database_permissions_test": results,
+            "timestamp": datetime.now().isoformat() + 'Z'
+        }
+        
+    except Exception as e:
+        logger.error(f"Permission test failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Permission test failed: {str(e)}")
+
+@app.post("/api/migrate-timeseries") 
+async def migrate_timeseries():
+    """
+    🔧 DATABASE MIGRATION - Add Time-Series Columns
+    
+    JUST FUCKING DO IT - Add the columns we need
+    """
+    try:
+        async with pool.acquire() as conn:
+            # The exact columns we need for time-series
+            migrations = [
+                "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS memory_score_history JSONB DEFAULT '[]'",
+                "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS previous_memory_score REAL DEFAULT 0.0", 
+                "ALTER TABLE public_domain_cache ADD COLUMN IF NOT EXISTS memory_score_trend TEXT DEFAULT 'stable'"
+            ]
+            
+            results = []
+            
+            for sql in migrations:
+                try:
+                    await conn.execute(sql)
+                    column_name = sql.split('ADD COLUMN IF NOT EXISTS ')[1].split(' ')[0]
+                    results.append(f"✅ Added {column_name}")
+                except Exception as e:
+                    column_name = sql.split('ADD COLUMN IF NOT EXISTS ')[1].split(' ')[0]
+                    results.append(f"❌ {column_name}: {str(e)}")
+            
+            # Initialize data for existing domains
+            try:
+                count = await conn.execute("""
+                    UPDATE public_domain_cache 
+                    SET memory_score_history = '[]'::jsonb,
+                        previous_memory_score = memory_score
+                    WHERE memory_score_history IS NULL
+                """)
+                results.append(f"✅ Initialized {count} domains")
+            except Exception as e:
+                results.append(f"❌ Initialize failed: {str(e)}")
+        
+        return {
+            "status": "migration_attempted", 
+            "results": results,
+            "timestamp": datetime.now().isoformat() + 'Z'
+        }
+        
+    except Exception as e:
+        return {"status": "migration_failed", "error": str(e)}
 
 @app.get("/api/jolt-benchmark/{domain_identifier}")
 async def get_jolt_benchmark_analysis(domain_identifier: str):

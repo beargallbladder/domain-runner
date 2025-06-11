@@ -11,6 +11,8 @@ import DomainReport from './pages/DomainReport'
 import DomainDirectory from './pages/DomainDirectory'
 import Leaderboard from './pages/Leaderboard'
 import ComingSoon from './pages/ComingSoon'
+import Shadows from './pages/Shadows'
+import Rankings from './pages/Rankings'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -144,6 +146,8 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/categories/:category" element={<Categories />} />
+          <Route path="/shadows" element={<Shadows />} />
+          <Route path="/rankings" element={<Rankings />} />
           <Route path="/about" element={<About />} />
           <Route path="/premium" element={<ComingSoon />} />
           <Route path="/coming-soon" element={<ComingSoon />} />
