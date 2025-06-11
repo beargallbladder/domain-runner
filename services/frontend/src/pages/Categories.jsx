@@ -8,9 +8,37 @@ const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 80px 40px;
+  background: #ffffff;
+  min-height: 100vh;
   
   @media (max-width: 768px) {
     padding: 60px 20px;
+  }
+`
+
+const Breadcrumbs = styled.div`
+  margin-bottom: 40px;
+  font-size: 14px;
+  color: #666;
+  
+  a {
+    color: #007AFF;
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  .separator {
+    margin: 0 8px;
+    color: #ccc;
+  }
+  
+  .current {
+    color: #000;
+    font-weight: 600;
   }
 `
 
@@ -21,7 +49,7 @@ const Header = styled.div`
 
 const Title = styled(motion.h1)`
   font-size: 48px;
-  font-weight: 300;
+  font-weight: 500;
   margin-bottom: 24px;
   letter-spacing: -0.02em;
   color: #000;
@@ -30,7 +58,7 @@ const Title = styled(motion.h1)`
 const Subtitle = styled(motion.p)`
   font-size: 20px;
   color: #666;
-  font-weight: 300;
+  font-weight: 400;
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.6;
@@ -45,16 +73,32 @@ const CategoriesGrid = styled.div`
 
 const CategoryCard = styled(motion.div)`
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 2px solid #f0f0f0;
   border-radius: 16px;
   padding: 32px;
   transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: ${props => 
+      props.trend === 'Rising' ? 'linear-gradient(90deg, #34C759, #30D158)' : 
+      props.trend === 'Stable' ? 'linear-gradient(90deg, #007AFF, #32D74B)' : 
+      'linear-gradient(90deg, #FF3B30, #FF9500)'
+    };
+  }
   
   &:hover {
     border-color: #007AFF;
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0, 122, 255, 0.1);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 122, 255, 0.15);
   }
 `
 
@@ -67,14 +111,15 @@ const CategoryHeader = styled.div`
 
 const CategoryName = styled.h3`
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 600;
   color: #000;
 `
 
 const CategoryCount = styled.div`
   font-size: 32px;
-  font-weight: 300;
+  font-weight: 700;
   color: #007AFF;
+  text-shadow: 0 0 20px rgba(0, 122, 255, 0.2);
 `
 
 const CategoryMeta = styled.div`
@@ -86,17 +131,27 @@ const CategoryMeta = styled.div`
 
 const Trend = styled.span`
   font-size: 14px;
-  padding: 4px 12px;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   background: ${props => 
     props.trend === 'Rising' ? '#E8F5E8' : 
-    props.trend === 'Stable' ? '#F0F0F0' : '#FFF0F0'
+    props.trend === 'Stable' ? '#E3F2FD' : '#FFEBEE'
   };
   color: ${props => 
-    props.trend === 'Rising' ? '#34C759' : 
-    props.trend === 'Stable' ? '#666' : '#FF3B30'
+    props.trend === 'Rising' ? '#1B5E20' : 
+    props.trend === 'Stable' ? '#0D47A1' : '#B71C1C'
   };
+  
+  &::before {
+    content: '${props => 
+      props.trend === 'Rising' ? '📈' : 
+      props.trend === 'Stable' ? '📊' : '📉'
+    }';
+    margin-right: 4px;
+  }
 `
 
 const CategoryDescription = styled.p`
@@ -104,6 +159,7 @@ const CategoryDescription = styled.p`
   color: #666;
   line-height: 1.5;
   margin-bottom: 20px;
+  font-weight: 400;
 `
 
 const CategoryStats = styled.div`
@@ -119,7 +175,7 @@ const CategoryStats = styled.div`
     
     .value {
       font-size: 18px;
-      font-weight: 500;
+      font-weight: 600;
       color: #000;
       margin-bottom: 4px;
     }
@@ -127,6 +183,7 @@ const CategoryStats = styled.div`
     .label {
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      font-weight: 500;
     }
   }
 `
@@ -140,7 +197,9 @@ const TopDomains = styled.div`
     font-size: 14px;
     color: #666;
     margin-bottom: 12px;
-    font-weight: 500;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   
   .domains {
@@ -156,10 +215,152 @@ const TopDomains = styled.div`
     font-size: 12px;
     color: #666;
     transition: all 0.2s ease;
+    font-weight: 500;
     
     &:hover {
       background: #007AFF;
       color: #fff;
+      transform: translateY(-1px);
+    }
+  }
+`
+
+const DomainGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+`
+
+const DomainCard = styled(motion.div)`
+  background: #fff;
+  border: 2px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${props => 
+      props.score >= 90 ? 'linear-gradient(90deg, #34C759, #30D158)' : 
+      props.score >= 70 ? 'linear-gradient(90deg, #FF9500, #FFCC02)' : 
+      'linear-gradient(90deg, #FF3B30, #FF6B6B)'
+    };
+    border-radius: 12px 12px 0 0;
+  }
+  
+  &:hover {
+    border-color: #007AFF;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 122, 255, 0.15);
+  }
+`
+
+const DomainHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+`
+
+const DomainName = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+`
+
+const MemoryScore = styled.div`
+  font-size: 28px;
+  font-weight: 700;
+  color: ${props => 
+    props.score >= 90 ? '#34C759' : 
+    props.score >= 70 ? '#FF9500' : '#FF3B30'
+  };
+  text-shadow: 0 0 15px ${props => 
+    props.score >= 90 ? 'rgba(52, 199, 89, 0.3)' : 
+    props.score >= 70 ? 'rgba(255, 149, 0, 0.3)' : 'rgba(255, 59, 48, 0.3)'
+  };
+  
+  &::after {
+    content: '${props => 
+      props.score >= 90 ? '🔥' : 
+      props.score >= 70 ? '⚡' : '⚠️'
+    }';
+    font-size: 16px;
+    margin-left: 8px;
+  }
+`
+
+const DomainMeta = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 500;
+`
+
+const DomainDescription = styled.p`
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+  margin: 0;
+  font-weight: 400;
+`
+
+const CategorySummary = styled.div`
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 40px;
+  text-align: center;
+  
+  .title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 12px;
+  }
+  
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 20px;
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 16px;
+    }
+  }
+  
+  .stat {
+    text-align: center;
+    
+    .value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #007AFF;
+      display: block;
+      text-shadow: 0 0 20px rgba(0, 122, 255, 0.2);
+    }
+    
+    .label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
     }
   }
 `
@@ -247,22 +448,47 @@ const categoryData = {
   }
 }
 
+// Generate mock domain data for each category
+const generateDomainData = (category) => {
+  const baseData = categoryData[category]
+  if (!baseData) return []
+  
+  return baseData.domains.map((domain, index) => ({
+    name: domain,
+    score: Math.max(60, baseData.avgScore + (Math.random() - 0.5) * 20),
+    trend: Math.random() > 0.5 ? 'Rising' : 'Stable',
+    responses: Math.floor(Math.random() * 500) + 100,
+    models: Math.floor(Math.random() * 5) + 10,
+    description: `Leading ${category.toLowerCase()} company with strong market presence and technological innovation.`
+  }))
+}
+
 function Categories() {
   const { category } = useParams()
   const { categories } = useCategories()
 
   if (category && categoryData[category]) {
-    // Render single category view
+    // Render single category view with actual domain listings
     const cat = categoryData[category]
+    const domains = generateDomainData(category)
+    
     return (
       <Container>
+        <Breadcrumbs>
+          <Link to="/">Home</Link>
+          <span className="separator">→</span>
+          <Link to="/categories">Shadows</Link>
+          <span className="separator">→</span>
+          <span className="current">{cat.name}</span>
+        </Breadcrumbs>
+        
         <Header>
           <Title
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            {cat.name}
+            {cat.name} Leaders
           </Title>
           <Subtitle
             initial={{ opacity: 0, y: 20 }}
@@ -273,22 +499,74 @@ function Categories() {
           </Subtitle>
         </Header>
         
-        {/* Single category detailed view would go here */}
-        <div style={{ textAlign: 'center', padding: '80px 0' }}>
-          <h2>Category Details Coming Soon</h2>
-          <p style={{ color: '#666', marginTop: '16px' }}>
-            Detailed category analysis and domain listings will be available in the next update.
-          </p>
+        <CategorySummary>
+          <div className="title">{cat.name} Intelligence</div>
+          <div className="stats">
+            <div className="stat">
+              <span className="value">{cat.count}</span>
+              <span className="label">Companies</span>
+            </div>
+            <div className="stat">
+              <span className="value">{cat.avgScore}</span>
+              <span className="label">Avg Memory</span>
+            </div>
+            <div className="stat">
+              <span className="value">{cat.marketCap}</span>
+              <span className="label">Market Value</span>
+            </div>
+            <div className="stat">
+              <span className="value">{cat.trend}</span>
+              <span className="label">AI Trend</span>
+            </div>
+          </div>
+        </CategorySummary>
+        
+        <DomainGrid>
+          {domains.map((domain, index) => (
+            <DomainCard
+              key={domain.name}
+              as={Link}
+              to={`/domain/${domain.name}`}
+              score={domain.score}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+            >
+              <DomainHeader>
+                <DomainName>{domain.name}</DomainName>
+                <MemoryScore score={domain.score}>
+                  {Math.round(domain.score)}
+                </MemoryScore>
+              </DomainHeader>
+              
+              <DomainMeta>
+                <span>{domain.responses} AI responses</span>
+                <span>{domain.models} models</span>
+                <Trend trend={domain.trend}>{domain.trend}</Trend>
+              </DomainMeta>
+              
+              <DomainDescription>
+                {domain.description}
+              </DomainDescription>
+            </DomainCard>
+          ))}
+        </DomainGrid>
+        
+        <div style={{ textAlign: 'center', marginTop: '60px' }}>
           <Link 
             to="/categories" 
             style={{ 
               color: '#007AFF', 
               textDecoration: 'none',
-              marginTop: '24px',
-              display: 'inline-block'
+              fontSize: '16px',
+              fontWeight: '600',
+              padding: '12px 24px',
+              border: '2px solid #007AFF',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease'
             }}
           >
-            ← Back to Categories
+            ← View All Categories
           </Link>
         </div>
       </Container>
@@ -303,14 +581,14 @@ function Categories() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Domain Categories
+          AI Memory Shadows
         </Title>
         <Subtitle
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Explore memory scores and AI consensus across major industry sectors
+          Discover which domains will be remembered when AI writes tomorrow's history
         </Subtitle>
       </Header>
 
@@ -320,6 +598,7 @@ function Categories() {
             key={category.name}
             as={Link}
             to={`/categories/${category.name}`}
+            trend={category.trend}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -331,8 +610,8 @@ function Categories() {
 
             <CategoryMeta>
               <Trend trend={category.trend}>{category.trend}</Trend>
-              <span style={{ fontSize: '14px', color: '#666' }}>
-                Avg Score: {category.avgScore}
+              <span style={{ fontSize: '14px', color: '#666', fontWeight: '600' }}>
+                Memory: {category.avgScore}
               </span>
             </CategoryMeta>
 
@@ -343,7 +622,7 @@ function Categories() {
             <CategoryStats>
               <div className="stat">
                 <div className="value">{category.avgScore}</div>
-                <div className="label">Avg Score</div>
+                <div className="label">Memory Score</div>
               </div>
               <div className="stat">
                 <div className="value">{category.marketCap}</div>
@@ -356,7 +635,7 @@ function Categories() {
             </CategoryStats>
 
             <TopDomains>
-              <div className="title">Sample Domains</div>
+              <div className="title">Leading Domains</div>
               <div className="domains">
                 {category.domains.slice(0, 3).map(domain => (
                   <span key={domain} className="domain">

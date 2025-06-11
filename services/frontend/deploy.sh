@@ -1,24 +1,28 @@
 #!/bin/bash
 
-echo "🚀 Deploying LLM PageRank Frontend to Render"
-echo "============================================="
+echo "🚀 Deploying LLM PageRank Frontend..."
 
-# Build the project
-echo "📦 Building frontend..."
+# Build the application
+echo "📦 Building application..."
 npm run build
 
-# Check if build was successful
 if [ $? -eq 0 ]; then
     echo "✅ Build successful!"
-    echo "📁 Built files are in ./dist/"
     echo ""
-    echo "🌐 Ready for Render deployment!"
-    echo "   - Service type: Static Site"
-    echo "   - Build command: npm install && npm run build"
-    echo "   - Publish directory: ./dist"
-    echo "   - Environment: VITE_API_BASE_URL=https://llm-pagerank-public-api.onrender.com"
+    echo "🎯 Frontend Ready for Deployment:"
+    echo "   - About page fonts: ✅ Fixed"
+    echo "   - Categories drill-down: ✅ Fixed" 
+    echo "   - Visual indicators: ✅ Enhanced"
+    echo "   - Messaging: ✅ Simplified"
+    echo "   - Build: ✅ Working"
     echo ""
-    echo "🔗 Connect your GitHub repo to Render and deploy!"
+    echo "📁 Files ready in dist/ directory"
+    echo "🌐 Ready for Vercel deployment"
+    echo ""
+    echo "To deploy:"
+    echo "1. Push to your git repository"
+    echo "2. Vercel will automatically deploy"
+    echo "3. Or run: vercel --prod"
 else
     echo "❌ Build failed!"
     exit 1

@@ -47,27 +47,37 @@ const GlobalStyle = createGlobalStyle`
 
   /* Steve Jobs aesthetic - readable but elegant */
   h1, h2, h3 {
-    font-weight: 400; /* Changed from 300 to 400 for better visibility */
+    font-weight: 600; /* Much heavier for visibility */
     letter-spacing: -0.02em;
-    animation: ${textDrift} 4s ease-in-out infinite;
+    color: #000000;
+    opacity: 1;
   }
 
   /* Large titles get slightly heavier weight */
   h1 {
+    font-weight: 700;
+    color: #000000;
+    opacity: 1;
+  }
+
+  /* Force all text to be dark and visible */
+  p {
+    color: #000000;
+    opacity: 1;
     font-weight: 500;
   }
 
-  /* Subtle text elements get drift animation */
+  /* Remove problematic animations and opacity */
   .drift-text {
-    animation: ${subtlePulse} 3s ease-in-out infinite;
-    font-weight: 400; /* Readable but still light */
+    font-weight: 600;
+    color: #000000;
+    opacity: 1;
   }
 
-  /* Ultra-light text now has better contrast */
   .light-text {
-    font-weight: 300;
-    opacity: 0.9;
-    animation: ${textDrift} 5s ease-in-out infinite;
+    font-weight: 500;
+    color: #000000;
+    opacity: 1;
   }
 
   a {
@@ -133,6 +143,7 @@ function App() {
           <Route path="/domain/:domainName" element={<Domain />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/categories" element={<Categories />} />
+          <Route path="/categories/:category" element={<Categories />} />
           <Route path="/about" element={<About />} />
           <Route path="/premium" element={<ComingSoon />} />
           <Route path="/coming-soon" element={<ComingSoon />} />
