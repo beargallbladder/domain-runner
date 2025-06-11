@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 import os
 
 # Database connection
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db')
+DATABASE_URL = 'postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db'
 
 def get_connection():
     return psycopg2.connect(DATABASE_URL)
