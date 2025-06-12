@@ -3598,12 +3598,14 @@ app.post('/migrate/news-correlation-schema', async (req, res) => {
         source_url TEXT,
         event_type VARCHAR(100), -- 'leadership', 'scandal', 'acquisition', 'regulatory'
         sentiment_score FLOAT, -- -1.0 to 1.0
-        detected_at TIMESTAMP DEFAULT NOW(),
-        INDEX (domain),
-        INDEX (event_date),
-        INDEX (event_type)
+        detected_at TIMESTAMP DEFAULT NOW()
       )
     `);
+   
+    // Create indexes for news_events
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_news_events_domain ON news_events(domain)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_news_events_date ON news_events(event_date)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_news_events_type ON news_events(event_type)`);
     
     // Create perception_correlations table
     await pool.query(`
@@ -3616,12 +3618,14 @@ app.post('/migrate/news-correlation-schema', async (req, res) => {
         after_score FLOAT,
         days_delta INTEGER, -- Days after event when measured
         correlation_strength FLOAT, -- 0.0-1.0 confidence in correlation
-        measured_at TIMESTAMP DEFAULT NOW(),
-        INDEX (domain),
-        INDEX (news_event_id),
-        INDEX (model_name)
+        measured_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    
+    // Create indexes for perception_correlations  
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_correlations_domain ON perception_correlations(domain)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_correlations_event ON perception_correlations(news_event_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_correlations_model ON perception_correlations(model_name)`);
     
     console.log('✅ News correlation schema created successfully');
     
