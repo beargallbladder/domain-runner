@@ -1037,41 +1037,39 @@ function Domain() {
           </p>
           
           <RelatedDomainsGrid>
-            {/* Related domains based on category/business focus */}
-            {[
+            {/* Related domains from the same category */}
+            {(competitorData.competitors || [
               { domain: 'facebook.com', score: 95, category: 'Social Media', change: '+0.2%' },
               { domain: 'bloomberg.com', score: 95, category: 'Financial Media', change: '+0.1%' },
               { domain: 'yahoo.com', score: 95, category: 'Web Portal', change: '+0.3%' },
               { domain: 'google.es', score: 95, category: 'Search Engine', change: '+0.1%' },
               { domain: 'synopsys.com', score: 95, category: 'Enterprise Software', change: '+0.1%' },
-            ].filter(d => d.domain !== domainName).slice(0, 4).map((domain, index) => (
+            ]).filter(d => d.domain !== domainName).slice(0, 4).map((domain, index) => (
               <motion.div
                 key={domain.domain}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 1.0 + index * 0.1 }}
+                whileHover={{ 
+                  y: -4,
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)',
+                  transition: { duration: 0.2 }
+                }}
+                style={{
+                  background: Colors.white,
+                  borderRadius: '16px',
+                  border: '2px solid #f0f0f0',
+                  cursor: 'pointer'
+                }}
               >
                 <Link
                   to={`/domain/${domain.domain}`}
                   style={{
                     display: 'block',
-                    background: Colors.white,
-                    borderRadius: '16px',
                     padding: '32px',
                     textDecoration: 'none',
-                    border: '2px solid #f0f0f0',
-                    transition: 'all 0.3s ease',
-                    height: '100%'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = 'translateY(-4px)';
-                    e.target.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.15)';
-                    e.target.style.borderColor = Colors.blue;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = 'none';
-                    e.target.style.borderColor = '#f0f0f0';
+                    height: '100%',
+                    color: 'inherit'
                   }}
                 >
                   <div style={{
@@ -1091,9 +1089,9 @@ function Domain() {
                     <div style={{
                       fontSize: '1.5rem',
                       fontWeight: '700',
-                      color: domain.change.startsWith('+') ? Colors.green : Colors.red
+                      color: (domain.change || domain.trend || '+0.1%').startsWith('+') ? Colors.green : Colors.red
                     }}>
-                      {domain.change.startsWith('+') ? '↗' : '↘'} {domain.change}
+                      {(domain.change || domain.trend || '+0.1%').startsWith('+') ? '↗' : '↘'} {domain.change || domain.trend || '+0.1%'}
                     </div>
                   </div>
                   
@@ -1103,7 +1101,7 @@ function Domain() {
                     color: domain.score >= 90 ? Colors.green : Colors.orange,
                     marginBottom: '12px'
                   }}>
-                    {domain.score}
+                    {Math.round(domain.score)}
                   </div>
                   
                   <div style={{
@@ -1128,7 +1126,7 @@ function Domain() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px'
                   }}>
-                    {domain.category}
+                    {domain.category || competitorData.category || 'Technology'}
                   </div>
                 </Link>
               </motion.div>
