@@ -13,6 +13,7 @@ import Leaderboard from './pages/Leaderboard'
 import ComingSoon from './pages/ComingSoon'
 import Rankings from './pages/Rankings'
 import DomainSEO from './pages/DomainSEO'
+import TeslaJolt from './pages/TeslaJolt'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -154,6 +155,8 @@ function App() {
           <Route path="/categories/:category" element={<Categories />} />
           <Route path="/shadows" element={<ComingSoon />} />
           <Route path="/rankings" element={<Rankings />} />
+          <Route path="/tesla-jolt" element={<TeslaJolt />} />
+          <Route path="/crisis" element={<div style={{padding: '40px', textAlign: 'center', background: '#000', color: '#fff', minHeight: '100vh'}}><h1 style={{color: '#ff3b30'}}>🚨 Crisis Simulator Coming Soon</h1></div>} />
           <Route path="/about" element={<About />} />
           <Route path="/premium" element={<ComingSoon />} />
           <Route path="/coming-soon" element={<ComingSoon />} />

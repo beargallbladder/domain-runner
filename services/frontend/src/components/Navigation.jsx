@@ -98,6 +98,13 @@ function Navigation() {
         >
           manifesto
         </NavLink>
+        <NavLink 
+          to="/tesla-jolt" 
+          $active={location.pathname === '/tesla-jolt'}
+          style={{ color: '#ff6b35' }}
+        >
+          🚨 tesla jolt
+        </NavLink>
         <LiveIndicator>
           live
         </LiveIndicator>

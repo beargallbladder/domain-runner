@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import IntelligenceDashboard from '../components/IntelligenceDashboard';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -539,6 +540,8 @@ const Home = () => {
           )}
         </TickerContainer>
       </TickerSection>
+
+      <IntelligenceDashboard />
 
       <StatsSection>
         <StatsGrid>
