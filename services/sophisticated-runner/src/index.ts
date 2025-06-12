@@ -3442,3 +3442,200 @@ app.get('/jolt/events', async (req, res) => {
     res.status(500).json({ error: (error as Error).message });
   }
 });
+
+// ============================================================================
+// 📊 CORRELATION DATA ACCESS APIS - FOR FRONTEND BENCHMARKING
+// ============================================================================
+
+// Get event-perception correlations for a domain
+app.get('/api/correlations/:domain', async (req, res) => {
+  try {
+    const { domain } = req.params;
+    
+    // Get all news events for domain
+    const events = await pool.query(`
+      SELECT 
+        ne.id, ne.event_date, ne.headline, ne.event_type, 
+        ne.sentiment_score, ne.source_url,
+        pc.model_name, pc.before_score, pc.after_score, 
+        pc.days_delta, pc.correlation_strength
+      FROM news_events ne
+      LEFT JOIN perception_correlations pc ON ne.id = pc.news_event_id
+      WHERE ne.domain = $1 OR pc.domain = $1
+      ORDER BY ne.event_date DESC
+    `, [domain]);
+    
+    // Group by events with their perception impacts
+    const timeline = events.rows.reduce((acc, row) => {
+      const eventId = row.event_id;
+      if (!acc[eventId]) {
+        acc[eventId] = {
+          event_id: eventId,
+          event_date: row.event_date,
+          headlines: [],
+          event_type: row.event_type,
+          sentiment_score: row.sentiment_score,
+          source_url: row.source_url,
+          perception_changes: []
+        };
+      }
+      acc[eventId].headlines.push(row.headline);
+      acc[eventId].perception_changes.push({
+        model_name: row.model_name,
+        before_score: row.before_score,
+        after_score: row.after_score,
+        days_delta: row.days_delta,
+        correlation_strength: row.correlation_strength
+      });
+      return acc;
+    }, {} as Record<string, any>);
+    
+    res.json({
+      correlations: Object.values(timeline)
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Benchmark comparison API - compare customer events against JOLT benchmarks
+app.get('/api/benchmarks/compare/:domain', async (req, res) => {
+  try {
+    const { domain } = req.params;
+    const { event_type, days_after } = req.query;
+    
+    // Get customer's recent perception changes
+    const customerData = await pool.query(`
+      SELECT AVG(after_score - before_score) as avg_change
+      FROM perception_correlations pc
+      JOIN news_events ne ON pc.news_event_id = ne.id
+      WHERE pc.domain = $1 
+      AND ne.event_type = $2
+      AND pc.days_delta <= $3
+    `, [domain, event_type, days_after || 7]);
+    
+    // Get benchmark data for similar event types
+    const benchmarkData = await pool.query(`
+      SELECT 
+        ne.domain as benchmark_domain,
+        AVG(pc.after_score - pc.before_score) as avg_change,
+        COUNT(*) as measurement_count
+      FROM perception_correlations pc
+      JOIN news_events ne ON pc.news_event_id = ne.id
+      WHERE ne.event_type = $1
+      AND pc.days_delta <= $2
+      AND ne.domain IN ('tesla.com', 'boeing.com', 'facebook.com', 'theranos.com')
+      GROUP BY ne.domain
+      ORDER BY avg_change DESC
+    `, [event_type, days_after || 7]);
+    
+    const customerChange = customerData.rows[0]?.avg_change || 0;
+    const benchmarks = benchmarkData.rows;
+    
+    res.json({
+      domain,
+      event_type,
+      customer_performance: {
+        avg_perception_change: customerChange,
+        measurement_window_days: days_after || 7
+      },
+      benchmarks: benchmarks.map(b => ({
+        benchmark_domain: b.benchmark_domain,
+        avg_change: b.avg_change,
+        relative_performance: customerChange > b.avg_change ? 
+          `${((customerChange / b.avg_change) * 100).toFixed(1)}% better` :
+          `${((b.avg_change / customerChange) * 100).toFixed(1)}% worse`,
+        measurement_count: b.measurement_count
+      }))
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Get available benchmark categories 
+app.get('/api/benchmarks/categories', async (req, res) => {
+  try {
+    const categories = await pool.query(`
+      SELECT 
+        event_type,
+        COUNT(DISTINCT ne.domain) as domain_count,
+        COUNT(*) as total_measurements,
+        AVG(pc.after_score - pc.before_score) as avg_impact
+      FROM news_events ne
+      JOIN perception_correlations pc ON ne.id = pc.news_event_id
+      WHERE ne.domain IN ('tesla.com', 'boeing.com', 'facebook.com', 'theranos.com')
+      GROUP BY event_type
+      ORDER BY total_measurements DESC
+    `);
+    
+    res.json({
+      benchmark_categories: categories.rows
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ============================================================================
+// 🗄️ NEWS CORRELATION DATABASE SCHEMA MIGRATION
+// ============================================================================
+
+// Create news correlation tables
+app.post('/migrate/news-correlation-schema', async (req, res) => {
+  try {
+    console.log('🗄️ Creating news correlation database schema...');
+    
+    // Create news_events table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS news_events (
+        id SERIAL PRIMARY KEY,
+        domain VARCHAR(255) NOT NULL,
+        event_date DATE NOT NULL,
+        headline TEXT NOT NULL,
+        source_url TEXT,
+        event_type VARCHAR(100), -- 'leadership', 'scandal', 'acquisition', 'regulatory'
+        sentiment_score FLOAT, -- -1.0 to 1.0
+        detected_at TIMESTAMP DEFAULT NOW(),
+        INDEX (domain),
+        INDEX (event_date),
+        INDEX (event_type)
+      )
+    `);
+    
+    // Create perception_correlations table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS perception_correlations (
+        id SERIAL PRIMARY KEY,
+        news_event_id INTEGER REFERENCES news_events(id) ON DELETE CASCADE,
+        domain VARCHAR(255) NOT NULL,
+        model_name VARCHAR(50) NOT NULL,
+        before_score FLOAT,
+        after_score FLOAT,
+        days_delta INTEGER, -- Days after event when measured
+        correlation_strength FLOAT, -- 0.0-1.0 confidence in correlation
+        measured_at TIMESTAMP DEFAULT NOW(),
+        INDEX (domain),
+        INDEX (news_event_id),
+        INDEX (model_name)
+      )
+    `);
+    
+    console.log('✅ News correlation schema created successfully');
+    
+    res.json({
+      success: true,
+      message: 'News correlation database schema created',
+      tables_created: ['news_events', 'perception_correlations']
+    });
+    
+  } catch (error) {
+    console.error('❌ Schema creation failed:', error);
+    res.status(500).json({ 
+      error: 'Schema creation failed', 
+      details: (error as Error).message 
+    });
+  }
+});
