@@ -288,13 +288,37 @@ function selectOptimalModel(): string {
 // ============================================================================
 // JOLT domains are now loaded dynamically from industry-intelligence service
 
-// Database connection
+// Database connection with robust SSL and connection handling
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false
-  }
+  } : false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000
 });
+
+// Database connection recovery system
+async function ensureDatabaseConnection(): Promise<boolean> {
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      const client = await pool.connect();
+      await client.query('SELECT 1');
+      client.release();
+      console.log('✅ Database connection verified');
+      return true;
+    } catch (error) {
+      console.error(`❌ Database connection failed (${retries} retries left):`, error);
+      retries--;
+      if (retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+      }
+    }
+  }
+  return false;
+}
 
 // Dual API key clients (copied from raw-capture-runner architecture)  
 const openaiClients = [
@@ -1557,6 +1581,14 @@ class SophisticatedRunner {
     
     const processLoop = async (): Promise<void> => {
       try {
+        // Ensure database connection before processing
+        const connected = await ensureDatabaseConnection();
+        if (!connected) {
+          console.error('❌ Database connection lost - retrying in 30 seconds...');
+          setTimeout(processLoop, 30000);
+          return;
+        }
+
         await this.processNextBatch();
         
         // 🔍 Check if more domains remain BEFORE scheduling next iteration
@@ -1575,6 +1607,17 @@ class SophisticatedRunner {
         
       } catch (error) {
         console.error('❌ Processing loop error:', error);
+        
+        // Check if it's a database error and try to recover
+        if (error instanceof Error && (error.message.includes('connection') || error.message.includes('database'))) {
+          console.log('🔄 Database error detected - attempting recovery...');
+          const recovered = await ensureDatabaseConnection();
+          if (!recovered) {
+            console.error('❌ Database recovery failed - retrying in 60 seconds...');
+            setTimeout(processLoop, 60000);
+            return;
+          }
+        }
         
         // Even on error, check if we should continue
         try {
@@ -2040,23 +2083,37 @@ app.get('/discovery/performance', async (req, res) => {
   }
 });
 
-// Main execution
+// Main execution with recovery system
 async function main() {
   try {
-    console.log('🔍 Testing database connection...');
-    await pool.query('SELECT 1');
-    console.log('✅ Database connected');
+    console.log('🔍 Testing database connection with recovery...');
+    
+    // Use robust connection check
+    const connected = await ensureDatabaseConnection();
+    if (!connected) {
+      console.error('❌ Failed to establish database connection after retries');
+      process.exit(1);
+    }
 
     const runner = new SophisticatedRunner();
     await runner.seedDomains();
 
-    // Start real LLM processing loop
+    // Start real LLM processing loop with recovery
     await runner.startProcessing();
 
     app.listen(port, () => {
       console.log(`🌐 Sophisticated Runner running on port ${port}`);
       console.log('🎯 Ready to prove equivalence!');
     });
+
+    // Set up periodic health checks
+    setInterval(async () => {
+      try {
+        await ensureDatabaseConnection();
+      } catch (error) {
+        console.error('❌ Health check failed:', error);
+      }
+    }, 300000); // Check every 5 minutes
 
   } catch (error) {
     console.error('❌ Startup failed:', error);
