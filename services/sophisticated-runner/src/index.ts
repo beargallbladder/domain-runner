@@ -3467,26 +3467,27 @@ app.get('/api/correlations/:domain', async (req, res) => {
     
     // Group by events with their perception impacts
     const timeline = events.rows.reduce((acc, row) => {
-      const eventId = row.event_id;
+      const eventId = row.id; // Use row.id instead of row.event_id
       if (!acc[eventId]) {
         acc[eventId] = {
           event_id: eventId,
           event_date: row.event_date,
-          headlines: [],
+          headline: row.headline,
           event_type: row.event_type,
           sentiment_score: row.sentiment_score,
           source_url: row.source_url,
           perception_changes: []
         };
       }
-      acc[eventId].headlines.push(row.headline);
-      acc[eventId].perception_changes.push({
-        model_name: row.model_name,
-        before_score: row.before_score,
-        after_score: row.after_score,
-        days_delta: row.days_delta,
-        correlation_strength: row.correlation_strength
-      });
+      if (row.model_name) { // Only add if we have perception data
+        acc[eventId].perception_changes.push({
+          model_name: row.model_name,
+          before_score: row.before_score,
+          after_score: row.after_score,
+          days_delta: row.days_delta,
+          correlation_strength: row.correlation_strength
+        });
+      }
       return acc;
     }, {} as Record<string, any>);
     
