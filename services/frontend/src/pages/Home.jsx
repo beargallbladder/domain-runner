@@ -648,8 +648,8 @@ const Home = () => {
         </TickerContainer>
       </TickerSection>
 
-      {/* FEAR FACTOR SECTION - Show declining domains */}
-      {shadowsData.length > 0 && (
+      {/* FEAR FACTOR SECTION - TEMPORARILY DISABLED DUE TO DATA INTEGRITY ISSUES */}
+      {/* {shadowsData.length > 0 && (
         <ShadowsSection>
           <ShadowsHeader>
             <ShadowsTitle>
@@ -688,9 +688,7 @@ const Home = () => {
                   </ScoreLabel>
 
                   <ModelConsensus>
-                    {/* Generate reasonable consensus from available real data */}
                     {shadow.modelsForgetting !== undefined ? (
-                      // Real API data - generate visualization from modelsForgetting
                       <>
                         {Array.from({ length: Math.max(1, 18 - (shadow.modelsForgetting * 3)) }, (_, i) => (
                           <ConsensusDot key={`pos-${i}`} type="positive" />
@@ -706,7 +704,6 @@ const Home = () => {
                         </ConsensusLabel>
                       </>
                     ) : (
-                      // Fallback data structure
                       <>
                         {Array.from({ length: Math.min(shadow.modelsPositive || 2, 5) }, (_, i) => (
                           <ConsensusDot key={`pos-${i}`} type="positive" />
@@ -755,7 +752,7 @@ const Home = () => {
             </FearFactorCTA>
           </ShadowsContainer>
         </ShadowsSection>
-      )}
+      )} */}
 
       <StatsSection>
         <StatsGrid>
