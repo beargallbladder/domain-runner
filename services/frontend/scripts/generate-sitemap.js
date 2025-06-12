@@ -79,9 +79,14 @@ async function generateSitemap() {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    const domains = allDomains;
+    // Remove duplicates based on domain name
+    const uniqueDomains = allDomains.filter((domain, index, self) => 
+      index === self.findIndex(d => d.domain === domain.domain)
+    );
     
-    console.log(`✅ Found ${domains.length} domains from API`);
+    const domains = uniqueDomains;
+    
+    console.log(`✅ Found ${allDomains.length} total domains, ${domains.length} unique domains from API`);
     
     // Generate sitemap XML
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
