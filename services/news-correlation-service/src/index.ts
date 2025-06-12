@@ -1,11 +1,18 @@
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
+import { Pool } from 'pg';
+import TeslaJOLTMonitor from './tesla-jolt-monitor';
+import { CorrelationEngine } from './correlation-engine';
+import { NewsScanner } from './news-scanner';
 import { db } from './database';
-import { newsScanner } from './news-scanner';
-import { correlationEngine } from './correlation-engine';
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const port = process.env.PORT || 3000;
+
+// Initialize Tesla JOLT Monitor and other services
+const teslaMonitor = new TeslaJOLTMonitor();
+const newsScanner = new NewsScanner();
+const correlationEngine = new CorrelationEngine();
 
 app.use(cors());
 app.use(express.json());
@@ -16,9 +23,10 @@ app.use(express.json());
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({
+  res.json({ 
+    status: 'healthy', 
     service: 'news-correlation-service',
-    status: 'running',
+    tesla_jolt_monitoring: 'active',
     timestamp: new Date().toISOString()
   });
 });
@@ -229,14 +237,38 @@ setInterval(scheduledProcessing, PROCESSING_INTERVAL);
 // 🚀 SERVER STARTUP
 // ============================================================================
 
-app.listen(PORT, () => {
-  console.log(`📰 News Correlation Service running on port ${PORT}`);
-  console.log(`⏰ Scheduled processing every ${PROCESSING_INTERVAL / (60 * 60 * 1000)} hours`);
-  
-  // Run initial processing after 30 seconds
-  setTimeout(() => {
-    scheduledProcessing();
-  }, 30000);
-});
+// Start the server and Tesla JOLT monitoring
+async function startServer() {
+  try {
+    console.log('🚀 NEWS CORRELATION SERVICE STARTING');
+    console.log('====================================');
+    console.log('');
+    
+    // Start Tesla JOLT Detection Engine
+    console.log('🎯 Starting Tesla JOLT Detection Engine...');
+    await teslaMonitor.startTeslaJOLTDetection();
+    console.log('✅ Tesla JOLT monitoring active');
+    console.log('');
+    
+    // Start the Express server
+    app.listen(port, () => {
+      console.log(`🌐 News Correlation Service running on port ${port}`);
+      console.log('📊 Available endpoints:');
+      console.log('   GET  /health - Service health check');
+      console.log('   GET  /api/tesla-jolt/status - JOLT monitoring status');
+      console.log('   POST /api/tesla-jolt/trigger-detection - Manual JOLT detection');
+      console.log('   GET  /api/tesla-jolt/case-study/:joltId - Get case study data');
+      console.log('');
+      console.log('🔥 TESLA NATURAL EXPERIMENT MONITORING: ACTIVE');
+      console.log('🎯 Ready to capture Tesla government transition signals!');
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to start news correlation service:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 export default app; 
