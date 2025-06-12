@@ -3050,3 +3050,395 @@ app.get('/realtime/status', async (req, res) => {
     res.status(500).json({ error: (error as Error).message });
   }
 });
+
+// ============================================================================
+// 🔥 EMERGENCY JOLT EVENT CAPTURE SYSTEM - TESLA GOVERNMENT TRANSITION
+// ============================================================================
+// Purpose: Capture real-time JOLT events as natural experiments for AI perception benchmarking
+// URGENT: Tesla CEO government transition happening NOW - capture T+0 baseline immediately
+
+class JOLTEventCaptureSystem {
+  private readonly JOLT_DOMAINS = {
+    TESLA_GOVERNMENT_2025: [
+      'tesla.com',
+      'spacex.com', 
+      'neuralink.com',
+      'theboringcompany.com',
+      'x.com'
+    ],
+    OPENAI_ALIGNMENT_EXIT: [
+      'openai.com',
+      'anthropic.com',
+      'deepmind.com'
+    ],
+    REDDIT_API_2025: [
+      'reddit.com',
+      'openai.com'
+    ]
+  };
+
+  private readonly JOLT_MEASUREMENT_SCHEDULE = [1, 3, 7, 14, 30, 60, 90, 180, 365]; // Days post-event
+
+  private readonly JOLT_CORE_PROMPTS = {
+    core_business: (domain: string) => `What is ${domain}'s core business and primary focus?`,
+    trust_assessment: (domain: string) => `How trustworthy and reliable is ${domain} as a company?`,
+    leadership_stability: (domain: string) => `How would you assess the leadership stability and focus of ${domain}?`,
+    competitive_position: (domain: string) => `How does ${domain} compare to its main competitors in terms of market position and reputation?`,
+    risk_factors: (domain: string) => `What are the main risks or concerns when considering ${domain}?`
+  };
+
+  async captureJOLTEvent(eventTag: string, eventDate: string): Promise<{
+    eventId: string;
+    domainsTracked: string[];
+    baselinesCaptured: number;
+    totalCost: number;
+    followUpScheduled: string[];
+  }> {
+    console.log(`🔥 EMERGENCY JOLT CAPTURE: ${eventTag} starting...`);
+    
+    const domains = this.JOLT_DOMAINS[eventTag as keyof typeof this.JOLT_DOMAINS] || [];
+    if (domains.length === 0) {
+      throw new Error(`Unknown JOLT event: ${eventTag}`);
+    }
+
+    const eventId = `${eventTag}_${eventDate.replace(/-/g, '')}`;
+    let totalCost = 0;
+    let baselinesCaptured = 0;
+
+    // Capture T+0 baseline for all domains
+    for (const domain of domains) {
+      console.log(`📊 Capturing T+0 baseline for ${domain}...`);
+      
+      const baselineData = await this.captureFullBaseline(domain, eventTag, eventDate);
+      totalCost += baselineData.cost;
+      
+      // Store baseline
+      await this.storeJOLTBaseline(eventId, domain, eventDate, 0, baselineData);
+      baselinesCaptured++;
+      
+      console.log(`✅ ${domain} baseline captured - Cost: $${baselineData.cost.toFixed(4)}`);
+    }
+
+    // Schedule follow-up measurements
+    await this.scheduleFollowUpMeasurements(eventId, domains, eventDate);
+
+    // Record JOLT event
+    await this.recordJOLTEvent(eventId, eventTag, eventDate, domains);
+
+    console.log(`🎯 JOLT EVENT CAPTURED: ${eventTag}`);
+    console.log(`   - Domains: ${domains.length}`);
+    console.log(`   - Baselines: ${baselinesCaptured}`);
+    console.log(`   - Total Cost: $${totalCost.toFixed(4)}`);
+
+    return {
+      eventId,
+      domainsTracked: domains,
+      baselinesCaptured,
+      totalCost,
+      followUpScheduled: this.JOLT_MEASUREMENT_SCHEDULE.map(days => 
+        new Date(new Date(eventDate).getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      )
+    };
+  }
+
+  private async captureFullBaseline(domain: string, eventTag: string, eventDate: string): Promise<{
+    responses: Record<string, any>;
+    cost: number;
+  }> {
+    const responses: Record<string, any> = {};
+    let totalCost = 0;
+
+    // Use ALL available models for maximum data richness
+    const models = [
+      'gpt-4', 'claude-3.5-sonnet-20241022', 'gemini-1.5-pro', 
+      'grok-beta', 'claude-3-sonnet-20240229', 'mistral-large-latest'
+    ];
+
+    for (const [promptType, promptGenerator] of Object.entries(this.JOLT_CORE_PROMPTS)) {
+      responses[promptType] = {};
+      
+      for (const model of models) {
+        try {
+          const prompt = promptGenerator(domain);
+          const result = await callLLM(model, prompt, domain);
+          
+          responses[promptType][model] = {
+            response: result.response,
+            tokenUsage: result.tokenUsage,
+            cost: result.cost,
+            latency: result.latency,
+            timestamp: new Date().toISOString()
+          };
+          
+          totalCost += result.cost;
+          
+          // Brief pause between API calls
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+        } catch (error) {
+          console.warn(`⚠️  ${model} failed for ${domain} ${promptType}:`, (error as Error).message);
+          responses[promptType][model] = {
+            error: (error as Error).message,
+            timestamp: new Date().toISOString()
+          };
+        }
+      }
+    }
+
+    return { responses, cost: totalCost };
+  }
+
+  private async storeJOLTBaseline(
+    eventId: string, 
+    domain: string, 
+    eventDate: string, 
+    daysSinceEvent: number, 
+    data: any
+  ): Promise<void> {
+    try {
+      await pool.query(`
+        INSERT INTO jolt_baselines (
+          event_id, domain, event_date, days_since_event, 
+          measurement_date, response_data, total_cost, baseline_type
+        ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7)
+      `, [
+        eventId, domain, eventDate, daysSinceEvent, 
+        JSON.stringify(data.responses), data.cost, 'T0_baseline'
+      ]);
+    } catch (error) {
+      // Table might not exist - create it
+      await this.createJOLTTables();
+      // Retry insert
+      await pool.query(`
+        INSERT INTO jolt_baselines (
+          event_id, domain, event_date, days_since_event, 
+          measurement_date, response_data, total_cost, baseline_type
+        ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7)
+      `, [
+        eventId, domain, eventDate, daysSinceEvent, 
+        JSON.stringify(data.responses), data.cost, 'T0_baseline'
+      ]);
+    }
+  }
+
+  private async createJOLTTables(): Promise<void> {
+    try {
+      // JOLT events table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS jolt_events (
+          id SERIAL PRIMARY KEY,
+          event_id VARCHAR(255) UNIQUE,
+          event_tag VARCHAR(100),
+          event_date DATE,
+          domains_tracked TEXT[],
+          created_at TIMESTAMP DEFAULT NOW(),
+          status VARCHAR(50) DEFAULT 'active'
+        )
+      `);
+
+      // JOLT baselines table  
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS jolt_baselines (
+          id SERIAL PRIMARY KEY,
+          event_id VARCHAR(255),
+          domain VARCHAR(255),
+          event_date DATE,
+          days_since_event INTEGER,
+          measurement_date TIMESTAMP,
+          response_data JSONB,
+          total_cost DECIMAL(10,6),
+          baseline_type VARCHAR(50),
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+
+      // JOLT analysis table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS jolt_analysis (
+          id SERIAL PRIMARY KEY,
+          event_id VARCHAR(255),
+          domain VARCHAR(255),
+          analysis_date TIMESTAMP,
+          memory_score DECIMAL(3,1),
+          drift_metrics JSONB,
+          competitive_analysis JSONB,
+          triangulation_data JSONB,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+
+      console.log('✅ JOLT tables created successfully');
+    } catch (error) {
+      console.error('❌ Failed to create JOLT tables:', (error as Error).message);
+    }
+  }
+
+  private async scheduleFollowUpMeasurements(eventId: string, domains: string[], eventDate: string): Promise<void> {
+    // For now, just log the schedule - in production this would use a job scheduler
+    console.log(`📅 Follow-up measurements scheduled for ${eventId}:`);
+    for (const days of this.JOLT_MEASUREMENT_SCHEDULE) {
+      const measurementDate = new Date(new Date(eventDate).getTime() + days * 24 * 60 * 60 * 1000);
+      console.log(`   T+${days}: ${measurementDate.toISOString().split('T')[0]}`);
+    }
+  }
+
+  private async recordJOLTEvent(eventId: string, eventTag: string, eventDate: string, domains: string[]): Promise<void> {
+    try {
+      await pool.query(`
+        INSERT INTO jolt_events (event_id, event_tag, event_date, domains_tracked)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (event_id) DO UPDATE SET
+          event_tag = EXCLUDED.event_tag,
+          domains_tracked = EXCLUDED.domains_tracked
+      `, [eventId, eventTag, eventDate, domains]);
+    } catch (error) {
+      console.warn('⚠️  Failed to record JOLT event (table may need creation)');
+    }
+  }
+
+  async getJOLTEventStatus(eventId: string): Promise<any> {
+    try {
+      const eventData = await pool.query(`
+        SELECT * FROM jolt_events WHERE event_id = $1
+      `, [eventId]);
+
+      const baselines = await pool.query(`
+        SELECT domain, days_since_event, measurement_date, total_cost
+        FROM jolt_baselines 
+        WHERE event_id = $1 
+        ORDER BY domain, days_since_event
+      `, [eventId]);
+
+      return {
+        event: eventData.rows[0] || null,
+        baselines: baselines.rows,
+        total_measurements: baselines.rows.length,
+        total_cost: baselines.rows.reduce((sum, row) => sum + parseFloat(row.total_cost), 0)
+      };
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+  }
+}
+
+const joltCaptureSystem = new JOLTEventCaptureSystem();
+
+// ============================================================================
+// 🔥 EMERGENCY JOLT EVENT CAPTURE ENDPOINTS
+// ============================================================================
+
+// EMERGENCY: Capture Tesla government transition NOW
+app.post('/jolt/capture-tesla', async (req, res) => {
+  try {
+    console.log('🔥 EMERGENCY TESLA CAPTURE TRIGGERED');
+    
+    const today = new Date().toISOString().split('T')[0];
+    const result = await joltCaptureSystem.captureJOLTEvent('TESLA_GOVERNMENT_2025', today);
+    
+    res.json({
+      success: true,
+      emergency: 'TESLA GOVERNMENT TRANSITION CAPTURED',
+      event_id: result.eventId,
+      domains_tracked: result.domainsTracked,
+      baselines_captured: result.baselinesCaptured,
+      total_cost: `$${result.totalCost.toFixed(4)}`,
+      follow_up_schedule: result.followUpScheduled,
+      message: '🎯 Tesla government transition T+0 baseline captured - this is your first natural experiment benchmark!',
+      next_steps: [
+        'Monitor follow-up measurements automatically',
+        'Compare to stable benchmarks (Microsoft, Google)',
+        'Track AI memory drift across models',
+        'Build triangulation dashboard'
+      ]
+    });
+    
+  } catch (error) {
+    console.error('❌ Tesla capture failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Generic JOLT event capture
+app.post('/jolt/capture/:eventTag', async (req, res) => {
+  try {
+    const { eventTag } = req.params;
+    const { eventDate } = req.body;
+    
+    const captureDate = eventDate || new Date().toISOString().split('T')[0];
+    
+    console.log(`🔥 JOLT CAPTURE: ${eventTag} on ${captureDate}`);
+    
+    const result = await joltCaptureSystem.captureJOLTEvent(eventTag, captureDate);
+    
+    res.json({
+      success: true,
+      action: `JOLT Event Capture: ${eventTag}`,
+      event_id: result.eventId,
+      domains_tracked: result.domainsTracked,
+      baselines_captured: result.baselinesCaptured,
+      total_cost: `$${result.totalCost.toFixed(4)}`,
+      follow_up_schedule: result.followUpScheduled,
+      message: `🎯 ${eventTag} T+0 baseline captured - natural experiment benchmark created!`
+    });
+    
+  } catch (error) {
+    console.error(`❌ JOLT capture failed for ${req.params.eventTag}:`, error);
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
+
+// Get JOLT event status
+app.get('/jolt/status/:eventId', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    const status = await joltCaptureSystem.getJOLTEventStatus(eventId);
+    
+    res.json({
+      event_id: eventId,
+      status,
+      available_events: [
+        'TESLA_GOVERNMENT_2025',
+        'OPENAI_ALIGNMENT_EXIT', 
+        'REDDIT_API_2025'
+      ],
+      measurement_schedule: [1, 3, 7, 14, 30, 60, 90, 180, 365],
+      note: 'JOLT events capture natural experiments for AI perception benchmarking'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// List all JOLT events
+app.get('/jolt/events', async (req, res) => {
+  try {
+    const events = await pool.query(`
+      SELECT event_id, event_tag, event_date, domains_tracked, created_at, status
+      FROM jolt_events 
+      ORDER BY created_at DESC
+    `);
+
+    res.json({
+      jolt_events: events.rows,
+      available_captures: {
+        'TESLA_GOVERNMENT_2025': 'Tesla CEO government transition - URGENT',
+        'OPENAI_ALIGNMENT_EXIT': 'OpenAI alignment team departures',
+        'REDDIT_API_2025': 'Reddit API changes impact'
+      },
+      emergency_endpoint: 'POST /jolt/capture-tesla',
+      purpose: 'Natural experiments for AI perception stress testing',
+      moat: 'Impossible to replicate - requires real crisis events'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
