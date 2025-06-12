@@ -183,6 +183,18 @@ async function ensureSchemaExists(): Promise<void> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
           );
           
+          -- 🚀 PERFORMANCE INDEXES - Critical for race condition prevention
+          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_domains_status_source 
+            ON domains(status, source) WHERE status = 'pending';
+          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_domains_last_processed 
+            ON domains(last_processed_at) WHERE status = 'pending';
+          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_domains_source_status
+            ON domains(source, status);
+          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_processing_logs_domain_time
+            ON processing_logs(domain_id, created_at);
+          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_responses_domain_model_time
+            ON responses(domain_id, model, captured_at);
+          
           -- Create rate_limits table for temporal API usage tracking
           CREATE TABLE IF NOT EXISTS rate_limits (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -249,7 +261,26 @@ class ModularDomainProcessor {
   }) {
     this.processorId = config.processorId;
     this.domains = config.domains;
-    this.pool = new Pool({ connectionString: config.databaseUrl });
+    
+    // Apply SSL configuration for Vercel databases
+    const connectionString = config.databaseUrl;
+    const needsSslMode = connectionString.includes('postgres.vercel-storage.com') && 
+                         !connectionString.includes('sslmode=');
+    
+    const finalConnectionString = needsSslMode ? 
+      `${connectionString}?sslmode=require` : connectionString;
+    
+    this.pool = new Pool({
+      connectionString: finalConnectionString,
+      ssl: connectionString.includes('postgres.vercel-storage.com') ? {
+        rejectUnauthorized: false
+      } : false,
+      // 🚀 OPTIMIZED CONNECTION POOL - Performance improvements
+      min: 2,                    // Minimum connections
+      max: 10,                   // Maximum connections (reduced for modular processor)
+      idleTimeoutMillis: 30000,  // Close idle connections after 30s
+      connectionTimeoutMillis: 5000 // Faster timeout (was 2000)
+    });
     
     console.log(`🚀 Modular Domain Processor initialized`);
     console.log(`   Processor ID: ${this.processorId}`);
@@ -317,29 +348,45 @@ class ModularDomainProcessor {
 
   async processNextBatch(): Promise<void> {
     try {
-      const pendingDomains = await this.query(`
-        SELECT id, domain
-        FROM domains
-        WHERE status = 'pending' AND source = $1
-        ORDER BY last_processed_at ASC NULLS FIRST
-        LIMIT 5
-      `, [this.processorId]);
-
-      if (pendingDomains.rows.length > 0) {
-        console.log(`🚀 Processing ${pendingDomains.rows.length} domains (${this.processorId})`);
+      // 🔒 ATOMIC DOMAIN CLAIMING - Prevents race conditions
+      const client = await this.pool.connect();
+      let claimedDomains: any[] = [];
+      
+      try {
+        await client.query('BEGIN');
         
-        for (const domain of pendingDomains.rows) {
+        const result = await client.query(`
+          UPDATE domains 
+          SET status = 'processing',
+              last_processed_at = CURRENT_TIMESTAMP,
+              updated_at = CURRENT_TIMESTAMP,
+              process_count = process_count + 1
+          WHERE id IN (
+            SELECT id FROM domains 
+            WHERE status = 'pending' AND source = $1
+            ORDER BY last_processed_at ASC NULLS FIRST
+            LIMIT 5
+            FOR UPDATE SKIP LOCKED
+          )
+          RETURNING id, domain;
+        `, [this.processorId]);
+        
+        await client.query('COMMIT');
+        claimedDomains = result.rows;
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+
+      if (claimedDomains.length > 0) {
+        console.log(`🚀 Processing ${claimedDomains.length} domains (${this.processorId})`);
+        
+        for (const domain of claimedDomains) {
           console.log(`📋 Mock processing: ${domain.domain} (${this.processorId})`);
           
-          await this.query(`
-            UPDATE domains 
-            SET status = 'processing', 
-                last_processed_at = CURRENT_TIMESTAMP,
-                updated_at = CURRENT_TIMESTAMP,
-                process_count = process_count + 1
-            WHERE id = $1
-          `, [domain.id]);
-          
+          // Simulate processing time
           await new Promise(resolve => setTimeout(resolve, 1000));
           
           await this.query(`
@@ -881,11 +928,12 @@ async function initializeApp(): Promise<void> {
 // Initialize the processing loop
 async function processNextBatch(): Promise<void> {
   try {
-    // 🚀 5X THROTTLE TEST: Process 5 domains concurrently instead of 1
+    // 🚀 5X THROTTLE TEST: Process 5 domains concurrently (with source filtering to avoid race conditions)
     const pendingDomains = await query(`
       SELECT id, domain
       FROM domains
       WHERE status = 'pending'
+        AND (source IS NULL OR source NOT IN ('simple_modular_v1', 'api_seed_v1'))
       ORDER BY last_processed_at ASC NULLS FIRST
       LIMIT 5
     `);

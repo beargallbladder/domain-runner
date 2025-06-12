@@ -6,20 +6,26 @@ exports.testConnection = testConnection;
 exports.getClient = getClient;
 exports.cleanup = cleanup;
 const pg_1 = require("pg");
-// Default pool configuration
-const defaultConfig = {
-    max: 20, // Maximum number of clients in the pool
-    idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-    connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
-    ssl: process.env.NODE_ENV === 'production' ? {
-        rejectUnauthorized: false
-    } : false
+// Get database configuration with proper SSL handling
+const getDatabaseConfig = () => {
+    const connectionString = process.env.DATABASE_URL || 'postgres://localhost:5432/raw_capture';
+    // Add SSL mode if not present (for Vercel databases)
+    const needsSslMode = connectionString.includes('postgres.vercel-storage.com') &&
+        !connectionString.includes('sslmode=');
+    const finalConnectionString = needsSslMode ?
+        `${connectionString}?sslmode=require` : connectionString;
+    return {
+        connectionString: finalConnectionString,
+        max: 20, // Maximum number of clients in the pool
+        idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+        connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+        ssl: process.env.NODE_ENV === 'production' || connectionString.includes('postgres.vercel-storage.com') ? {
+            rejectUnauthorized: false
+        } : false
+    };
 };
 // Create pool with environment variables or defaults
-exports.pool = new pg_1.Pool({
-    ...defaultConfig,
-    connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/raw_capture',
-});
+exports.pool = new pg_1.Pool(getDatabaseConfig());
 // Handle pool errors
 exports.pool.on('error', (err, client) => {
     console.error('Unexpected error on idle client', err);
