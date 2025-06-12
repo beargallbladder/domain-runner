@@ -522,7 +522,7 @@ const Home = () => {
         
       } catch (error) {
         console.error('Failed to fetch data:', error);
-        // Enhanced fallback data for demo
+        // Enhanced fallback data for demo - TOP PERFORMERS ONLY
         setTickerData([
           { domain: 'openai.com', score: 98, change: '+2.5%', modelsPositive: 18, modelsNeutral: 2, modelsNegative: 1 },
           { domain: 'apple.com', score: 95, change: '+1.2%', modelsPositive: 16, modelsNeutral: 3, modelsNegative: 2 },
@@ -536,14 +536,8 @@ const Home = () => {
           { domain: 'zoom.us', score: 85, change: '+0.7%', modelsPositive: 8, modelsNeutral: 11, modelsNegative: 2 },
         ]);
         
-        // Fear factor fallback data - declining domains
-        setShadowsData([
-          { domain: 'yahoo.com', currentScore: 45, previousScore: 52, declineRate: -7.0, decliningWeeks: 5, modelsPositive: 4, modelsNeutral: 8, modelsNegative: 9 },
-          { domain: 'myspace.com', currentScore: 23, previousScore: 28, declineRate: -5.0, decliningWeeks: 12, modelsPositive: 2, modelsNeutral: 4, modelsNegative: 15 },
-          { domain: 'tumblr.com', currentScore: 31, previousScore: 38, declineRate: -7.0, decliningWeeks: 8, modelsPositive: 3, modelsNeutral: 6, modelsNegative: 12 },
-          { domain: 'blackberry.com', currentScore: 28, previousScore: 35, declineRate: -7.0, decliningWeeks: 15, modelsPositive: 2, modelsNeutral: 5, modelsNegative: 14 },
-          { domain: 'nokia.com', currentScore: 34, previousScore: 42, declineRate: -8.0, decliningWeeks: 10, modelsPositive: 3, modelsNeutral: 7, modelsNegative: 11 }
-        ]);
+        // NO FAKE SHADOWS DATA - Only show real declining domains
+        setShadowsData([]);
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -673,7 +667,7 @@ const Home = () => {
                   key={shadow.domain}
                   as={Link}
                   to={`/domain/${shadow.domain}`}
-                  score={shadow.currentScore}
+                  score={shadow.currentScore || shadow.score}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -681,31 +675,53 @@ const Home = () => {
                   <DomainHeader>
                     <DomainName style={{ color: '#ff3b30' }}>{shadow.domain}</DomainName>
                     <TrendIndicator trend="down">
-                      ↘ -{Math.abs(shadow.declineRate)}%
+                      ↘ -{Math.abs(shadow.declineRate || shadow.decline || 2.0)}%
                     </TrendIndicator>
                   </DomainHeader>
 
-                  <ScoreDisplay score={shadow.currentScore}>
-                    {Math.round(shadow.currentScore)}
+                  <ScoreDisplay score={shadow.currentScore || shadow.score}>
+                    {Math.round(shadow.currentScore || shadow.score)}
                   </ScoreDisplay>
                   
                   <ScoreLabel style={{ color: '#ff6b6b' }}>
-                    Declining for {shadow.decliningWeeks} weeks
+                    Declining for {shadow.decliningWeeks || 'multiple'} weeks
                   </ScoreLabel>
 
                   <ModelConsensus>
-                    {Array.from({ length: Math.min(shadow.modelsPositive, 5) }, (_, i) => (
-                      <ConsensusDot key={`pos-${i}`} type="positive" />
-                    ))}
-                    {Array.from({ length: Math.min(shadow.modelsNeutral, 8) }, (_, i) => (
-                      <ConsensusDot key={`neu-${i}`} type="neutral" />
-                    ))}
-                    {Array.from({ length: Math.min(shadow.modelsNegative, 12) }, (_, i) => (
-                      <ConsensusDot key={`neg-${i}`} type="negative" />
-                    ))}
-                    <ConsensusLabel style={{ color: '#ff6b6b' }}>
-                      {shadow.modelsPositive + shadow.modelsNeutral + shadow.modelsNegative} models
-                    </ConsensusLabel>
+                    {/* Generate reasonable consensus from available real data */}
+                    {shadow.modelsForgetting !== undefined ? (
+                      // Real API data - generate visualization from modelsForgetting
+                      <>
+                        {Array.from({ length: Math.max(1, 18 - (shadow.modelsForgetting * 3)) }, (_, i) => (
+                          <ConsensusDot key={`pos-${i}`} type="positive" />
+                        ))}
+                        {Array.from({ length: Math.min(8, shadow.modelsForgetting * 2) }, (_, i) => (
+                          <ConsensusDot key={`neu-${i}`} type="neutral" />
+                        ))}
+                        {Array.from({ length: Math.min(10, shadow.modelsForgetting) }, (_, i) => (
+                          <ConsensusDot key={`neg-${i}`} type="negative" />
+                        ))}
+                        <ConsensusLabel style={{ color: '#ff6b6b' }}>
+                          {shadow.modelsForgetting} models forgetting
+                        </ConsensusLabel>
+                      </>
+                    ) : (
+                      // Fallback data structure
+                      <>
+                        {Array.from({ length: Math.min(shadow.modelsPositive || 2, 5) }, (_, i) => (
+                          <ConsensusDot key={`pos-${i}`} type="positive" />
+                        ))}
+                        {Array.from({ length: Math.min(shadow.modelsNeutral || 6, 8) }, (_, i) => (
+                          <ConsensusDot key={`neu-${i}`} type="neutral" />
+                        ))}
+                        {Array.from({ length: Math.min(shadow.modelsNegative || 8, 12) }, (_, i) => (
+                          <ConsensusDot key={`neg-${i}`} type="negative" />
+                        ))}
+                        <ConsensusLabel style={{ color: '#ff6b6b' }}>
+                          {(shadow.modelsPositive || 2) + (shadow.modelsNeutral || 6) + (shadow.modelsNegative || 8)} models
+                        </ConsensusLabel>
+                      </>
+                    )}
                   </ModelConsensus>
 
                   <CategoryTag style={{ background: '#ff3b30', color: 'white' }}>
