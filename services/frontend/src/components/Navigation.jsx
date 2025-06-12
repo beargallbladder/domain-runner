@@ -93,8 +93,8 @@ function Navigation() {
       
       <NavLinks>
         <NavLink 
-          to="/categories" 
-          $active={location.pathname.startsWith('/categories')}
+          to="/shadows" 
+          $active={location.pathname.startsWith('/shadows')}
         >
           shadows
         </NavLink>

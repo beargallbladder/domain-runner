@@ -72,12 +72,12 @@ const CategoriesGrid = styled.div`
 `
 
 const CategoryCard = styled(motion.div)`
-  background: #fff;
-  border: 2px solid #f0f0f0;
-  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid #e5e5e5;
+  border-radius: 20px;
   padding: 32px;
-  transition: all 0.3s ease;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   
@@ -89,16 +89,22 @@ const CategoryCard = styled(motion.div)`
     right: 0;
     height: 4px;
     background: ${props => 
-      props.trend === 'Rising' ? 'linear-gradient(90deg, #34C759, #30D158)' : 
-      props.trend === 'Stable' ? 'linear-gradient(90deg, #007AFF, #32D74B)' : 
-      'linear-gradient(90deg, #FF3B30, #FF9500)'
+      props.trend === 'Rising' ? 'linear-gradient(90deg, #30D158, #34C759)' : 
+      props.trend === 'Stable' ? 'linear-gradient(90deg, #FF9500, #FFCC02)' : 
+      'linear-gradient(90deg, #FF3B30, #FF6B6B)'
     };
+    border-radius: 20px 20px 0 0;
   }
   
   &:hover {
+    transform: translateY(-8px) scale(1.02);
     border-color: #007AFF;
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 122, 255, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 122, 255, 0.2);
+    background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+  }
+  
+  &:active {
+    transform: translateY(-4px) scale(1.01);
   }
 `
 
@@ -601,10 +607,13 @@ function Categories() {
         {categories.map((cat, index) => (
           <CategoryCard
             key={cat.name}
+            as={Link}
+            to={`/categories/${encodeURIComponent(cat.name.toLowerCase().replace(/\s+/g, '-'))}`}
             trend="Rising"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: index * 0.1 }}
+            style={{ textDecoration: 'none', color: 'inherit' }}
           >
             <CategoryHeader>
               <CategoryName>{cat.name}</CategoryName>

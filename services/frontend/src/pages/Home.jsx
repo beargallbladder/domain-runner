@@ -357,6 +357,103 @@ const ExploreDescription = styled.p`
   line-height: 1.5;
 `;
 
+// FEAR FACTOR SECTION - Shadows/Declining Domains
+const ShadowsSection = styled.div`
+  background: linear-gradient(135deg, #fff5f5 0%, #fef1f1 100%);
+  padding: 80px 0;
+  border-top: 3px solid #ff3b30;
+  border-bottom: 3px solid #ff3b30;
+`;
+
+const ShadowsHeader = styled.div`
+  text-align: center;
+  margin-bottom: 60px;
+`;
+
+const ShadowsTitle = styled(motion.h2)`
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ff3b30;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+  text-shadow: 0 0 20px rgba(255, 59, 48, 0.2);
+`;
+
+const ShadowsSubtitle = styled(motion.p)`
+  font-size: 1.3rem;
+  color: #ff6b6b;
+  font-weight: 500;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+`;
+
+const ShadowsContainer = styled.div`
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 40px;
+`;
+
+const ShadowsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+  
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+`;
+
+const ShadowCard = styled(motion.div)`
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(255, 59, 48, 0.15);
+  border: 2px solid #ffccd5;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(255, 59, 48, 0.25);
+    border-color: #ff3b30;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ff3b30, #ff6b6b);
+    border-radius: 16px 16px 0 0;
+  }
+`;
+
+const FearFactorCTA = styled.div`
+  text-align: center;
+  padding: 40px;
+  background: rgba(255, 59, 48, 0.05);
+  border-radius: 16px;
+  border: 2px solid #ffccd5;
+`;
+
+const FearFactorText = styled.p`
+  font-size: 1.2rem;
+  color: #ff3b30;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  line-height: 1.4;
+`;
+
 const getTrendFromChange = (change) => {
   if (change.startsWith('+')) return 'up';
   if (change.startsWith('-')) return 'down';
@@ -393,7 +490,8 @@ const getCategoryFromDomain = (domain) => {
 
 const Home = () => {
   const [tickerData, setTickerData] = useState([]);
-  const [displayCount, setDisplayCount] = useState(20); // Show more by default
+  const [shadowsData, setShadowsData] = useState([]);
+  const [displayCount, setDisplayCount] = useState(20);
   const [stats, setStats] = useState({
     totalDomains: 477,
     aiModels: 21,
@@ -404,19 +502,26 @@ const Home = () => {
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    const fetchTickerData = async () => {
+    const fetchAllData = async () => {
       try {
-        const response = await axios.get(`https://llm-pagerank-public-api.onrender.com/api/ticker?limit=${displayCount}`);
-        const data = response.data;
+        // Fetch both top performers AND declining domains
+        const [tickerResponse, shadowsResponse] = await Promise.all([
+          axios.get(`https://llm-pagerank-public-api.onrender.com/api/ticker?limit=${displayCount}`),
+          axios.get(`https://llm-pagerank-public-api.onrender.com/api/shadows`)
+        ]);
         
-        setTickerData(data.topDomains);
+        const tickerData = tickerResponse.data;
+        const shadowsData = shadowsResponse.data;
+        
+        setTickerData(tickerData.topDomains);
+        setShadowsData(shadowsData.declining || []);
         setStats(prev => ({
           ...prev,
-          totalDomains: data.totalDomains
+          totalDomains: tickerData.totalDomains
         }));
         
       } catch (error) {
-        console.error('Failed to fetch ticker data:', error);
+        console.error('Failed to fetch data:', error);
         // Enhanced fallback data for demo
         setTickerData([
           { domain: 'openai.com', score: 98, change: '+2.5%', modelsPositive: 18, modelsNeutral: 2, modelsNegative: 1 },
@@ -430,13 +535,22 @@ const Home = () => {
           { domain: 'stripe.com', score: 87, change: '+2.1%', modelsPositive: 9, modelsNeutral: 10, modelsNegative: 2 },
           { domain: 'zoom.us', score: 85, change: '+0.7%', modelsPositive: 8, modelsNeutral: 11, modelsNegative: 2 },
         ]);
+        
+        // Fear factor fallback data - declining domains
+        setShadowsData([
+          { domain: 'yahoo.com', currentScore: 45, previousScore: 52, declineRate: -7.0, decliningWeeks: 5, modelsPositive: 4, modelsNeutral: 8, modelsNegative: 9 },
+          { domain: 'myspace.com', currentScore: 23, previousScore: 28, declineRate: -5.0, decliningWeeks: 12, modelsPositive: 2, modelsNeutral: 4, modelsNegative: 15 },
+          { domain: 'tumblr.com', currentScore: 31, previousScore: 38, declineRate: -7.0, decliningWeeks: 8, modelsPositive: 3, modelsNeutral: 6, modelsNegative: 12 },
+          { domain: 'blackberry.com', currentScore: 28, previousScore: 35, declineRate: -7.0, decliningWeeks: 15, modelsPositive: 2, modelsNeutral: 5, modelsNegative: 14 },
+          { domain: 'nokia.com', currentScore: 34, previousScore: 42, declineRate: -8.0, decliningWeeks: 10, modelsPositive: 3, modelsNeutral: 7, modelsNegative: 11 }
+        ]);
       } finally {
         setLoading(false);
         setLoadingMore(false);
       }
     };
 
-    fetchTickerData();
+    fetchAllData();
   }, [displayCount]);
 
   const loadMore = () => {
@@ -539,6 +653,93 @@ const Home = () => {
           )}
         </TickerContainer>
       </TickerSection>
+
+      {/* FEAR FACTOR SECTION - Show declining domains */}
+      {shadowsData.length > 0 && (
+        <ShadowsSection>
+          <ShadowsHeader>
+            <ShadowsTitle>
+              ⚠️ Memory Decline Alert
+            </ShadowsTitle>
+            <ShadowsSubtitle>
+              These brands are losing AI memory. Once forgotten, recovery is difficult.
+            </ShadowsSubtitle>
+          </ShadowsHeader>
+          
+          <ShadowsContainer>
+            <ShadowsGrid>
+              {shadowsData.slice(0, 5).map((shadow, index) => (
+                <ShadowCard
+                  key={shadow.domain}
+                  as={Link}
+                  to={`/domain/${shadow.domain}`}
+                  score={shadow.currentScore}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <DomainHeader>
+                    <DomainName style={{ color: '#ff3b30' }}>{shadow.domain}</DomainName>
+                    <TrendIndicator trend="down">
+                      ↘ -{Math.abs(shadow.declineRate)}%
+                    </TrendIndicator>
+                  </DomainHeader>
+
+                  <ScoreDisplay score={shadow.currentScore}>
+                    {Math.round(shadow.currentScore)}
+                  </ScoreDisplay>
+                  
+                  <ScoreLabel style={{ color: '#ff6b6b' }}>
+                    Declining for {shadow.decliningWeeks} weeks
+                  </ScoreLabel>
+
+                  <ModelConsensus>
+                    {Array.from({ length: Math.min(shadow.modelsPositive, 5) }, (_, i) => (
+                      <ConsensusDot key={`pos-${i}`} type="positive" />
+                    ))}
+                    {Array.from({ length: Math.min(shadow.modelsNeutral, 8) }, (_, i) => (
+                      <ConsensusDot key={`neu-${i}`} type="neutral" />
+                    ))}
+                    {Array.from({ length: Math.min(shadow.modelsNegative, 12) }, (_, i) => (
+                      <ConsensusDot key={`neg-${i}`} type="negative" />
+                    ))}
+                    <ConsensusLabel style={{ color: '#ff6b6b' }}>
+                      {shadow.modelsPositive + shadow.modelsNeutral + shadow.modelsNegative} models
+                    </ConsensusLabel>
+                  </ModelConsensus>
+
+                  <CategoryTag style={{ background: '#ff3b30', color: 'white' }}>
+                    MEMORY FADING
+                  </CategoryTag>
+                </ShadowCard>
+              ))}
+            </ShadowsGrid>
+            
+            <FearFactorCTA>
+              <FearFactorText>
+                Don't let your brand become a shadow. Monitor your AI memory before it's too late.
+              </FearFactorText>
+              <Link 
+                to="/shadows" 
+                style={{ 
+                  color: '#ff3b30', 
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  padding: '12px 24px',
+                  border: '2px solid #ff3b30',
+                  borderRadius: '8px',
+                  marginTop: '16px',
+                  display: 'inline-block',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                View All Declining Brands →
+              </Link>
+            </FearFactorCTA>
+          </ShadowsContainer>
+        </ShadowsSection>
+      )}
 
       <StatsSection>
         <StatsGrid>
