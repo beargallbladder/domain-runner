@@ -11,7 +11,6 @@ import DomainReport from './pages/DomainReport'
 import DomainDirectory from './pages/DomainDirectory'
 import Leaderboard from './pages/Leaderboard'
 import ComingSoon from './pages/ComingSoon'
-import Shadows from './pages/Shadows'
 import Rankings from './pages/Rankings'
 import DomainSEO from './pages/DomainSEO'
 
@@ -153,7 +152,7 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/categories/:category" element={<Categories />} />
-          <Route path="/shadows" element={<Shadows />} />
+          <Route path="/shadows" element={<ComingSoon />} />
           <Route path="/rankings" element={<Rankings />} />
           <Route path="/about" element={<About />} />
           <Route path="/premium" element={<ComingSoon />} />

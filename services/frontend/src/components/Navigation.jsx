@@ -93,12 +93,6 @@ function Navigation() {
       
       <NavLinks>
         <NavLink 
-          to="/shadows" 
-          $active={location.pathname.startsWith('/shadows')}
-        >
-          shadows
-        </NavLink>
-        <NavLink 
           to="/about" 
           $active={location.pathname === '/about'}
         >
