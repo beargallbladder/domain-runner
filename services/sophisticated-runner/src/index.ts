@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import axios from 'axios';
+import CachePopulationScheduler from './cache-population-scheduler';
 
 dotenv.config();
 
@@ -2095,6 +2096,11 @@ async function main() {
       process.exit(1);
     }
 
+    // Initialize cache population scheduler
+    console.log('🔄 Initializing cache population scheduler...');
+    const cacheScheduler = new CachePopulationScheduler();
+    cacheScheduler.startScheduler();
+
     const runner = new SophisticatedRunner();
     await runner.seedDomains();
 
@@ -2120,6 +2126,72 @@ async function main() {
     process.exit(1);
   }
 }
+
+// Cache population endpoints
+app.post('/cache/populate', async (req, res) => {
+  try {
+    console.log('🔄 Manual cache population triggered...');
+    
+    const cacheScheduler = new CachePopulationScheduler();
+    await cacheScheduler.runOnce();
+    
+    res.json({
+      success: true,
+      message: '🎉 Cache population completed!',
+      action: 'Manual cache population',
+      note: 'All completed domains have been processed into public_domain_cache'
+    });
+    
+  } catch (error) {
+    console.error('❌ Manual cache population failed:', error);
+    res.status(500).json({
+      success: false,
+      error: (error as Error).message
+    });
+  }
+});
+
+app.get('/cache/status', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    
+    // Get cache statistics
+    const cacheStats = await client.query(`
+      SELECT COUNT(*) as cached_domains
+      FROM public_domain_cache
+    `);
+    
+    const domainStats = await client.query(`
+      SELECT 
+        COUNT(*) as total_domains,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed_domains
+      FROM domains
+    `);
+    
+    client.release();
+    
+    res.json({
+      cache_status: {
+        cached_domains: parseInt(cacheStats.rows[0].cached_domains),
+        total_domains: parseInt(domainStats.rows[0].total_domains),
+        completed_domains: parseInt(domainStats.rows[0].completed_domains),
+        cache_coverage: `${Math.round((cacheStats.rows[0].cached_domains / domainStats.rows[0].completed_domains) * 100)}%`
+      },
+      scheduler: {
+        status: 'Active',
+        frequency: 'Every 6 hours',
+        next_run: 'Automatic'
+      },
+      manual_actions: {
+        populate_now: 'POST /cache/populate',
+        check_status: 'GET /cache/status'
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
 
 main().catch(console.error); 
 

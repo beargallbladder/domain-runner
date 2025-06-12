@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "start": "npm run build && node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "recovery": "ts-node src/recovery.ts",
+    "start:with-recovery": "npm run recovery & npm start",
+    "dev:with-recovery": "npm run recovery & npm run dev"
+  }
+} 

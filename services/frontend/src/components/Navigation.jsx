@@ -93,17 +93,40 @@ function Navigation() {
       
       <NavLinks>
         <NavLink 
-          to="/about" 
-          $active={location.pathname === '/about'}
+          to="/"
+          $active={location.pathname === '/'}
         >
-          manifesto
+          Home
         </NavLink>
         <NavLink 
-          to="/tesla-jolt" 
-          $active={location.pathname === '/tesla-jolt'}
-          style={{ color: '#ff6b35' }}
+          to="/domains"
+          $active={location.pathname === '/domains'}
         >
-          🚨 tesla jolt
+          Domains
+        </NavLink>
+        <NavLink 
+          to="/leaderboard"
+          $active={location.pathname === '/leaderboard'}
+        >
+          Leaderboard
+        </NavLink>
+        <NavLink 
+          to="/categories"
+          $active={location.pathname.startsWith('/categories')}
+        >
+          Categories
+        </NavLink>
+        <NavLink 
+          to="/rankings"
+          $active={location.pathname === '/rankings'}
+        >
+          Rankings
+        </NavLink>
+        <NavLink 
+          to="/about"
+          $active={location.pathname === '/about'}
+        >
+          About
         </NavLink>
         <LiveIndicator>
           live

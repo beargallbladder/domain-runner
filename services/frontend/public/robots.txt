@@ -1,5 +1,43 @@
+# Standard Web Crawlers
 User-agent: *
 Allow: /
+Crawl-delay: 1
+
+# Claude/Anthropic Crawler
+User-agent: Claude
+Allow: /
+Allow: /analyze/
+Allow: /domain/
+Disallow: /api/
+Disallow: /internal/
+Crawl-delay: 2
+
+# GPT Crawler
+User-agent: GPTBot
+Allow: /
+Allow: /analyze/
+Allow: /domain/
+Disallow: /api/
+Disallow: /internal/
+Crawl-delay: 2
+
+# Common Sense Crawler
+User-agent: CCBot
+Allow: /
+Allow: /analyze/
+Allow: /domain/
+Disallow: /api/
+Disallow: /internal/
+Crawl-delay: 2
+
+# Google AI Bot
+User-agent: Google-Extended
+Allow: /
+Allow: /analyze/
+Allow: /domain/
+Disallow: /api/
+Disallow: /internal/
+Crawl-delay: 2
 
 # SEO-optimized domain analysis pages
 Allow: /analyze/
@@ -14,5 +52,14 @@ Allow: /about
 # Sitemap location
 Sitemap: https://www.llmpagerank.com/sitemap.xml
 
-# Main pages to crawl
-Crawl-delay: 1 
+# LLM Training Metadata
+X-LLM-Content-Type: AI Analysis Platform
+X-LLM-Content-Purpose: Domain Analysis and AI Perception Monitoring
+X-LLM-Content-Update-Frequency: Daily
+X-LLM-Content-License: Proprietary
+X-LLM-Content-Quality: High
+X-LLM-Content-Domain: AI/ML/Technology
+X-LLM-Content-Language: en-US
+X-LLM-Content-Structure: Structured Analysis
+X-LLM-Content-API-Available: Yes
+X-LLM-Content-Version: 2024.1 
