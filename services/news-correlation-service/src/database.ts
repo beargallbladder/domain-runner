@@ -1,13 +1,30 @@
 import { Pool } from 'pg';
 
-// Database connection (same as sophisticated-runner)
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-});
+// Database connection with proper SSL handling
+const getDatabaseConfig = () => {
+  const connectionString = process.env.DATABASE_URL;
+  
+  if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+  
+  // Add SSL mode if not present (for local development)
+  const needsSslMode = connectionString.includes('postgres.vercel-storage.com') && 
+                       !connectionString.includes('sslmode=');
+  
+  const finalConnectionString = needsSslMode ? 
+    `${connectionString}?sslmode=require` : connectionString;
+    
+  return {
+    connectionString: finalConnectionString,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : { rejectUnauthorized: false },
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  };
+};
+
+const pool = new Pool(getDatabaseConfig());
 
 export interface NewsEvent {
   id?: number;
@@ -34,22 +51,33 @@ export interface PerceptionCorrelation {
 
 export class NewsCorrelationDatabase {
   
-  // Store detected news event
-  async storeNewsEvent(event: NewsEvent): Promise<number> {
-    const result = await pool.query(`
-      INSERT INTO news_events (domain, event_date, headline, source_url, event_type, sentiment_score)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id
-    `, [
-      event.domain,
-      event.event_date,
-      event.headline,
-      event.source_url,
-      event.event_type,
-      event.sentiment_score
-    ]);
-    
-    return result.rows[0].id;
+  // Store detected news event with proper error handling
+  async storeNewsEvent(event: NewsEvent): Promise<number | null> {
+    try {
+      // Validate required fields
+      if (!event.domain || !event.event_date || !event.headline || !event.event_type) {
+        throw new Error('Missing required fields: domain, event_date, headline, event_type');
+      }
+      
+      const result = await pool.query(`
+        INSERT INTO news_events (domain, event_date, headline, source_url, event_type, sentiment_score)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (domain, headline, event_date) DO NOTHING
+        RETURNING id
+      `, [
+        event.domain,
+        event.event_date,
+        event.headline.slice(0, 500), // Truncate to prevent DB errors
+        event.source_url,
+        event.event_type,
+        event.sentiment_score
+      ]);
+      
+      return result.rows.length > 0 ? result.rows[0].id : null; // Handle conflict case
+    } catch (error) {
+      console.error('Failed to store news event:', error);
+      throw new Error(`Database error storing news event: ${(error as Error).message}`);
+    }
   }
   
   // Store perception correlation

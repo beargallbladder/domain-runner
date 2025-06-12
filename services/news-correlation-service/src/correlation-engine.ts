@@ -42,24 +42,34 @@ export class CorrelationEngine {
     };
   }
   
-  // Get recent news events for a domain
+  // Get recent news events for a domain with proper error handling
   private async getRecentEvents(domain: string, days: number): Promise<(NewsEvent & { id: number })[]> {
-    const pool = require('./database').default;
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-    
-    const result = await pool.query(`
-      SELECT * FROM news_events 
-      WHERE domain = $1 
-      AND event_date >= $2
-      AND id NOT IN (
-        SELECT DISTINCT news_event_id FROM perception_correlations 
-        WHERE news_event_id IS NOT NULL
-      )
-      ORDER BY event_date DESC
-    `, [domain, cutoffDate.toISOString().split('T')[0]]);
-    
-    return result.rows;
+    try {
+      if (!domain || days <= 0) {
+        return [];
+      }
+      
+      const pool = require('./database').default;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      
+      const result = await pool.query(`
+        SELECT * FROM news_events 
+        WHERE domain = $1 
+        AND event_date >= $2
+        AND id NOT IN (
+          SELECT DISTINCT news_event_id FROM perception_correlations 
+          WHERE news_event_id IS NOT NULL
+        )
+        ORDER BY event_date DESC
+        LIMIT 50
+      `, [domain, cutoffDate.toISOString().split('T')[0]]);
+      
+      return result.rows || [];
+    } catch (error) {
+      console.error(`Failed to get recent events for ${domain}:`, error);
+      return [];
+    }
   }
   
   // Find perception changes that correlate with a news event

@@ -1,4 +1,4 @@
-import express from 'express';
+const express = require('express');
 const cors = require('cors');
 import { db } from './database';
 import { newsScanner } from './news-scanner';

@@ -1,9 +1,21 @@
-import fetch from 'node-fetch';
 const xml2js = require('xml2js');
-const Sentiment = require('sentiment');
 import { NewsEvent } from './database';
 
-const sentiment = new Sentiment();
+// Simple sentiment analysis
+function analyzeSentiment(text: string): number {
+  const positiveWords = ['good', 'great', 'excellent', 'successful', 'positive', 'growth', 'profit', 'award'];
+  const negativeWords = ['bad', 'crisis', 'scandal', 'fraud', 'loss', 'decline', 'lawsuit', 'investigation', 'fail'];
+  
+  const words = text.toLowerCase().split(/\s+/);
+  let score = 0;
+  
+  words.forEach(word => {
+    if (positiveWords.includes(word)) score += 1;
+    if (negativeWords.includes(word)) score -= 1;
+  });
+  
+  return Math.max(-1, Math.min(1, score / words.length * 10));
+}
 
 export interface ScanResult {
   events: NewsEvent[];
@@ -123,9 +135,7 @@ export class NewsScanner {
 
   // Calculate sentiment score
   private calculateSentiment(text: string): number {
-    const result = sentiment.analyze(text);
-    // Normalize to -1.0 to 1.0 range
-    return Math.max(-1, Math.min(1, result.score / 10));
+    return analyzeSentiment(text);
   }
 
   // Parse date from RSS pubDate

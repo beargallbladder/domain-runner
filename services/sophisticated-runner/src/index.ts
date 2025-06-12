@@ -3589,7 +3589,7 @@ app.post('/migrate/news-correlation-schema', async (req, res) => {
   try {
     console.log('🗄️ Creating news correlation database schema...');
     
-    // Create news_events table
+    // Create news_events table with proper constraints
     await pool.query(`
       CREATE TABLE IF NOT EXISTS news_events (
         id SERIAL PRIMARY KEY,
@@ -3597,9 +3597,15 @@ app.post('/migrate/news-correlation-schema', async (req, res) => {
         event_date DATE NOT NULL,
         headline TEXT NOT NULL,
         source_url TEXT,
-        event_type VARCHAR(100), -- 'leadership', 'scandal', 'acquisition', 'regulatory'
-        sentiment_score FLOAT, -- -1.0 to 1.0
-        detected_at TIMESTAMP DEFAULT NOW()
+        event_type VARCHAR(100) NOT NULL, -- 'leadership', 'scandal', 'acquisition', 'regulatory'
+        sentiment_score FLOAT CHECK (sentiment_score >= -1.0 AND sentiment_score <= 1.0), -- -1.0 to 1.0
+        detected_at TIMESTAMP DEFAULT NOW(),
+        
+        -- Prevent duplicate events
+        UNIQUE(domain, headline, event_date),
+        
+        -- Ensure valid event types
+        CHECK (event_type IN ('leadership', 'scandal', 'acquisition', 'regulatory', 'financial', 'product', 'security', 'general_crisis'))
       )
     `);
    
@@ -3607,6 +3613,7 @@ app.post('/migrate/news-correlation-schema', async (req, res) => {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_news_events_domain ON news_events(domain)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_news_events_date ON news_events(event_date)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_news_events_type ON news_events(event_type)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_news_events_domain_date ON news_events(domain, event_date)`);
     
     // Create perception_correlations table
     await pool.query(`
