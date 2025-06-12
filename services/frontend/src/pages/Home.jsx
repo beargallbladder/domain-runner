@@ -13,7 +13,7 @@ const Container = styled.div`
 // Steve Jobs style - lots of white space, minimal, emotive
 const HeroSection = styled.div`
   text-align: center;
-  padding: 120px 40px 80px;
+  padding: 80px 40px 60px;
   max-width: 1200px;
   margin: 0 auto;
 `;
@@ -22,7 +22,7 @@ const MainQuestion = styled(motion.h1)`
   font-size: 4.5rem;
   font-weight: 700;
   color: #1d1d1f;
-  margin: 0 0 40px;
+  margin: 0 0 30px;
   letter-spacing: -3px;
   line-height: 1.1;
   
@@ -35,7 +35,7 @@ const MainQuestion = styled(motion.h1)`
 const SubQuestion = styled(motion.p)`
   font-size: 1.8rem;
   color: #86868b;
-  margin: 0 0 60px;
+  margin: 0 0 50px;
   font-weight: 400;
   max-width: 800px;
   margin-left: auto;
@@ -47,60 +47,109 @@ const SubQuestion = styled(motion.p)`
   }
 `;
 
-// Financial ticker style
+// Enhanced ticker section with more prominent display
 const TickerSection = styled.div`
   background: #f5f5f7;
-  padding: 60px 0;
+  padding: 80px 0;
   border-top: 1px solid #d2d2d7;
   border-bottom: 1px solid #d2d2d7;
 `;
 
 const TickerHeader = styled.div`
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 50px;
   padding: 0 40px;
 `;
 
 const TickerTitle = styled.h2`
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 600;
   color: #1d1d1f;
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   letter-spacing: -1px;
 `;
 
 const TickerSubtitle = styled.p`
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   color: #86868b;
-  margin: 0;
+  margin: 0 0 20px;
   font-weight: 400;
 `;
 
+const LiveIndicator = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: #007aff;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  
+  &::before {
+    content: '🟢';
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+`;
+
 const TickerContainer = styled.div`
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 40px;
 `;
 
+// Enhanced grid for more domains
 const TickerGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
   margin-top: 40px;
+  
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
 `;
 
 const TickerCard = styled(motion.div)`
   background: #ffffff;
-  border-radius: 18px;
-  padding: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
   border: 1px solid #e5e5e7;
   transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
   
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    border-color: #007aff;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${props => 
+      props.score >= 90 ? '#30d158' :
+      props.score >= 70 ? '#ff9500' :
+      '#ff3b30'
+    };
+    border-radius: 16px 16px 0 0;
   }
 `;
 
@@ -108,56 +157,62 @@ const DomainHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 `;
 
 const DomainName = styled.h3`
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #1d1d1f;
   margin: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 `;
 
 const TrendIndicator = styled.div`
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: ${props => 
-    props.trend === 'up' ? '#30d158' :     // Green for up
-    props.trend === 'down' ? '#ff3b30' :   // Red for down
-    '#ff9500'                              // Orange for neutral/stable
+    props.trend === 'up' ? '#30d158' :
+    props.trend === 'down' ? '#ff3b30' :
+    '#ff9500'
   };
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const ScoreDisplay = styled.div`
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 700;
   color: ${props => 
-    props.score >= 90 ? '#30d158' :        // Green for excellent
-    props.score >= 70 ? '#ff9500' :        // Orange for good
-    '#ff3b30'                              // Red for poor
+    props.score >= 90 ? '#30d158' :
+    props.score >= 70 ? '#ff9500' :
+    '#ff3b30'
   };
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 `;
 
 const ScoreLabel = styled.div`
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #86868b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 `;
 
 const ModelConsensus = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
+  margin-bottom: 12px;
 `;
 
 const ConsensusDot = styled.div`
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: ${props => 
     props.type === 'positive' ? '#30d158' :
@@ -167,21 +222,51 @@ const ConsensusDot = styled.div`
 `;
 
 const ConsensusLabel = styled.span`
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: #86868b;
   font-weight: 500;
+  margin-left: 4px;
 `;
 
 const CategoryTag = styled.div`
   display: inline-block;
   background: #007aff;
   color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+`;
+
+// Load More button
+const LoadMoreSection = styled.div`
+  text-align: center;
+  margin-top: 40px;
+`;
+
+const LoadMoreButton = styled(motion.button)`
+  background: #007aff;
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 24px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #0056cc;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 // Steve Jobs style stats section
@@ -294,13 +379,21 @@ const getCategoryFromDomain = (domain) => {
     'synopsys.com': 'Enterprise Software',
     'apple.com': 'Consumer Tech',
     'microsoft.com': 'Cloud Platform',
-    'nvidia.com': 'AI Hardware'
+    'nvidia.com': 'AI Hardware',
+    'openai.com': 'AI Platform',
+    'anthropic.com': 'AI Research',
+    'netflix.com': 'Streaming',
+    'amazon.com': 'E-commerce',
+    'tesla.com': 'Electric Vehicles',
+    'stripe.com': 'Fintech',
+    'zoom.us': 'Communication'
   };
   return categoryMap[domain] || 'Technology';
 };
 
 const Home = () => {
   const [tickerData, setTickerData] = useState([]);
+  const [displayCount, setDisplayCount] = useState(20); // Show more by default
   const [stats, setStats] = useState({
     totalDomains: 477,
     aiModels: 21,
@@ -308,11 +401,12 @@ const Home = () => {
     categories: 12
   });
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     const fetchTickerData = async () => {
       try {
-        const response = await axios.get('https://llm-pagerank-public-api.onrender.com/api/ticker?limit=12');
+        const response = await axios.get(`https://llm-pagerank-public-api.onrender.com/api/ticker?limit=${displayCount}`);
         const data = response.data;
         
         setTickerData(data.topDomains);
@@ -323,19 +417,32 @@ const Home = () => {
         
       } catch (error) {
         console.error('Failed to fetch ticker data:', error);
-        // Fallback data for demo
+        // Enhanced fallback data for demo
         setTickerData([
           { domain: 'openai.com', score: 98, change: '+2.5%', modelsPositive: 18, modelsNeutral: 2, modelsNegative: 1 },
           { domain: 'apple.com', score: 95, change: '+1.2%', modelsPositive: 16, modelsNeutral: 3, modelsNegative: 2 },
           { domain: 'microsoft.com', score: 94, change: '+0.8%', modelsPositive: 15, modelsNeutral: 4, modelsNegative: 2 },
+          { domain: 'google.com', score: 93, change: '+0.5%', modelsPositive: 14, modelsNeutral: 5, modelsNegative: 2 },
+          { domain: 'netflix.com', score: 91, change: '+1.8%', modelsPositive: 13, modelsNeutral: 6, modelsNegative: 2 },
+          { domain: 'amazon.com', score: 90, change: '+0.3%', modelsPositive: 12, modelsNeutral: 7, modelsNegative: 2 },
+          { domain: 'tesla.com', score: 89, change: '-0.2%', modelsPositive: 11, modelsNeutral: 8, modelsNegative: 2 },
+          { domain: 'facebook.com', score: 88, change: '+1.1%', modelsPositive: 10, modelsNeutral: 9, modelsNegative: 2 },
+          { domain: 'stripe.com', score: 87, change: '+2.1%', modelsPositive: 9, modelsNeutral: 10, modelsNegative: 2 },
+          { domain: 'zoom.us', score: 85, change: '+0.7%', modelsPositive: 8, modelsNeutral: 11, modelsNegative: 2 },
         ]);
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
     };
 
     fetchTickerData();
-  }, []);
+  }, [displayCount]);
+
+  const loadMore = () => {
+    setLoadingMore(true);
+    setDisplayCount(prev => prev + 20);
+  };
 
   return (
     <Container>
@@ -364,18 +471,22 @@ const Home = () => {
           <TickerSubtitle>
             Real-time scores across {stats.totalDomains} domains • {stats.aiModels} AI models • {stats.aiResponses.toLocaleString()}+ responses
           </TickerSubtitle>
+          <LiveIndicator>
+            LIVE: Memory scores updating every 30 minutes
+          </LiveIndicator>
         </TickerHeader>
 
         <TickerContainer>
           <TickerGrid>
-            {tickerData.slice(0, 12).map((domain, index) => (
+            {tickerData.slice(0, displayCount).map((domain, index) => (
               <TickerCard
                 key={domain.domain}
                 as={Link}
                 to={`/domain/${domain.domain}`}
+                score={domain.score}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                transition={{ duration: 0.6, delay: index * 0.05 }}
               >
                 <DomainHeader>
                   <DomainName>{domain.domain}</DomainName>
@@ -393,13 +504,13 @@ const Home = () => {
                 <ScoreLabel>AI Memory Score</ScoreLabel>
 
                 <ModelConsensus>
-                  {Array.from({ length: domain.modelsPositive }, (_, i) => (
+                  {Array.from({ length: Math.min(domain.modelsPositive, 10) }, (_, i) => (
                     <ConsensusDot key={`pos-${i}`} type="positive" />
                   ))}
-                  {Array.from({ length: domain.modelsNeutral }, (_, i) => (
+                  {Array.from({ length: Math.min(domain.modelsNeutral, 5) }, (_, i) => (
                     <ConsensusDot key={`neu-${i}`} type="neutral" />
                   ))}
-                  {Array.from({ length: domain.modelsNegative }, (_, i) => (
+                  {Array.from({ length: Math.min(domain.modelsNegative, 3) }, (_, i) => (
                     <ConsensusDot key={`neg-${i}`} type="negative" />
                   ))}
                   <ConsensusLabel>
@@ -413,6 +524,19 @@ const Home = () => {
               </TickerCard>
             ))}
           </TickerGrid>
+          
+          {tickerData.length >= displayCount && (
+            <LoadMoreSection>
+              <LoadMoreButton
+                onClick={loadMore}
+                disabled={loadingMore}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {loadingMore ? 'Loading More...' : `Load More Domains (${stats.totalDomains - displayCount} remaining)`}
+              </LoadMoreButton>
+            </LoadMoreSection>
+          )}
         </TickerContainer>
       </TickerSection>
 

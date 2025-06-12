@@ -473,10 +473,19 @@ function Categories() {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/categories`)
         const data = await response.json()
-        setCategories(data.categories || [])
+        
+        // Parse topDomains if it comes as a string
+        const parsedCategories = (data.categories || []).map(category => ({
+          ...category,
+          topDomains: typeof category.topDomains === 'string' 
+            ? JSON.parse(category.topDomains) 
+            : category.topDomains || []
+        }))
+        
+        setCategories(parsedCategories)
       } catch (error) {
         console.error('Failed to fetch categories:', error)
-        // Fallback to some demo data
+        // Enhanced fallback data that matches the API structure
         setCategories([
           {
             name: 'Technology',
@@ -485,7 +494,9 @@ function Categories() {
             topDomains: [
               { domain: 'google.com', score: 95, modelsPositive: 15, modelsNeutral: 2, modelsNegative: 1 },
               { domain: 'microsoft.com', score: 94, modelsPositive: 14, modelsNeutral: 3, modelsNegative: 1 },
-              { domain: 'apple.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 }
+              { domain: 'apple.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
+              { domain: 'openai.com', score: 92, modelsPositive: 12, modelsNeutral: 4, modelsNegative: 2 },
+              { domain: 'nvidia.com', score: 91, modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 }
             ]
           },
           {
@@ -495,7 +506,9 @@ function Categories() {
             topDomains: [
               { domain: 'facebook.com', score: 82, modelsPositive: 10, modelsNeutral: 4, modelsNegative: 4 },
               { domain: 'twitter.com', score: 79, modelsPositive: 9, modelsNeutral: 5, modelsNegative: 4 },
-              { domain: 'instagram.com', score: 77, modelsPositive: 8, modelsNeutral: 6, modelsNegative: 4 }
+              { domain: 'instagram.com', score: 77, modelsPositive: 8, modelsNeutral: 6, modelsNegative: 4 },
+              { domain: 'linkedin.com', score: 75, modelsPositive: 7, modelsNeutral: 7, modelsNegative: 4 },
+              { domain: 'youtube.com', score: 73, modelsPositive: 6, modelsNeutral: 8, modelsNegative: 4 }
             ]
           },
           {
@@ -505,7 +518,45 @@ function Categories() {
             topDomains: [
               { domain: 'amazon.com', score: 96, modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
               { domain: 'ebay.com', score: 84, modelsPositive: 11, modelsNeutral: 4, modelsNegative: 3 },
-              { domain: 'shopify.com', score: 81, modelsPositive: 10, modelsNeutral: 5, modelsNegative: 3 }
+              { domain: 'shopify.com', score: 81, modelsPositive: 10, modelsNeutral: 5, modelsNegative: 3 },
+              { domain: 'alibaba.com', score: 79, modelsPositive: 9, modelsNeutral: 6, modelsNegative: 3 },
+              { domain: 'stripe.com', score: 77, modelsPositive: 8, modelsNeutral: 7, modelsNegative: 3 }
+            ]
+          },
+          {
+            name: 'Cloud Infrastructure',
+            totalDomains: 15,
+            averageScore: 89.3,
+            topDomains: [
+              { domain: 'aws.amazon.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
+              { domain: 'azure.microsoft.com', score: 91, modelsPositive: 12, modelsNeutral: 4, modelsNegative: 2 },
+              { domain: 'cloud.google.com', score: 89, modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 },
+              { domain: 'cloudflare.com', score: 87, modelsPositive: 10, modelsNeutral: 6, modelsNegative: 2 },
+              { domain: 'digitalocean.com', score: 85, modelsPositive: 9, modelsNeutral: 7, modelsNegative: 2 }
+            ]
+          },
+          {
+            name: 'Consumer Technology',
+            totalDomains: 20,
+            averageScore: 84.7,
+            topDomains: [
+              { domain: 'apple.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
+              { domain: 'samsung.com', score: 87, modelsPositive: 10, modelsNeutral: 6, modelsNegative: 2 },
+              { domain: 'sony.com', score: 85, modelsPositive: 9, modelsNeutral: 7, modelsNegative: 2 },
+              { domain: 'lg.com', score: 83, modelsPositive: 8, modelsNeutral: 8, modelsNegative: 2 },
+              { domain: 'tesla.com', score: 81, modelsPositive: 7, modelsNeutral: 9, modelsNegative: 2 }
+            ]
+          },
+          {
+            name: 'AI/ML Technology',
+            totalDomains: 8,
+            averageScore: 91.2,
+            topDomains: [
+              { domain: 'openai.com', score: 98, modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
+              { domain: 'anthropic.com', score: 92, modelsPositive: 12, modelsNeutral: 4, modelsNegative: 2 },
+              { domain: 'huggingface.co', score: 90, modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 },
+              { domain: 'stability.ai', score: 88, modelsPositive: 10, modelsNeutral: 6, modelsNegative: 2 },
+              { domain: 'midjourney.com', score: 86, modelsPositive: 9, modelsNeutral: 7, modelsNegative: 2 }
             ]
           }
         ])
