@@ -441,9 +441,18 @@ function Domain() {
   useEffect(() => {
     const fetchRealDomainData = async () => {
       try {
+        console.log(`🔍 Fetching data for domain: ${domainName}`);
+        
         // Call our REAL domain intelligence API with actual crawled data
         const response = await axios.get(`https://llm-pagerank-public-api.onrender.com/api/domains/${domainName}/public`);
         const realData = response.data;
+        
+        console.log('✅ API Response received:', realData);
+        
+        // Validate that we have the required data structure
+        if (!realData || !realData.ai_intelligence) {
+          throw new Error('Invalid API response structure - missing ai_intelligence');
+        }
         
         // Process REAL data from our crawling system
         const memoryScore = Math.round(realData.ai_intelligence.memory_score);
@@ -451,6 +460,8 @@ function Domain() {
         const consensusPercent = Math.round(realData.ai_intelligence.ai_consensus * 100);  // Convert decimal to percentage
         const trendData = generateTrendData(memoryScore);
         const isRising = realData.ai_intelligence.trend_direction === 'improving';
+        
+        console.log(`📊 Processed data - Memory Score: ${memoryScore}, Consensus: ${consensusPercent}%`);
         
         const processedData = {
           domain: realData.domain,
@@ -466,9 +477,10 @@ function Domain() {
           changeFromLastWeek: Math.round((Math.random() - 0.5) * 10), // Will be real when time-series is connected
           
           // Real alert data
-          reputationAlerts: realData.reputation_alerts.active_alerts || []
+          reputationAlerts: realData.reputation_alerts?.active_alerts || []
         };
         
+        console.log('✅ Setting domain data:', processedData);
         setDomainData(processedData);
         
         // Fetch competitor data for crisis rankings
@@ -504,12 +516,25 @@ function Domain() {
         setLoading(false);
         
       } catch (error) {
-        console.error(`No data found for ${domainName} - domain may not be in our crawled dataset`);
-        // Don't show error to user - just indicate domain not in dataset
-        setDomainData({
-          domain: domainName,
-          notInDataset: true
-        });
+        console.error(`❌ Error fetching data for ${domainName}:`, error);
+        console.error('Error details:', error.response?.data || error.message);
+        
+        // Check if it's a 404 (domain not found) vs other errors
+        if (error.response?.status === 404) {
+          console.log(`Domain ${domainName} not found in dataset`);
+          setDomainData({
+            domain: domainName,
+            notInDataset: true
+          });
+        } else {
+          // For other errors, still try to show the error state but log more details
+          console.error('Unexpected error - showing not in dataset message');
+          setDomainData({
+            domain: domainName,
+            notInDataset: true,
+            error: error.message
+          });
+        }
         setLoading(false);
       }
     };
