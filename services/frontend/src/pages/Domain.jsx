@@ -448,7 +448,7 @@ function Domain() {
         // Process REAL data from our crawling system
         const memoryScore = Math.round(realData.ai_intelligence.memory_score);
         const aiModels = generateAIModels(memoryScore);
-        const consensusPercent = Math.round(realData.ai_intelligence.ai_consensus);  // Already a percentage
+        const consensusPercent = Math.round(realData.ai_intelligence.ai_consensus * 100);  // Convert decimal to percentage
         const trendData = generateTrendData(memoryScore);
         const isRising = realData.ai_intelligence.trend_direction === 'improving';
         
@@ -542,7 +542,7 @@ function Domain() {
         <HeroSection>
           <DomainName>{domainName}</DomainName>
           <ExistentialQuestion>
-            This domain is not yet in our crawled dataset of {window.location.origin === 'https://domain-runner.vercel.app' ? '477' : '549'} monitored domains.
+            This domain is not yet in our crawled dataset of 1,705 monitored domains.
           </ExistentialQuestion>
           <div style={{ 
             background: Colors.lightGray, 
