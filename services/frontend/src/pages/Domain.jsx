@@ -433,7 +433,7 @@ const getAlertLevel = (score, consensus) => {
 };
 
 function Domain() {
-  const { domainName } = useParams()
+  const { domain: domainName } = useParams()
   const [domainData, setDomainData] = useState(null)
   const [competitorData, setCompetitorData] = useState([])
   const [loading, setLoading] = useState(true)
