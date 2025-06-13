@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "ts-node src/index.ts",
+    "start": "npm run build && node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "jest",
     "deploy": "npm run build && echo 'Ready for Render deployment'"
