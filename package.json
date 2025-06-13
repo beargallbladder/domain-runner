@@ -5,5 +5,8 @@
     "recovery": "ts-node src/recovery.ts",
     "start:with-recovery": "npm run recovery & npm start",
     "dev:with-recovery": "npm run recovery & npm run dev"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
   }
-} 
+}

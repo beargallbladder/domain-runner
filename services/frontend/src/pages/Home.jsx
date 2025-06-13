@@ -11,70 +11,96 @@ const Container = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
 `;
 
-// Steve Jobs style - lots of white space, minimal, emotive
+// Mobile-first Hero Section
 const HeroSection = styled.div`
   text-align: center;
-  padding: 80px 40px 60px;
+  padding: 40px 20px 30px;
   max-width: 1200px;
   margin: 0 auto;
+  
+  @media (min-width: 768px) {
+    padding: 80px 40px 60px;
+  }
 `;
 
 const MainQuestion = styled(motion.h1)`
-  font-size: 4.5rem;
+  font-size: 2.5rem;
   font-weight: 700;
   color: #1d1d1f;
-  margin: 0 0 30px;
-  letter-spacing: -3px;
+  margin: 0 0 20px;
+  letter-spacing: -1px;
   line-height: 1.1;
   
-  @media (max-width: 768px) {
-    font-size: 3rem;
-    letter-spacing: -2px;
+  @media (min-width: 768px) {
+    font-size: 4.5rem;
+    margin: 0 0 30px;
+    letter-spacing: -3px;
   }
 `;
 
 const SubQuestion = styled(motion.p)`
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   color: #86868b;
-  margin: 0 0 50px;
+  margin: 0 0 30px;
   font-weight: 400;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
   line-height: 1.4;
   
-  @media (max-width: 768px) {
-    font-size: 1.4rem;
+  @media (min-width: 768px) {
+    font-size: 1.8rem;
+    margin: 0 0 50px;
   }
 `;
 
-// Enhanced ticker section with more prominent display
+// Mobile-first ticker section
 const TickerSection = styled.div`
   background: #f5f5f7;
-  padding: 80px 0;
+  padding: 40px 0;
   border-top: 1px solid #d2d2d7;
   border-bottom: 1px solid #d2d2d7;
+  
+  @media (min-width: 768px) {
+    padding: 80px 0;
+  }
 `;
 
 const TickerHeader = styled.div`
   text-align: center;
-  margin-bottom: 50px;
-  padding: 0 40px;
+  margin-bottom: 30px;
+  padding: 0 20px;
+  
+  @media (min-width: 768px) {
+    margin-bottom: 50px;
+    padding: 0 40px;
+  }
 `;
 
 const TickerTitle = styled.h2`
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 600;
   color: #1d1d1f;
-  margin: 0 0 20px;
-  letter-spacing: -1px;
+  margin: 0 0 16px;
+  letter-spacing: -0.5px;
+  
+  @media (min-width: 768px) {
+    font-size: 3rem;
+    margin: 0 0 20px;
+    letter-spacing: -1px;
+  }
 `;
 
 const TickerSubtitle = styled.p`
-  font-size: 1.4rem;
+  font-size: 1rem;
   color: #86868b;
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   font-weight: 400;
+  
+  @media (min-width: 768px) {
+    font-size: 1.4rem;
+    margin: 0 0 20px;
+  }
 `;
 
 const LiveIndicator = styled.div`
@@ -102,35 +128,49 @@ const LiveIndicator = styled.div`
 const TickerContainer = styled.div`
   max-width: 1600px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 20px;
+  
+  @media (min-width: 768px) {
+    padding: 0 40px;
+  }
 `;
 
-// Enhanced grid for more domains
+// Mobile-first grid
 const TickerGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 40px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 30px;
+  
+  @media (min-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 40px;
+  }
   
   @media (min-width: 1200px) {
     grid-template-columns: repeat(5, 1fr);
-  }
-  
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
   }
 `;
 
 const TickerCard = styled(motion.div)`
   background: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 12px;
+  padding: 16px;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
   border: 1px solid #e5e5e7;
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
+  
+  @media (min-width: 768px) {
+    border-radius: 16px;
+    padding: 24px;
+  }
   
   &:hover {
     transform: translateY(-4px);
@@ -150,7 +190,11 @@ const TickerCard = styled(motion.div)`
       props.score >= 70 ? '#ff9500' :
       '#ff3b30'
     };
-    border-radius: 16px 16px 0 0;
+    border-radius: 12px 12px 0 0;
+    
+    @media (min-width: 768px) {
+      border-radius: 16px 16px 0 0;
+    }
   }
 `;
 
@@ -464,6 +508,79 @@ const Home = () => {
           Large language models are becoming the new interface to human knowledge. 
           Track how AI systems remember, rank, and recall your brand.
         </SubQuestion>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, delay: 0.6 }}
+          style={{ 
+            marginTop: '30px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            alignItems: 'center'
+          }}
+        >
+          <Link
+            to="/death-match"
+            style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, #FF3B30 0%, #007AFF 100%)',
+              color: '#ffffff',
+              padding: '16px 32px',
+              borderRadius: '25px',
+              textDecoration: 'none',
+              fontSize: '1.1rem',
+              fontWeight: '700',
+              boxShadow: '0 8px 25px rgba(255, 59, 48, 0.3)',
+              transition: 'all 0.3s ease',
+              width: '100%',
+              maxWidth: '280px',
+              textAlign: 'center'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-3px)';
+              e.target.style.boxShadow = '0 15px 40px rgba(255, 59, 48, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 8px 25px rgba(255, 59, 48, 0.3)';
+            }}
+          >
+            📊 Competitive Analysis
+          </Link>
+          
+          <Link
+            to="/rankings"
+            style={{
+              display: 'inline-block',
+              background: 'transparent',
+              color: '#007AFF',
+              border: '2px solid #007AFF',
+              padding: '14px 30px',
+              borderRadius: '25px',
+              textDecoration: 'none',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              transition: 'all 0.3s ease',
+              width: '100%',
+              maxWidth: '280px',
+              textAlign: 'center'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#007AFF';
+              e.target.style.color = '#ffffff';
+              e.target.style.transform = 'translateY(-3px)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+              e.target.style.color = '#007AFF';
+              e.target.style.transform = 'translateY(0)';
+            }}
+          >
+            📊 View Rankings
+          </Link>
+        </motion.div>
       </HeroSection>
 
       <TickerSection>
@@ -568,27 +685,35 @@ const Home = () => {
         <ExploreTitle>Explore AI Memory Intelligence</ExploreTitle>
         
         <ExploreGrid>
-          <ExploreCard to="/categories">
-            <ExploreIcon>🏢</ExploreIcon>
-            <ExploreCardTitle>Industry Categories</ExploreCardTitle>
-            <ExploreDescription>
-              See how different industries perform in AI memory rankings and consensus.
-            </ExploreDescription>
-          </ExploreCard>
-
           <ExploreCard to="/rankings">
-            <ExploreIcon>📊</ExploreIcon>
-            <ExploreCardTitle>Full Rankings</ExploreCardTitle>
+            <ExploreIcon>🏆</ExploreIcon>
+            <ExploreCardTitle>Complete Rankings</ExploreCardTitle>
             <ExploreDescription>
-              Complete leaderboard with search, filtering, and detailed analytics.
+              Browse all domains ranked by AI memory strength. Winners vs Losers in the AI memory game.
             </ExploreDescription>
           </ExploreCard>
 
-          <ExploreCard to="/premium">
-            <ExploreIcon>⚡</ExploreIcon>
-            <ExploreCardTitle>Enterprise Analytics</ExploreCardTitle>
+          <ExploreCard to="/cohorts">
+            <ExploreIcon>⚔️</ExploreIcon>
+            <ExploreCardTitle>Competitive Cohorts</ExploreCardTitle>
             <ExploreDescription>
-              Advanced monitoring, alerts, and competitive intelligence for enterprises.
+              Advanced competitive intelligence showing how brands stack against direct rivals.
+            </ExploreDescription>
+          </ExploreCard>
+
+          <ExploreCard to="/death-match">
+            <ExploreIcon>💀</ExploreIcon>
+            <ExploreCardTitle>Death Match Analysis</ExploreCardTitle>
+            <ExploreDescription>
+              Head-to-head competitive analysis. See which brands are thriving vs dying in AI memory.
+            </ExploreDescription>
+          </ExploreCard>
+
+          <ExploreCard to="/about">
+            <ExploreIcon>🧠</ExploreIcon>
+            <ExploreCardTitle>How It Works</ExploreCardTitle>
+            <ExploreDescription>
+              Learn about our AI memory analysis methodology and what the scores mean.
             </ExploreDescription>
           </ExploreCard>
         </ExploreGrid>

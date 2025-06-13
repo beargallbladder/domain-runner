@@ -4,10 +4,7 @@ import styled, { createGlobalStyle, keyframes } from 'styled-components'
 import Landing from './pages/Landing'
 import Home from './pages/Home'
 import About from './pages/About'
-import DomainDirectory from './pages/DomainDirectory'
 import Domain from './pages/Domain'
-import Leaderboard from './pages/Leaderboard'
-import Categories from './pages/Categories'
 import ComingSoon from './pages/ComingSoon'
 import Navigation from './components/Navigation'
 import PlausibleScript from './components/PlausibleScript'
@@ -19,12 +16,13 @@ import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
-import Domains from './pages/Domains'
 import Analysis from './pages/Analysis'
 import Reports from './pages/Reports'
 import Alerts from './pages/Alerts'
 import Integrations from './pages/Integrations'
 import Help from './pages/Help'
+import CompetitorDeathMatch from './pages/CompetitorDeathMatch'
+import CompetitiveCohorts from './pages/CompetitiveCohorts'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -136,7 +134,9 @@ function App() {
       <Main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/domains" element={<DomainDirectory />} />
+          <Route path="/death-match" element={<CompetitorDeathMatch />} />
+          <Route path="/cohorts" element={<CompetitiveCohorts />} />
+          <Route path="/rankings" element={<Rankings />} />
           <Route path="/domain/:domainName" element={<Domain />} />
           
           {/* SEO-optimized domain analysis pages */}
@@ -144,15 +144,12 @@ function App() {
           <Route path="/crisis-score/:domainName" element={<DomainSEO />} />
           <Route path="/competitive/:domainName" element={<DomainSEO />} />
           
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/categories/:category" element={<Categories />} />
-          <Route path="/shadows" element={<ComingSoon />} />
-          <Route path="/rankings" element={<Rankings />} />
-          <Route path="/crisis" element={<div style={{padding: '40px', textAlign: 'center', background: '#000', color: '#fff', minHeight: '100vh'}}><h1 style={{color: '#ff3b30'}}>🚨 Crisis Simulator Coming Soon</h1></div>} />
           <Route path="/about" element={<About />} />
           <Route path="/premium" element={<ComingSoon />} />
           <Route path="/coming-soon" element={<ComingSoon />} />
+          
+          {/* Catch-all for any other routes */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Main>
     </AppContainer>

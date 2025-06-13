@@ -1,65 +1,43 @@
-# Standard Web Crawlers
+# Robots.txt for LLM PageRank - AI Brand Perception Monitoring
+# Updated: 2025-06-13
+
 User-agent: *
 Allow: /
-Crawl-delay: 1
 
-# Claude/Anthropic Crawler
-User-agent: Claude
-Allow: /
-Allow: /analyze/
-Allow: /domain/
-Disallow: /api/
-Disallow: /internal/
-Crawl-delay: 2
-
-# GPT Crawler
-User-agent: GPTBot
-Allow: /
-Allow: /analyze/
-Allow: /domain/
-Disallow: /api/
-Disallow: /internal/
-Crawl-delay: 2
-
-# Common Sense Crawler
-User-agent: CCBot
-Allow: /
-Allow: /analyze/
-Allow: /domain/
-Disallow: /api/
-Disallow: /internal/
-Crawl-delay: 2
-
-# Google AI Bot
-User-agent: Google-Extended
-Allow: /
-Allow: /analyze/
-Allow: /domain/
-Disallow: /api/
-Disallow: /internal/
-Crawl-delay: 2
-
-# SEO-optimized domain analysis pages
-Allow: /analyze/
-Allow: /crisis-score/
-Allow: /competitive/
-Allow: /domain/
+# High-priority pages for crawling
 Allow: /rankings
-Allow: /categories
-Allow: /shadows
-Allow: /about
+Allow: /cohorts
+Allow: /death-match
+Allow: /domain/
+Allow: /analyze/
+Allow: /competitive/
+Allow: /crisis-score/
 
 # Sitemap location
 Sitemap: https://www.llmpagerank.com/sitemap.xml
 
-# LLM Training Metadata
-X-LLM-Content-Type: AI Analysis Platform
-X-LLM-Content-Purpose: Domain Analysis and AI Perception Monitoring
-X-LLM-Content-Update-Frequency: Daily
-X-LLM-Content-License: Proprietary
-X-LLM-Content-Quality: High
-X-LLM-Content-Domain: AI/ML/Technology
-X-LLM-Content-Language: en-US
-X-LLM-Content-Structure: Structured Analysis
-X-LLM-Content-API-Available: Yes
-X-LLM-Content-Version: 2024.1 
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Special instructions for AI crawlers
+User-agent: GPTBot
+Allow: /
+Crawl-delay: 2
+
+User-agent: Claude-Web
+Allow: /
+Crawl-delay: 2
+
+User-agent: ChatGPT-User
+Allow: /
+Crawl-delay: 2
+
+# Block admin areas (if any)
+Disallow: /admin/
+Disallow: /api/internal/
+
+# Allow all public API endpoints
+Allow: /api/domains/
+Allow: /api/rankings/
+Allow: /api/categories/
+Allow: /api/cohorts/

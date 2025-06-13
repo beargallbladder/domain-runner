@@ -7,12 +7,12 @@ import ConsensusVisualization from '../components/ConsensusVisualization'
 const Container = styled.div`
   max-width: 1400px;
   margin: 0 auto;
-  padding: 80px 40px;
+  padding: 40px 20px;
   background: #ffffff;
   min-height: 100vh;
   
-  @media (max-width: 768px) {
-    padding: 60px 20px;
+  @media (min-width: 768px) {
+    padding: 80px 40px;
   }
 `
 
@@ -22,44 +22,60 @@ const Header = styled.div`
 `
 
 const Title = styled(motion.h1)`
-  font-size: 48px;
+  font-size: 2.5rem;
   font-weight: 700;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   letter-spacing: -0.02em;
   color: #000000;
+  
+  @media (min-width: 768px) {
+    font-size: 48px;
+    margin-bottom: 24px;
+  }
 `
 
 const Subtitle = styled(motion.p)`
-  font-size: 20px;
+  font-size: 1.1rem;
   color: #666666;
   font-weight: 400;
   max-width: 700px;
   margin: 0 auto;
   line-height: 1.6;
+  
+  @media (min-width: 768px) {
+    font-size: 20px;
+  }
 `
 
 const Controls = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 40px;
-  gap: 20px;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 30px;
   
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    gap: 20px;
   }
 `
 
 const SearchBox = styled.input`
-  flex: 1;
-  max-width: 400px;
-  padding: 16px 20px;
+  width: 100%;
+  padding: 14px 16px;
   border: 2px solid #e5e5e5;
   border-radius: 12px;
   font-size: 16px;
   font-weight: 500;
   transition: all 0.3s ease;
+  
+  @media (min-width: 768px) {
+    flex: 1;
+    max-width: 400px;
+    padding: 16px 20px;
+  }
   
   &:focus {
     outline: none;
@@ -74,15 +90,17 @@ const SearchBox = styled.input`
 
 const SortControls = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
   
-  @media (max-width: 768px) {
-    justify-content: center;
+  @media (min-width: 768px) {
+    gap: 12px;
+    flex-wrap: nowrap;
   }
 `
 
 const SortButton = styled.button`
-  padding: 12px 20px;
+  padding: 10px 16px;
   border: 2px solid ${props => props.active ? '#007AFF' : '#e5e5e5'};
   background: ${props => props.active ? '#007AFF' : '#ffffff'};
   color: ${props => props.active ? '#ffffff' : '#666666'};
@@ -90,7 +108,14 @@ const SortButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 14px;
+  font-size: 13px;
+  flex: 1;
+  
+  @media (min-width: 768px) {
+    padding: 12px 20px;
+    font-size: 14px;
+    flex: none;
+  }
   
   &:hover {
     border-color: #007AFF;
@@ -381,14 +406,14 @@ function Rankings() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Complete Memory Rankings
+          AI Memory Rankings
         </Title>
         <Subtitle
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Every domain, ranked by AI memory strength. See which sites are remembered most vividly across all models.
+          Complete rankings of {totalDomains.toLocaleString()} domains by AI memory strength. Winners vs Losers in the AI memory game.
         </Subtitle>
       </Header>
 
