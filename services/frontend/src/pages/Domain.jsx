@@ -447,11 +447,15 @@ function Domain() {
         const response = await axios.get(`https://llm-pagerank-public-api.onrender.com/api/rankings?search=${domainName}&limit=1`);
         const rankingsData = response.data;
         
+        console.log('🔍 Rankings API Response:', rankingsData);
+        
         if (!rankingsData.domains || rankingsData.domains.length === 0) {
+          console.error(`❌ Domain ${domainName} not found in rankings`);
           throw new Error(`Domain ${domainName} not found in rankings`);
         }
         
         const realData = rankingsData.domains[0];
+        console.log('✅ Found domain data:', realData);
         
         console.log('✅ API Response received:', realData);
         
