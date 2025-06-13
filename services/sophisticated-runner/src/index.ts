@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import axios from 'axios';
 import CachePopulationScheduler from './cache-population-scheduler';
+import CohortIntelligenceSystem from './cohort-intelligence-system';
 
 dotenv.config();
 
@@ -124,6 +125,11 @@ class JoltService {
 }
 
 const joltService = new JoltService();
+
+// ============================================================================
+// 🎯 COHORT INTELLIGENCE SYSTEM - CRITICAL COMPETITIVE ANALYSIS
+// ============================================================================
+const cohortIntelligenceSystem = new CohortIntelligenceSystem();
 
 // ============================================================================
 // 🎯 COMPREHENSIVE MODEL SELECTION - ALL TIERS (COMPLETE COST SPECTRUM)
@@ -2101,6 +2107,16 @@ async function main() {
     const cacheScheduler = new CachePopulationScheduler();
     cacheScheduler.startScheduler();
 
+    // Initialize cohort intelligence system
+    try {
+      console.log('🎯 Initializing Cohort Intelligence System...');
+      await cohortIntelligenceSystem.ensureCohortTables();
+      console.log('✅ Cohort Intelligence System initialized - competitive analysis ready');
+    } catch (error) {
+      console.error('⚠️  Cohort Intelligence initialization failed:', error);
+      // Don't exit - cohorts are important but not critical for basic operation
+    }
+
     const runner = new SophisticatedRunner();
     await runner.seedDomains();
 
@@ -3706,6 +3722,122 @@ app.get('/api/benchmarks/categories', async (req, res) => {
     
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ============================================================================
+// 🎯 COHORT INTELLIGENCE API - CRITICAL COMPETITIVE ANALYSIS
+// ============================================================================
+
+// Get comprehensive competitive cohorts - THE MONEY-MAKING ENDPOINT
+app.get('/api/cohorts/competitive', async (req, res) => {
+  try {
+    console.log('🎯 COHORT API: Generating comprehensive competitive analysis...');
+    
+    const cohortAPI = await cohortIntelligenceSystem.generateCohortAPI();
+    
+    res.json({
+      success: true,
+      message: 'Comprehensive competitive cohorts generated',
+      ...cohortAPI
+    });
+    
+  } catch (error) {
+    console.error('❌ Cohort API error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Cohort generation failed', 
+      details: (error as Error).message 
+    });
+  }
+});
+
+// Get cohort system health and coverage
+app.get('/api/cohorts/health', async (req, res) => {
+  try {
+    const health = await cohortIntelligenceSystem.getSystemHealth();
+    
+    res.json({
+      success: true,
+      cohort_intelligence_health: health,
+      message: health.status === 'healthy' ? 
+        'All critical cohorts available' : 
+        'Some critical cohorts under-populated'
+    });
+    
+  } catch (error) {
+    console.error('❌ Cohort health check failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Health check failed', 
+      details: (error as Error).message 
+    });
+  }
+});
+
+// Force cohort refresh and discovery
+app.post('/api/cohorts/refresh', async (req, res) => {
+  try {
+    console.log('🔄 COHORT REFRESH: Forcing cohort regeneration...');
+    
+    // Ensure cohort tables exist
+    await cohortIntelligenceSystem.ensureCohortTables();
+    
+    // Generate fresh cohorts
+    const cohorts = await cohortIntelligenceSystem.generateComprehensiveCohorts();
+    
+    res.json({
+      success: true,
+      message: 'Cohorts refreshed successfully',
+      cohorts_generated: Object.keys(cohorts).length,
+      total_companies: Object.values(cohorts).reduce((sum, cohort) => sum + cohort.total_companies, 0),
+      refresh_timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ Cohort refresh failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Cohort refresh failed', 
+      details: (error as Error).message 
+    });
+  }
+});
+
+// Get specific cohort analysis
+app.get('/api/cohorts/:cohortName', async (req, res) => {
+  try {
+    const { cohortName } = req.params;
+    const cohorts = await cohortIntelligenceSystem.generateComprehensiveCohorts();
+    
+    const cohort = cohorts[cohortName];
+    if (!cohort) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cohort not found',
+        available_cohorts: Object.keys(cohorts)
+      });
+    }
+    
+    res.json({
+      success: true,
+      cohort_name: cohortName,
+      analysis: cohort,
+      competitive_intelligence: {
+        leader_advantage: `${cohort.leader.domain} leads by ${cohort.leader.gap_to_leader} points`,
+        market_dynamics: cohort.competitive_narrative,
+        total_companies: cohort.total_companies,
+        score_spread: cohort.score_range
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Specific cohort analysis failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Cohort analysis failed', 
+      details: (error as Error).message 
+    });
   }
 });
 

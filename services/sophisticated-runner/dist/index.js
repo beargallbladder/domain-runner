@@ -32,6 +32,8 @@ const dotenv = __importStar(require("dotenv"));
 const openai_1 = __importDefault(require("openai"));
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const axios_1 = __importDefault(require("axios"));
+const cache_population_scheduler_1 = __importDefault(require("./cache-population-scheduler"));
+const cohort_intelligence_system_1 = __importDefault(require("./cohort-intelligence-system"));
 dotenv.config();
 // ============================================================================
 // SOPHISTICATED RUNNER - COMPREHENSIVE MODE (JOLT + ALL MODELS)
@@ -127,6 +129,10 @@ class JoltService {
     }
 }
 const joltService = new JoltService();
+// ============================================================================
+// 🎯 COHORT INTELLIGENCE SYSTEM - CRITICAL COMPETITIVE ANALYSIS
+// ============================================================================
+const cohortIntelligenceSystem = new cohort_intelligence_system_1.default();
 // ============================================================================
 // 🎯 COMPREHENSIVE MODEL SELECTION - ALL TIERS (COMPLETE COST SPECTRUM)
 // ============================================================================
@@ -262,13 +268,37 @@ function selectOptimalModel() {
 // PREMIUM DOMAINS - DYNAMIC JOLT INTEGRATION
 // ============================================================================
 // JOLT domains are now loaded dynamically from industry-intelligence service
-// Database connection
+// Database connection with robust SSL and connection handling
 const pool = new pg_1.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
+    ssl: process.env.NODE_ENV === 'production' ? {
         rejectUnauthorized: false
-    }
+    } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000
 });
+// Database connection recovery system
+async function ensureDatabaseConnection() {
+    let retries = 3;
+    while (retries > 0) {
+        try {
+            const client = await pool.connect();
+            await client.query('SELECT 1');
+            client.release();
+            console.log('✅ Database connection verified');
+            return true;
+        }
+        catch (error) {
+            console.error(`❌ Database connection failed (${retries} retries left):`, error);
+            retries--;
+            if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+            }
+        }
+    }
+    return false;
+}
 // Dual API key clients (copied from raw-capture-runner architecture)  
 const openaiClients = [
     new openai_1.default({ apiKey: process.env.OPENAI_API_KEY }),
@@ -1335,6 +1365,13 @@ class SophisticatedRunner {
         console.log('🚀 Starting sophisticated LLM processing loop...');
         const processLoop = async () => {
             try {
+                // Ensure database connection before processing
+                const connected = await ensureDatabaseConnection();
+                if (!connected) {
+                    console.error('❌ Database connection lost - retrying in 30 seconds...');
+                    setTimeout(processLoop, 30000);
+                    return;
+                }
                 await this.processNextBatch();
                 // 🔍 Check if more domains remain BEFORE scheduling next iteration
                 const pendingCheck = await pool.query(`SELECT COUNT(*) as count FROM domains WHERE status = 'pending'`);
@@ -1352,6 +1389,16 @@ class SophisticatedRunner {
             }
             catch (error) {
                 console.error('❌ Processing loop error:', error);
+                // Check if it's a database error and try to recover
+                if (error instanceof Error && (error.message.includes('connection') || error.message.includes('database'))) {
+                    console.log('🔄 Database error detected - attempting recovery...');
+                    const recovered = await ensureDatabaseConnection();
+                    if (!recovered) {
+                        console.error('❌ Database recovery failed - retrying in 60 seconds...');
+                        setTimeout(processLoop, 60000);
+                        return;
+                    }
+                }
                 // Even on error, check if we should continue
                 try {
                     const pendingCheck = await pool.query(`SELECT COUNT(*) as count FROM domains WHERE status = 'pending'`);
@@ -1779,26 +1826,111 @@ app.get('/discovery/performance', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-// Main execution
+// Main execution with recovery system
 async function main() {
     try {
-        console.log('🔍 Testing database connection...');
-        await pool.query('SELECT 1');
-        console.log('✅ Database connected');
+        console.log('🔍 Testing database connection with recovery...');
+        // Use robust connection check
+        const connected = await ensureDatabaseConnection();
+        if (!connected) {
+            console.error('❌ Failed to establish database connection after retries');
+            process.exit(1);
+        }
+        // Initialize cache population scheduler
+        console.log('🔄 Initializing cache population scheduler...');
+        const cacheScheduler = new cache_population_scheduler_1.default();
+        cacheScheduler.startScheduler();
+        // Initialize cohort intelligence system
+        try {
+            console.log('🎯 Initializing Cohort Intelligence System...');
+            await cohortIntelligenceSystem.ensureCohortTables();
+            console.log('✅ Cohort Intelligence System initialized - competitive analysis ready');
+        }
+        catch (error) {
+            console.error('⚠️  Cohort Intelligence initialization failed:', error);
+            // Don't exit - cohorts are important but not critical for basic operation
+        }
         const runner = new SophisticatedRunner();
         await runner.seedDomains();
-        // Start real LLM processing loop
+        // Start real LLM processing loop with recovery
         await runner.startProcessing();
         app.listen(port, () => {
             console.log(`🌐 Sophisticated Runner running on port ${port}`);
             console.log('🎯 Ready to prove equivalence!');
         });
+        // Set up periodic health checks
+        setInterval(async () => {
+            try {
+                await ensureDatabaseConnection();
+            }
+            catch (error) {
+                console.error('❌ Health check failed:', error);
+            }
+        }, 300000); // Check every 5 minutes
     }
     catch (error) {
         console.error('❌ Startup failed:', error);
         process.exit(1);
     }
 }
+// Cache population endpoints
+app.post('/cache/populate', async (req, res) => {
+    try {
+        console.log('🔄 Manual cache population triggered...');
+        const cacheScheduler = new cache_population_scheduler_1.default();
+        await cacheScheduler.runOnce();
+        res.json({
+            success: true,
+            message: '🎉 Cache population completed!',
+            action: 'Manual cache population',
+            note: 'All completed domains have been processed into public_domain_cache'
+        });
+    }
+    catch (error) {
+        console.error('❌ Manual cache population failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+app.get('/cache/status', async (req, res) => {
+    try {
+        const client = await pool.connect();
+        // Get cache statistics
+        const cacheStats = await client.query(`
+      SELECT COUNT(*) as cached_domains
+      FROM public_domain_cache
+    `);
+        const domainStats = await client.query(`
+      SELECT 
+        COUNT(*) as total_domains,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed_domains
+      FROM domains
+    `);
+        client.release();
+        res.json({
+            cache_status: {
+                cached_domains: parseInt(cacheStats.rows[0].cached_domains),
+                total_domains: parseInt(domainStats.rows[0].total_domains),
+                completed_domains: parseInt(domainStats.rows[0].completed_domains),
+                cache_coverage: `${Math.round((cacheStats.rows[0].cached_domains / domainStats.rows[0].completed_domains) * 100)}%`
+            },
+            scheduler: {
+                status: 'Active',
+                frequency: 'Every 6 hours',
+                next_run: 'Automatic'
+            },
+            manual_actions: {
+                populate_now: 'POST /cache/populate',
+                check_status: 'GET /cache/status'
+            }
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 main().catch(console.error);
 // ============================================================================
 // 🎯 TIERED JOLT MANAGEMENT ENDPOINTS
@@ -3120,6 +3252,109 @@ app.get('/api/benchmarks/categories', async (req, res) => {
     }
     catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+// ============================================================================
+// 🎯 COHORT INTELLIGENCE API - CRITICAL COMPETITIVE ANALYSIS
+// ============================================================================
+// Get comprehensive competitive cohorts - THE MONEY-MAKING ENDPOINT
+app.get('/api/cohorts/competitive', async (req, res) => {
+    try {
+        console.log('🎯 COHORT API: Generating comprehensive competitive analysis...');
+        const cohortAPI = await cohortIntelligenceSystem.generateCohortAPI();
+        res.json({
+            success: true,
+            message: 'Comprehensive competitive cohorts generated',
+            ...cohortAPI
+        });
+    }
+    catch (error) {
+        console.error('❌ Cohort API error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Cohort generation failed',
+            details: error.message
+        });
+    }
+});
+// Get cohort system health and coverage
+app.get('/api/cohorts/health', async (req, res) => {
+    try {
+        const health = await cohortIntelligenceSystem.getSystemHealth();
+        res.json({
+            success: true,
+            cohort_intelligence_health: health,
+            message: health.status === 'healthy' ?
+                'All critical cohorts available' :
+                'Some critical cohorts under-populated'
+        });
+    }
+    catch (error) {
+        console.error('❌ Cohort health check failed:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Health check failed',
+            details: error.message
+        });
+    }
+});
+// Force cohort refresh and discovery
+app.post('/api/cohorts/refresh', async (req, res) => {
+    try {
+        console.log('🔄 COHORT REFRESH: Forcing cohort regeneration...');
+        // Ensure cohort tables exist
+        await cohortIntelligenceSystem.ensureCohortTables();
+        // Generate fresh cohorts
+        const cohorts = await cohortIntelligenceSystem.generateComprehensiveCohorts();
+        res.json({
+            success: true,
+            message: 'Cohorts refreshed successfully',
+            cohorts_generated: Object.keys(cohorts).length,
+            total_companies: Object.values(cohorts).reduce((sum, cohort) => sum + cohort.total_companies, 0),
+            refresh_timestamp: new Date().toISOString()
+        });
+    }
+    catch (error) {
+        console.error('❌ Cohort refresh failed:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Cohort refresh failed',
+            details: error.message
+        });
+    }
+});
+// Get specific cohort analysis
+app.get('/api/cohorts/:cohortName', async (req, res) => {
+    try {
+        const { cohortName } = req.params;
+        const cohorts = await cohortIntelligenceSystem.generateComprehensiveCohorts();
+        const cohort = cohorts[cohortName];
+        if (!cohort) {
+            return res.status(404).json({
+                success: false,
+                error: 'Cohort not found',
+                available_cohorts: Object.keys(cohorts)
+            });
+        }
+        res.json({
+            success: true,
+            cohort_name: cohortName,
+            analysis: cohort,
+            competitive_intelligence: {
+                leader_advantage: `${cohort.leader.domain} leads by ${cohort.leader.gap_to_leader} points`,
+                market_dynamics: cohort.competitive_narrative,
+                total_companies: cohort.total_companies,
+                score_spread: cohort.score_range
+            }
+        });
+    }
+    catch (error) {
+        console.error('❌ Specific cohort analysis failed:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Cohort analysis failed',
+            details: error.message
+        });
     }
 });
 // ============================================================================

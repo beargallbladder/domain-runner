@@ -154,6 +154,14 @@ function Navigation() {
     setMobileMenuOpen(false)
   }
 
+  const navItems = [
+    { path: '/', label: 'Home' },
+    { path: '/rankings', label: 'Rankings' },
+    { path: '/cohorts', label: 'Cohorts' },
+    { path: '/competitive-analysis', label: 'Competitive Analysis' },
+    { path: '/about', label: 'About' }
+  ];
+
   return (
     <>
       <Nav>
@@ -172,75 +180,29 @@ function Navigation() {
         </MobileMenuButton>
         
         <NavLinks>
-          <NavLink 
-            to="/"
-            $active={location.pathname === '/'}
-          >
-            Home
-          </NavLink>
-          <NavLink 
-            to="/rankings"
-            $active={location.pathname === '/rankings'}
-          >
-            Rankings
-          </NavLink>
-          <NavLink 
-            to="/cohorts"
-            $active={location.pathname === '/cohorts'}
-          >
-            Cohorts
-          </NavLink>
-          <NavLink 
-            to="/death-match"
-            $active={location.pathname === '/death-match'}
-          >
-            Death Match
-          </NavLink>
-          <NavLink 
-            to="/about"
-            $active={location.pathname === '/about'}
-          >
-            About
-          </NavLink>
+          {navItems.map((item) => (
+            <NavLink 
+              key={item.path}
+              to={item.path}
+              $active={location.pathname === item.path}
+            >
+              {item.label}
+            </NavLink>
+          ))}
         </NavLinks>
       </Nav>
       
       <MobileNavLinks isOpen={mobileMenuOpen}>
-        <NavLink 
-          to="/"
-          $active={location.pathname === '/'}
-          onClick={closeMobileMenu}
-        >
-          Home
-        </NavLink>
-        <NavLink 
-          to="/rankings"
-          $active={location.pathname === '/rankings'}
-          onClick={closeMobileMenu}
-        >
-          Rankings
-        </NavLink>
-        <NavLink 
-          to="/cohorts"
-          $active={location.pathname === '/cohorts'}
-          onClick={closeMobileMenu}
-        >
-          Cohorts
-        </NavLink>
-        <NavLink 
-          to="/death-match"
-          $active={location.pathname === '/death-match'}
-          onClick={closeMobileMenu}
-        >
-          Death Match
-        </NavLink>
-        <NavLink 
-          to="/about"
-          $active={location.pathname === '/about'}
-          onClick={closeMobileMenu}
-        >
-          About
-        </NavLink>
+        {navItems.map((item) => (
+          <NavLink 
+            key={item.path}
+            to={item.path}
+            $active={location.pathname === item.path}
+            onClick={closeMobileMenu}
+          >
+            {item.label}
+          </NavLink>
+        ))}
       </MobileNavLinks>
     </>
   )

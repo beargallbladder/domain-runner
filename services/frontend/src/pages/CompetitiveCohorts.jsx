@@ -313,17 +313,18 @@ const CompetitiveCohorts = () => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get('https://sophisticated-runner.onrender.com/api/cohorts/competitive');
+      const response = await axios.get('https://llm-pagerank-public-api.onrender.com/api/rankings?limit=100');
       
-      if (response.data.success) {
-        setCohorts(response.data.categories || []);
+      if (response.data && response.data.domains) {
+        const groupedDomains = groupDomainsByCategory(response.data.domains);
+        setCohorts(groupedDomains);
         setStats({
-          totalCohorts: response.data.total_cohorts || 0,
-          totalCompanies: response.data.categories?.reduce((sum, cat) => sum + cat.totalDomains, 0) || 0,
-          systemVersion: response.data.system_version || '2.0.0'
+          totalCohorts: groupedDomains.length,
+          totalCompanies: response.data.totalDomains || response.data.domains.length,
+          systemVersion: '2.1.0'
         });
       } else {
-        throw new Error('Failed to fetch cohort data');
+        throw new Error('Failed to fetch domain data');
       }
       
       setLoading(false);
@@ -332,6 +333,60 @@ const CompetitiveCohorts = () => {
       setError(err.message);
       setLoading(false);
     }
+  };
+
+  const groupDomainsByCategory = (domains) => {
+    const categories = {
+      'Enterprise Software': {
+        name: 'Enterprise Software Leaders',
+        description: 'Market-leading enterprise software platforms driving digital transformation.',
+        domains: domains.filter(d => 
+          ['monday.com', 'airtable.com', 'asana.com', 'notion.so', 'slack.com'].includes(d.domain)
+        ).slice(0, 8)
+      },
+      'Financial Technology': {
+        name: 'FinTech Innovation Leaders',
+        description: 'Revolutionary financial technology platforms reshaping global commerce.',
+        domains: domains.filter(d => 
+          ['stripe.com', 'paypal.com', 'square.com', 'plaid.com', 'robinhood.com'].includes(d.domain)
+        ).slice(0, 8)
+      },
+      'Cloud Infrastructure': {
+        name: 'Cloud Infrastructure Giants',
+        description: 'Mission-critical cloud infrastructure powering the digital economy.',
+        domains: domains.filter(d => 
+          ['aws.amazon.com', 'azure.microsoft.com', 'cloud.google.com', 'digitalocean.com'].includes(d.domain)
+        ).slice(0, 8)
+      },
+      'AI & Machine Learning': {
+        name: 'AI Intelligence Platforms',
+        description: 'Next-generation AI platforms defining the future of artificial intelligence.',
+        domains: domains.filter(d => 
+          ['openai.com', 'anthropic.com', 'huggingface.co', 'cohere.ai', 'stability.ai'].includes(d.domain)
+        ).slice(0, 8)
+      }
+    };
+
+    return Object.entries(categories)
+      .filter(([_, category]) => category.domains.length > 0)
+      .map(([key, category]) => ({
+        name: category.name,
+        description: category.description,
+        totalDomains: category.domains.length,
+        averageScore: (category.domains.reduce((sum, d) => sum + d.score, 0) / category.domains.length).toFixed(1),
+        scoreRange: `${Math.min(...category.domains.map(d => d.score)).toFixed(1)}-${Math.max(...category.domains.map(d => d.score)).toFixed(1)}`,
+        topDomains: JSON.stringify(category.domains.map((domain, index) => ({
+          domain: domain.domain,
+          score: domain.score,
+          rank: index + 1,
+          competitive_position: domain.score >= 80 ? 'EXCELLENT' : 
+                              domain.score >= 70 ? 'STRONG' : 
+                              domain.score >= 60 ? 'AVERAGE' : 
+                              domain.score >= 50 ? 'WEAK' : 'CRITICAL',
+          gap_to_leader: category.domains[0].score - domain.score
+        }))),
+        competitiveNarrative: `${category.name} represents ${category.domains.length} leading companies with an average AI memory score of ${(category.domains.reduce((sum, d) => sum + d.score, 0) / category.domains.length).toFixed(1)}. Market leadership is defined by consistent AI model recognition and brand recall strength.`
+      }));
   };
 
   useEffect(() => {

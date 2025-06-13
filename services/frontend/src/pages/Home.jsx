@@ -522,7 +522,7 @@ const Home = () => {
           }}
         >
           <Link
-            to="/death-match"
+            to="/competitive-analysis"
             style={{
               display: 'inline-block',
               background: 'linear-gradient(135deg, #FF3B30 0%, #007AFF 100%)',
@@ -547,7 +547,7 @@ const Home = () => {
               e.target.style.boxShadow = '0 8px 25px rgba(255, 59, 48, 0.3)';
             }}
           >
-            📊 Competitive Analysis
+            📊 Competitive Intelligence
           </Link>
           
           <Link
@@ -701,11 +701,11 @@ const Home = () => {
             </ExploreDescription>
           </ExploreCard>
 
-          <ExploreCard to="/death-match">
-            <ExploreIcon>💀</ExploreIcon>
-            <ExploreCardTitle>Death Match Analysis</ExploreCardTitle>
+          <ExploreCard to="/competitive-analysis">
+            <ExploreIcon>📊</ExploreIcon>
+            <ExploreCardTitle>Competitive Intelligence</ExploreCardTitle>
             <ExploreDescription>
-              Head-to-head competitive analysis. See which brands are thriving vs dying in AI memory.
+              Head-to-head competitive analysis. Strategic insights for market positioning and competitive advantage.
             </ExploreDescription>
           </ExploreCard>
 

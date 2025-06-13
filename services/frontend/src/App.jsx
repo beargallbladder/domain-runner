@@ -21,7 +21,7 @@ import Reports from './pages/Reports'
 import Alerts from './pages/Alerts'
 import Integrations from './pages/Integrations'
 import Help from './pages/Help'
-import CompetitorDeathMatch from './pages/CompetitorDeathMatch'
+import CompetitorAnalysis from './pages/CompetitorAnalysis'
 import CompetitiveCohorts from './pages/CompetitiveCohorts'
 
 // Subtle drift animation for text
@@ -134,21 +134,11 @@ function App() {
       <Main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/death-match" element={<CompetitorDeathMatch />} />
-          <Route path="/cohorts" element={<CompetitiveCohorts />} />
           <Route path="/rankings" element={<Rankings />} />
-          <Route path="/domain/:domainName" element={<Domain />} />
-          
-          {/* SEO-optimized domain analysis pages */}
-          <Route path="/analyze/:domainName" element={<DomainSEO />} />
-          <Route path="/crisis-score/:domainName" element={<DomainSEO />} />
-          <Route path="/competitive/:domainName" element={<DomainSEO />} />
-          
+          <Route path="/cohorts" element={<CompetitiveCohorts />} />
+          <Route path="/competitive-analysis" element={<CompetitorAnalysis />} />
+          <Route path="/domain/:domain" element={<Domain />} />
           <Route path="/about" element={<About />} />
-          <Route path="/premium" element={<ComingSoon />} />
-          <Route path="/coming-soon" element={<ComingSoon />} />
-          
-          {/* Catch-all for any other routes */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Main>
