@@ -158,6 +158,7 @@ function Navigation() {
     { path: '/', label: 'Home' },
     { path: '/rankings', label: 'Rankings' },
     { path: '/cohorts', label: 'Cohorts' },
+    { path: '/cohort-intelligence', label: 'Intelligence' },
     { path: '/competitive-analysis', label: 'Competitive Analysis' },
     { path: '/about', label: 'About' }
   ];
