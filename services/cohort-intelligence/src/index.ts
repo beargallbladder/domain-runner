@@ -16,7 +16,7 @@
  * Integration: Works with existing sophisticated-runner and database
  */
 
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import axios from 'axios';
@@ -100,7 +100,7 @@ class CategoryDiscoveryEngine {
     }
   }
   
-  private async storeCategoriesInDatabase(domain: string, categories: any[]) {
+  private async storeCategoriesInDatabase(domain: string, categories: Array<{name: string, confidence: number, keywords: string[]}>) {
     for (const category of categories) {
       try {
         await pool.query(`
@@ -225,7 +225,7 @@ class CohortRankingEngine {
         ORDER BY pdc.memory_score DESC
       `, [category]);
       
-      const rankings = result.rows.map((row, index) => ({
+      const rankings = result.rows.map((row: any, index: number) => ({
         position: index + 1,
         domain: row.domain,
         score: parseFloat(row.memory_score),
@@ -238,7 +238,7 @@ class CohortRankingEngine {
       return {
         category,
         updated_at: new Date().toISOString(),
-        rankings: rankings.map(r => ({
+        rankings: rankings.map((r: any) => ({
           ...r,
           hidden: r.premium_required
         }))
@@ -250,7 +250,7 @@ class CohortRankingEngine {
     }
   }
   
-  private async storeRankingsInDatabase(category: string, rankings: any[]) {
+  private async storeRankingsInDatabase(category: string, rankings: Array<{position: number, domain: string, score: number, trend: string, premium_required: boolean}>) {
     const today = new Date().toISOString().split('T')[0];
     
     for (const ranking of rankings) {
@@ -289,7 +289,7 @@ const competitorEngine = new CompetitorDiscoveryEngine();
 const rankingEngine = new CohortRankingEngine();
 
 // Health check
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
   res.json({
     service: 'cohort-intelligence-service',
     status: 'healthy',
@@ -304,7 +304,7 @@ app.get('/', (req, res) => {
 });
 
 // Discover categories for a domain
-app.post('/api/discover-categories', async (req, res) => {
+app.post('/api/discover-categories', async (req: Request, res: Response) => {
   try {
     const { domain } = req.body;
     
@@ -322,7 +322,7 @@ app.post('/api/discover-categories', async (req, res) => {
 });
 
 // Discover competitors for domain in category
-app.post('/api/discover-competitors', async (req, res) => {
+app.post('/api/discover-competitors', async (req: Request, res: Response) => {
   try {
     const { domain, category } = req.body;
     
@@ -340,7 +340,7 @@ app.post('/api/discover-competitors', async (req, res) => {
 });
 
 // Get cohort rankings for category
-app.get('/api/cohort-rankings/:category', async (req, res) => {
+app.get('/api/cohort-rankings/:category', async (req: Request, res: Response) => {
   try {
     const { category } = req.params;
     const rankings = await rankingEngine.generateCohortRankings(category);
@@ -353,7 +353,7 @@ app.get('/api/cohort-rankings/:category', async (req, res) => {
 });
 
 // Get all categories for a domain
-app.get('/api/domain/:domain/categories', async (req, res) => {
+app.get('/api/domain/:domain/categories', async (req: Request, res: Response) => {
   try {
     const { domain } = req.params;
     
@@ -367,7 +367,7 @@ app.get('/api/domain/:domain/categories', async (req, res) => {
     
     res.json({
       domain,
-      categories: result.rows.map(row => ({
+      categories: result.rows.map((row: any) => ({
         name: row.category_name,
         confidence: row.confidence_score,
         position: row.position,
