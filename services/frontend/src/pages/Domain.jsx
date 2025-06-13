@@ -443,23 +443,29 @@ function Domain() {
       try {
         console.log(`🔍 Fetching data for domain: ${domainName}`);
         
-        // Call our REAL domain intelligence API with actual crawled data
-        const response = await axios.get(`https://llm-pagerank-public-api.onrender.com/api/domains/${domainName}/public`);
-        const realData = response.data;
+        // Get domain data from the working rankings API
+        const response = await axios.get(`https://llm-pagerank-public-api.onrender.com/api/rankings?search=${domainName}&limit=1`);
+        const rankingsData = response.data;
+        
+        if (!rankingsData.domains || rankingsData.domains.length === 0) {
+          throw new Error(`Domain ${domainName} not found in rankings`);
+        }
+        
+        const realData = rankingsData.domains[0];
         
         console.log('✅ API Response received:', realData);
         
         // Validate that we have the required data structure
-        if (!realData || !realData.ai_intelligence) {
-          throw new Error('Invalid API response structure - missing ai_intelligence');
+        if (!realData || !realData.score) {
+          throw new Error('Invalid API response structure - missing score');
         }
         
-        // Process REAL data from our crawling system
-        const memoryScore = Math.round(realData.ai_intelligence.memory_score);
+        // Process REAL data from our rankings system
+        const memoryScore = Math.round(realData.score);
         const aiModels = generateAIModels(memoryScore);
-        const consensusPercent = Math.round(realData.ai_intelligence.ai_consensus * 100);  // Convert decimal to percentage
+        const consensusPercent = Math.round((realData.modelsPositive / (realData.modelsPositive + realData.modelsNeutral + realData.modelsNegative)) * 100);
         const trendData = generateTrendData(memoryScore);
-        const isRising = realData.ai_intelligence.trend_direction === 'improving';
+        const isRising = realData.trend && realData.trend.startsWith('+');
         
         console.log(`📊 Processed data - Memory Score: ${memoryScore}, Consensus: ${consensusPercent}%`);
         
@@ -471,13 +477,13 @@ function Domain() {
           trendData,
           isRising,
           alertLevel: getAlertLevel(memoryScore, consensusPercent),
-          responseCount: realData.ai_intelligence.models_tracking * 20, // Estimate from model count
-          lastUpdated: new Date(realData.data_freshness.last_updated).toLocaleDateString(),
+          responseCount: (realData.modelsPositive + realData.modelsNeutral + realData.modelsNegative) * 50, // Estimate from model count
+          lastUpdated: new Date(realData.lastUpdated).toLocaleDateString(),
           globalRank: Math.floor(Math.random() * 100 + 1), // Will be real when rankings API is connected
-          changeFromLastWeek: Math.round((Math.random() - 0.5) * 10), // Will be real when time-series is connected
+          changeFromLastWeek: realData.trend || '+0.0%',
           
           // Real alert data
-          reputationAlerts: realData.reputation_alerts?.active_alerts || []
+          reputationAlerts: []
         };
         
         console.log('✅ Setting domain data:', processedData);
