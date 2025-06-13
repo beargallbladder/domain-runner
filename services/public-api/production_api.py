@@ -393,14 +393,14 @@ async def get_memory_ticker(limit: int = Query(5, le=20)):
     """
     try:
         async with pool.acquire() as conn:
-            # Get top domains with trend data - NO TIME FILTERS, show ALL data
+            # Get top domains with trend data - NO TIME FILTERS, show ALL data - FIX DUPLICATES
             top_domains = await conn.fetch("""
-                SELECT 
+                SELECT DISTINCT ON (domain)
                     domain, memory_score, model_count, drift_delta,
                     ai_consensus_score, reputation_risk_score,
                     updated_at
                 FROM public_domain_cache 
-                ORDER BY memory_score DESC
+                ORDER BY domain, updated_at DESC, memory_score DESC
                 LIMIT $1
             """, limit)
             
@@ -638,9 +638,9 @@ async def get_full_rankings(
                 {where_clause}
             """)
             
-            # Get domains for current page
+            # Get domains for current page - FIX DUPLICATES WITH DISTINCT
             domains = await conn.fetch(f"""
-                SELECT 
+                SELECT DISTINCT ON (domain)
                     domain, memory_score, ai_consensus_score, drift_delta,
                     model_count, reputation_risk_score, updated_at,
                     CASE 
@@ -650,7 +650,7 @@ async def get_full_rankings(
                     END as data_freshness
                 FROM public_domain_cache 
                 {where_clause}
-                {order_clause}
+                ORDER BY domain, updated_at DESC, {order_clause.replace('ORDER BY ', '')}
                 LIMIT $1 OFFSET $2
             """, limit, offset)
         

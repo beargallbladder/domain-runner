@@ -227,34 +227,87 @@ const CompetitorAnalysis = () => {
   const generateCompetitiveAnalyses = (domains) => {
     const analyses = [];
     
-    // Create head-to-head competitive analyses
-    const competitivePairs = [
-      { category: 'Enterprise Productivity', domains: ['monday.com', 'airtable.com'] },
-      { category: 'Payment Processing', domains: ['stripe.com', 'paypal.com'] },
-      { category: 'Cloud Infrastructure', domains: ['aws.amazon.com', 'azure.microsoft.com'] },
-      { category: 'AI Platforms', domains: ['openai.com', 'anthropic.com'] }
-    ];
-
-    competitivePairs.forEach(pair => {
-      const domain1 = domains.find(d => d.domain === pair.domains[0]);
-      const domain2 = domains.find(d => d.domain === pair.domains[1]);
-      
-      if (domain1 && domain2) {
-        const scoreDiff = Math.abs(domain1.score - domain2.score);
-        const leader = domain1.score > domain2.score ? domain1 : domain2;
-        const challenger = domain1.score > domain2.score ? domain2 : domain1;
+    // Create dynamic competitive analyses from available domains
+    // Group domains by score ranges for fair comparisons
+    const topTier = domains.filter(d => d.score >= 80);
+    const midTier = domains.filter(d => d.score >= 70 && d.score < 80);
+    const lowerTier = domains.filter(d => d.score >= 60 && d.score < 70);
+    
+    // Generate head-to-head comparisons within each tier
+    const generateTierAnalyses = (tierDomains, tierName) => {
+      for (let i = 0; i < tierDomains.length - 1 && analyses.length < 8; i += 2) {
+        const domain1 = tierDomains[i];
+        const domain2 = tierDomains[i + 1];
         
-        analyses.push({
-          category: pair.category,
-          leader,
-          challenger,
-          scoreDifference: scoreDiff,
-          marketGap: scoreDiff,
-          competitiveAdvantage: scoreDiff > 10 ? 'Significant' : scoreDiff > 5 ? 'Moderate' : 'Minimal',
-          insight: `In the ${pair.category} sector, ${leader.domain} maintains a ${scoreDiff.toFixed(1)}-point AI memory advantage over ${challenger.domain}. This represents ${scoreDiff > 10 ? 'dominant market positioning' : scoreDiff > 5 ? 'competitive leadership' : 'tight market competition'} in AI model recognition and brand recall.`
-        });
+        if (domain1 && domain2) {
+          const scoreDiff = Math.abs(domain1.score - domain2.score);
+          const leader = domain1.score > domain2.score ? domain1 : domain2;
+          const challenger = domain1.score > domain2.score ? domain2 : domain1;
+          
+          // Determine category based on domain patterns
+          const getCategory = (d1, d2) => {
+            const domains = [d1.domain, d2.domain];
+            if (domains.some(d => ['monday.com', 'airtable.com', 'asana.com', 'notion.so'].includes(d))) {
+              return 'Enterprise Productivity';
+            }
+            if (domains.some(d => ['stripe.com', 'paypal.com', 'square.com'].includes(d))) {
+              return 'Payment Processing';
+            }
+            if (domains.some(d => ['openai.com', 'anthropic.com', 'cohere.ai'].includes(d))) {
+              return 'AI Platforms';
+            }
+            if (domains.some(d => ['google.com', 'microsoft.com', 'apple.com'].includes(d))) {
+              return 'Technology Giants';
+            }
+            return `${tierName} Competition`;
+          };
+          
+          const category = getCategory(domain1, domain2);
+          
+          analyses.push({
+            category,
+            leader,
+            challenger,
+            scoreDifference: scoreDiff,
+            marketGap: scoreDiff,
+            competitiveAdvantage: scoreDiff > 10 ? 'Significant' : scoreDiff > 5 ? 'Moderate' : 'Minimal',
+            insight: `In the ${category} sector, ${leader.domain} maintains a ${scoreDiff.toFixed(1)}-point AI memory advantage over ${challenger.domain}. This represents ${scoreDiff > 10 ? 'dominant market positioning' : scoreDiff > 5 ? 'competitive leadership' : 'tight market competition'} in AI model recognition and brand recall.`
+          });
+        }
       }
-    });
+    };
+    
+    // Generate analyses for each tier
+    generateTierAnalyses(topTier, 'Premium Market');
+    generateTierAnalyses(midTier, 'Mid-Market');
+    generateTierAnalyses(lowerTier, 'Emerging Market');
+    
+    // If we still don't have enough, create cross-tier comparisons
+    if (analyses.length < 4) {
+      for (let i = 0; i < Math.min(domains.length - 1, 10) && analyses.length < 8; i += 2) {
+        const domain1 = domains[i];
+        const domain2 = domains[i + 1];
+        
+        if (domain1 && domain2 && !analyses.some(a => 
+          (a.leader.domain === domain1.domain && a.challenger.domain === domain2.domain) ||
+          (a.leader.domain === domain2.domain && a.challenger.domain === domain1.domain)
+        )) {
+          const scoreDiff = Math.abs(domain1.score - domain2.score);
+          const leader = domain1.score > domain2.score ? domain1 : domain2;
+          const challenger = domain1.score > domain2.score ? domain2 : domain1;
+          
+          analyses.push({
+            category: 'Market Leadership',
+            leader,
+            challenger,
+            scoreDifference: scoreDiff,
+            marketGap: scoreDiff,
+            competitiveAdvantage: scoreDiff > 10 ? 'Significant' : scoreDiff > 5 ? 'Moderate' : 'Minimal',
+            insight: `${leader.domain} outperforms ${challenger.domain} by ${scoreDiff.toFixed(1)} points in AI memory recognition, indicating ${scoreDiff > 10 ? 'strong competitive moat' : scoreDiff > 5 ? 'competitive advantage' : 'close market positioning'}.`
+          });
+        }
+      }
+    }
 
     return analyses;
   };
@@ -309,7 +362,9 @@ const CompetitorAnalysis = () => {
 
             <CompetitorComparison>
               <CompetitorInfo score={analysis.leader.score}>
-                <div className="domain">{analysis.leader.domain}</div>
+                <Link to={`/domain/${analysis.leader.domain}`} className="domain" style={{textDecoration: 'none', color: 'inherit'}}>
+                  {analysis.leader.domain}
+                </Link>
                 <div className="score">{analysis.leader.score}</div>
                 <div className="position">Market Leader</div>
               </CompetitorInfo>
@@ -317,7 +372,9 @@ const CompetitorAnalysis = () => {
               <VersusIndicator>VS</VersusIndicator>
               
               <CompetitorInfo score={analysis.challenger.score}>
-                <div className="domain">{analysis.challenger.domain}</div>
+                <Link to={`/domain/${analysis.challenger.domain}`} className="domain" style={{textDecoration: 'none', color: 'inherit'}}>
+                  {analysis.challenger.domain}
+                </Link>
                 <div className="score">{analysis.challenger.score}</div>
                 <div className="position">Challenger</div>
               </CompetitorInfo>

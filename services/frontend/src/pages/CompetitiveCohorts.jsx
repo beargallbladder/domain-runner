@@ -336,57 +336,128 @@ const CompetitiveCohorts = () => {
   };
 
   const groupDomainsByCategory = (domains) => {
+    // Remove duplicates first
+    const uniqueDomains = domains.reduce((acc, domain) => {
+      if (!acc.find(d => d.domain === domain.domain)) {
+        acc.push(domain);
+      }
+      return acc;
+    }, []);
+
     const categories = {
       'Enterprise Software': {
         name: 'Enterprise Software Leaders',
         description: 'Market-leading enterprise software platforms driving digital transformation.',
-        domains: domains.filter(d => 
-          ['monday.com', 'airtable.com', 'asana.com', 'notion.so', 'slack.com'].includes(d.domain)
-        ).slice(0, 8)
+        keywords: ['monday.com', 'airtable.com', 'asana.com', 'notion.so', 'slack.com', 'zoom.us', 'salesforce.com', 'hubspot.com'],
+        domains: []
       },
       'Financial Technology': {
         name: 'FinTech Innovation Leaders',
         description: 'Revolutionary financial technology platforms reshaping global commerce.',
-        domains: domains.filter(d => 
-          ['stripe.com', 'paypal.com', 'square.com', 'plaid.com', 'robinhood.com'].includes(d.domain)
-        ).slice(0, 8)
+        keywords: ['stripe.com', 'paypal.com', 'square.com', 'plaid.com', 'robinhood.com', 'coinbase.com', 'klarna.com'],
+        domains: []
       },
       'Cloud Infrastructure': {
         name: 'Cloud Infrastructure Giants',
         description: 'Mission-critical cloud infrastructure powering the digital economy.',
-        domains: domains.filter(d => 
-          ['aws.amazon.com', 'azure.microsoft.com', 'cloud.google.com', 'digitalocean.com'].includes(d.domain)
-        ).slice(0, 8)
+        keywords: ['aws.amazon.com', 'azure.microsoft.com', 'cloud.google.com', 'digitalocean.com', 'cloudflare.com', 'vercel.com'],
+        domains: []
       },
       'AI & Machine Learning': {
         name: 'AI Intelligence Platforms',
         description: 'Next-generation AI platforms defining the future of artificial intelligence.',
-        domains: domains.filter(d => 
-          ['openai.com', 'anthropic.com', 'huggingface.co', 'cohere.ai', 'stability.ai'].includes(d.domain)
-        ).slice(0, 8)
+        keywords: ['openai.com', 'anthropic.com', 'huggingface.co', 'cohere.ai', 'stability.ai', 'midjourney.com'],
+        domains: []
+      },
+      'Technology Giants': {
+        name: 'Technology Titans',
+        description: 'Global technology leaders shaping the digital landscape.',
+        keywords: ['google.com', 'microsoft.com', 'apple.com', 'amazon.com', 'meta.com', 'netflix.com', 'tesla.com'],
+        domains: []
+      },
+      'Social Media': {
+        name: 'Social Media Platforms',
+        description: 'Leading social networks and communication platforms.',
+        keywords: ['facebook.com', 'instagram.com', 'twitter.com', 'linkedin.com', 'tiktok.com', 'snapchat.com', 'discord.com'],
+        domains: []
+      },
+      'E-commerce': {
+        name: 'E-commerce Leaders',
+        description: 'Digital commerce platforms revolutionizing retail.',
+        keywords: ['shopify.com', 'etsy.com', 'ebay.com', 'walmart.com', 'target.com', 'alibaba.com'],
+        domains: []
+      },
+      'Media & Entertainment': {
+        name: 'Media & Entertainment',
+        description: 'Content platforms and entertainment services.',
+        keywords: ['youtube.com', 'spotify.com', 'twitch.tv', 'hulu.com', 'disney.com', 'hbo.com'],
+        domains: []
       }
     };
 
+    // Categorize domains
+    uniqueDomains.forEach(domain => {
+      let categorized = false;
+      
+      // Check each category for keyword matches
+      Object.keys(categories).forEach(categoryKey => {
+        const category = categories[categoryKey];
+        if (category.keywords.some(keyword => domain.domain.includes(keyword.replace('.com', '')) || domain.domain === keyword)) {
+          category.domains.push(domain);
+          categorized = true;
+        }
+      });
+      
+      // If not categorized by keywords, use pattern matching
+      if (!categorized) {
+        const domainLower = domain.domain.toLowerCase();
+        
+        if (domainLower.includes('bank') || domainLower.includes('finance') || domainLower.includes('pay')) {
+          categories['Financial Technology'].domains.push(domain);
+        } else if (domainLower.includes('shop') || domainLower.includes('store') || domainLower.includes('buy')) {
+          categories['E-commerce'].domains.push(domain);
+        } else if (domainLower.includes('cloud') || domainLower.includes('aws') || domainLower.includes('server')) {
+          categories['Cloud Infrastructure'].domains.push(domain);
+        } else if (domainLower.includes('ai') || domainLower.includes('ml') || domainLower.includes('bot')) {
+          categories['AI & Machine Learning'].domains.push(domain);
+        } else if (domain.score >= 80) {
+          categories['Technology Giants'].domains.push(domain);
+        } else {
+          // Add to the category with the fewest domains to balance
+          const smallestCategory = Object.keys(categories).reduce((min, key) => 
+            categories[key].domains.length < categories[min].domains.length ? key : min
+          );
+          categories[smallestCategory].domains.push(domain);
+        }
+      }
+    });
+
+    // Convert to the expected format and filter out empty categories
     return Object.entries(categories)
       .filter(([_, category]) => category.domains.length > 0)
-      .map(([key, category]) => ({
-        name: category.name,
-        description: category.description,
-        totalDomains: category.domains.length,
-        averageScore: (category.domains.reduce((sum, d) => sum + d.score, 0) / category.domains.length).toFixed(1),
-        scoreRange: `${Math.min(...category.domains.map(d => d.score)).toFixed(1)}-${Math.max(...category.domains.map(d => d.score)).toFixed(1)}`,
-        topDomains: JSON.stringify(category.domains.map((domain, index) => ({
-          domain: domain.domain,
-          score: domain.score,
-          rank: index + 1,
-          competitive_position: domain.score >= 80 ? 'EXCELLENT' : 
-                              domain.score >= 70 ? 'STRONG' : 
-                              domain.score >= 60 ? 'AVERAGE' : 
-                              domain.score >= 50 ? 'WEAK' : 'CRITICAL',
-          gap_to_leader: category.domains[0].score - domain.score
-        }))),
-        competitiveNarrative: `${category.name} represents ${category.domains.length} leading companies with an average AI memory score of ${(category.domains.reduce((sum, d) => sum + d.score, 0) / category.domains.length).toFixed(1)}. Market leadership is defined by consistent AI model recognition and brand recall strength.`
-      }));
+      .map(([key, category]) => {
+        // Sort domains by score within each category
+        const sortedDomains = category.domains.sort((a, b) => b.score - a.score).slice(0, 8);
+        
+        return {
+          name: category.name,
+          description: category.description,
+          totalDomains: sortedDomains.length,
+          averageScore: (sortedDomains.reduce((sum, d) => sum + d.score, 0) / sortedDomains.length).toFixed(1),
+          scoreRange: `${Math.min(...sortedDomains.map(d => d.score)).toFixed(1)}-${Math.max(...sortedDomains.map(d => d.score)).toFixed(1)}`,
+          topDomains: JSON.stringify(sortedDomains.map((domain, index) => ({
+            domain: domain.domain,
+            score: domain.score,
+            rank: index + 1,
+            competitive_position: domain.score >= 80 ? 'EXCELLENT' : 
+                                domain.score >= 70 ? 'STRONG' : 
+                                domain.score >= 60 ? 'AVERAGE' : 
+                                domain.score >= 50 ? 'WEAK' : 'CRITICAL',
+            gap_to_leader: sortedDomains[0].score - domain.score
+          }))),
+          competitiveNarrative: `${category.name} represents ${sortedDomains.length} leading companies with an average AI memory score of ${(sortedDomains.reduce((sum, d) => sum + d.score, 0) / sortedDomains.length).toFixed(1)}. Market leadership is defined by consistent AI model recognition and brand recall strength across ${sortedDomains.length} competitive players.`
+        };
+      });
   };
 
   useEffect(() => {

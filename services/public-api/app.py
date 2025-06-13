@@ -543,13 +543,13 @@ async def get_rankings(
             offset = (page - 1) * limit
             
             domains_query = f"""
-                SELECT 
+                SELECT DISTINCT ON (domain)
                     domain, memory_score, ai_consensus_score, model_count,
                     reputation_risk_score, drift_delta,
                     updated_at
                 FROM public_domain_cache 
                 WHERE updated_at > NOW() - INTERVAL '72 hours' {search_condition}
-                ORDER BY {order_clause}
+                ORDER BY domain, updated_at DESC, {order_clause.replace('ORDER BY ', '')}
                 LIMIT ${"2" if search_params else "1"} OFFSET ${"3" if search_params else "2"}
             """
             
