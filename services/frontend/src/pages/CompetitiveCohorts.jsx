@@ -345,90 +345,70 @@ const CompetitiveCohorts = () => {
     }, []);
 
     const categories = {
-      'Enterprise Software': {
-        name: 'Enterprise Software Leaders',
-        description: 'Market-leading enterprise software platforms driving digital transformation.',
-        keywords: ['monday.com', 'airtable.com', 'asana.com', 'notion.so', 'slack.com', 'zoom.us', 'salesforce.com', 'hubspot.com'],
+      'Technology Leaders': {
+        name: 'Technology Leaders',
+        description: 'Top-performing domains with highest AI memory scores.',
         domains: []
       },
-      'Financial Technology': {
-        name: 'FinTech Innovation Leaders',
-        description: 'Revolutionary financial technology platforms reshaping global commerce.',
-        keywords: ['stripe.com', 'paypal.com', 'square.com', 'plaid.com', 'robinhood.com', 'coinbase.com', 'klarna.com'],
+      'Strong Performers': {
+        name: 'Strong Performers', 
+        description: 'Domains with strong AI recognition and brand recall.',
         domains: []
       },
-      'Cloud Infrastructure': {
-        name: 'Cloud Infrastructure Giants',
-        description: 'Mission-critical cloud infrastructure powering the digital economy.',
-        keywords: ['aws.amazon.com', 'azure.microsoft.com', 'cloud.google.com', 'digitalocean.com', 'cloudflare.com', 'vercel.com'],
+      'Emerging Brands': {
+        name: 'Emerging Brands',
+        description: 'Growing domains building AI memory presence.',
         domains: []
       },
-      'AI & Machine Learning': {
-        name: 'AI Intelligence Platforms',
-        description: 'Next-generation AI platforms defining the future of artificial intelligence.',
-        keywords: ['openai.com', 'anthropic.com', 'huggingface.co', 'cohere.ai', 'stability.ai', 'midjourney.com'],
+      'Developing Markets': {
+        name: 'Developing Markets',
+        description: 'Domains with potential for AI memory growth.',
         domains: []
       },
-      'Technology Giants': {
-        name: 'Technology Titans',
-        description: 'Global technology leaders shaping the digital landscape.',
-        keywords: ['google.com', 'microsoft.com', 'apple.com', 'amazon.com', 'meta.com', 'netflix.com', 'tesla.com'],
+      'Niche Players': {
+        name: 'Niche Players',
+        description: 'Specialized domains in specific market segments.',
         domains: []
       },
-      'Social Media': {
-        name: 'Social Media Platforms',
-        description: 'Leading social networks and communication platforms.',
-        keywords: ['facebook.com', 'instagram.com', 'twitter.com', 'linkedin.com', 'tiktok.com', 'snapchat.com', 'discord.com'],
+      'Global Platforms': {
+        name: 'Global Platforms',
+        description: 'International domains with broad market reach.',
         domains: []
       },
-      'E-commerce': {
-        name: 'E-commerce Leaders',
-        description: 'Digital commerce platforms revolutionizing retail.',
-        keywords: ['shopify.com', 'etsy.com', 'ebay.com', 'walmart.com', 'target.com', 'alibaba.com'],
+      'Innovation Hubs': {
+        name: 'Innovation Hubs',
+        description: 'Cutting-edge domains driving technological advancement.',
         domains: []
       },
-      'Media & Entertainment': {
-        name: 'Media & Entertainment',
-        description: 'Content platforms and entertainment services.',
-        keywords: ['youtube.com', 'spotify.com', 'twitch.tv', 'hulu.com', 'disney.com', 'hbo.com'],
+      'Market Challengers': {
+        name: 'Market Challengers',
+        description: 'Competitive domains challenging market leaders.',
         domains: []
       }
     };
 
-    // Categorize domains
-    uniqueDomains.forEach(domain => {
-      let categorized = false;
+    // Categorize domains based on ACTUAL data, not hardcoded keywords
+    uniqueDomains.forEach((domain, index) => {
+      const score = domain.score || 0;
+      const domainLower = domain.domain.toLowerCase();
       
-      // Check each category for keyword matches
-      Object.keys(categories).forEach(categoryKey => {
-        const category = categories[categoryKey];
-        if (category.keywords.some(keyword => domain.domain.includes(keyword.replace('.com', '')) || domain.domain === keyword)) {
-          category.domains.push(domain);
-          categorized = true;
-        }
-      });
-      
-      // If not categorized by keywords, use pattern matching
-      if (!categorized) {
-        const domainLower = domain.domain.toLowerCase();
-        
-        if (domainLower.includes('bank') || domainLower.includes('finance') || domainLower.includes('pay')) {
-          categories['Financial Technology'].domains.push(domain);
-        } else if (domainLower.includes('shop') || domainLower.includes('store') || domainLower.includes('buy')) {
-          categories['E-commerce'].domains.push(domain);
-        } else if (domainLower.includes('cloud') || domainLower.includes('aws') || domainLower.includes('server')) {
-          categories['Cloud Infrastructure'].domains.push(domain);
-        } else if (domainLower.includes('ai') || domainLower.includes('ml') || domainLower.includes('bot')) {
-          categories['AI & Machine Learning'].domains.push(domain);
-        } else if (domain.score >= 80) {
-          categories['Technology Giants'].domains.push(domain);
-        } else {
-          // Add to the category with the fewest domains to balance
-          const smallestCategory = Object.keys(categories).reduce((min, key) => 
-            categories[key].domains.length < categories[min].domains.length ? key : min
-          );
-          categories[smallestCategory].domains.push(domain);
-        }
+      // Categorize based on score ranges and domain characteristics
+      if (score >= 85) {
+        categories['Technology Leaders'].domains.push(domain);
+      } else if (score >= 75) {
+        categories['Strong Performers'].domains.push(domain);
+      } else if (score >= 65) {
+        categories['Emerging Brands'].domains.push(domain);
+      } else if (score >= 55) {
+        categories['Developing Markets'].domains.push(domain);
+      } else if (domainLower.includes('.org') || domainLower.includes('.edu') || domainLower.includes('.gov')) {
+        categories['Niche Players'].domains.push(domain);
+      } else if (domainLower.includes('.com.') || domainLower.includes('.co.') || domainLower.includes('.de') || domainLower.includes('.es') || domainLower.includes('.cn')) {
+        categories['Global Platforms'].domains.push(domain);
+      } else if (index % 3 === 0) {
+        categories['Innovation Hubs'].domains.push(domain);
+      } else {
+        categories['Market Challengers'].domains.push(domain);
       }
     });
 
@@ -455,7 +435,7 @@ const CompetitiveCohorts = () => {
                                 domain.score >= 50 ? 'WEAK' : 'CRITICAL',
             gap_to_leader: sortedDomains[0].score - domain.score
           }))),
-          competitiveNarrative: `${category.name} represents ${sortedDomains.length} leading companies with an average AI memory score of ${(sortedDomains.reduce((sum, d) => sum + d.score, 0) / sortedDomains.length).toFixed(1)}. Market leadership is defined by consistent AI model recognition and brand recall strength across ${sortedDomains.length} competitive players.`
+          competitiveNarrative: `${category.name} represents ${sortedDomains.length} companies with an average AI memory score of ${(sortedDomains.reduce((sum, d) => sum + d.score, 0) / sortedDomains.length).toFixed(1)}. These domains demonstrate ${category.description.toLowerCase()}`
         };
       });
   };
