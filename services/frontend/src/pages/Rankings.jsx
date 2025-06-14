@@ -352,6 +352,7 @@ function Rankings() {
   useEffect(() => {
     const fetchRankings = async () => {
       setLoading(true)
+      console.log('🔍 Fetching rankings...')
       try {
         const params = new URLSearchParams({
           page: currentPage,
@@ -360,17 +361,26 @@ function Rankings() {
           sort: sortBy
         })
         
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/rankings?${params}`)
+        const url = `https://llm-pagerank-public-api.onrender.com/api/rankings?${params}`
+        console.log('📡 API URL:', url)
+        
+        const response = await fetch(url)
         const data = await response.json()
+        
+        console.log('✅ API Response:', data)
+        console.log(`📊 Found ${data.domains?.length || 0} domains`)
         
         setRankings(data.domains || [])
         setTotalPages(data.totalPages || 1)
         setTotalDomains(data.totalDomains || 0)
+        
+        console.log('✅ Rankings state updated')
       } catch (error) {
-        console.error('Failed to fetch rankings:', error)
+        console.error('❌ Failed to fetch rankings:', error)
         setRankings([])
       } finally {
         setLoading(false)
+        console.log('🏁 Rankings fetch complete')
       }
     }
 

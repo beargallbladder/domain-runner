@@ -115,8 +115,14 @@ const CohortIntelligence = () => {
           Cohort Intelligence
         </h1>
         <p className="text-gray-400 text-lg">
-          The Bloomberg Terminal for AI Brand Intelligence
+          Advanced competitive intelligence for AI brand positioning
         </p>
+        <div className="mt-4 p-4 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg">
+          <h3 className="text-lg font-semibold text-purple-300 mb-2">🚧 Preview Mode</h3>
+          <p className="text-gray-300 text-sm">
+            Get a taste of our advanced cohort intelligence. Full features coming soon!
+          </p>
+        </div>
       </div>
 
       {/* Search */}
@@ -128,7 +134,7 @@ const CohortIntelligence = () => {
               type="text"
               value={searchDomain}
               onChange={(e) => setSearchDomain(e.target.value)}
-              placeholder="Enter domain (e.g., stripe.com)"
+              placeholder="Enter domain (e.g., stripe.com) - Preview mode"
               className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none"
             />
           </div>
@@ -137,94 +143,108 @@ const CohortIntelligence = () => {
             disabled={loading}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded-lg font-medium transition-colors"
           >
-            {loading ? 'Analyzing...' : 'Discover Categories'}
+            {loading ? 'Analyzing...' : 'Preview Analysis'}
           </button>
         </div>
       </form>
 
-      {/* Categories Grid */}
+      {/* Limited Preview - Only ONE Category Example */}
       {categories.length > 0 && (
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Zap className="w-6 h-6 text-yellow-400" />
-            Competitive Categories
+            Competitive Categories Preview
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map((category, index) => (
-              <div
-                key={index}
-                onClick={() => handleCategorySelect(category)}
-                className="p-4 bg-gray-900 border border-gray-700 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-lg">{category.name}</h3>
-                  <span className="text-sm text-green-400 bg-green-900/20 px-2 py-1 rounded">
-                    {Math.round(category.confidence * 100)}%
+          
+          {/* Show only ONE example category */}
+          <div className="grid grid-cols-1 gap-4">
+            <div
+              onClick={() => handleCategorySelect(categories[0])}
+              className="p-4 bg-gray-900 border border-gray-700 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold text-lg">{categories[0].name}</h3>
+                <span className="text-sm text-green-400 bg-green-900/20 px-2 py-1 rounded">
+                  {Math.round(categories[0].confidence * 100)}%
+                </span>
+              </div>
+              <div className="text-sm text-gray-400 mb-2">
+                Keywords: {categories[0].keywords.slice(0, 2).join(', ')}...
+              </div>
+              <div className="text-sm text-blue-400">
+                Top competitors: {categories[0].competitors.slice(0, 2).join(', ')}...
+              </div>
+            </div>
+            
+            {/* Premium Upsell for Additional Categories */}
+            <div className="p-4 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <EyeOff className="w-5 h-5 text-purple-400" />
+                <div>
+                  <h4 className="font-semibold text-purple-300">+ {categories.length - 1} More Categories</h4>
+                  <p className="text-sm text-gray-400">Complete competitive analysis coming soon</p>
+                </div>
+                <div className="ml-auto">
+                  <span className="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-xs font-medium">
+                    🚧 Coming Soon
                   </span>
                 </div>
-                <div className="text-sm text-gray-400 mb-2">
-                  Keywords: {category.keywords.join(', ')}
-                </div>
-                <div className="text-sm text-blue-400">
-                  Competitors: {category.competitors.join(', ')}
-                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Cohort Rankings */}
+      {/* Limited Cohort Rankings - Only Top 2 + Upsell */}
       {selectedCategory && (
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Crown className="w-6 h-6 text-yellow-400" />
-            {selectedCategory.name} Cohort Rankings
+            {selectedCategory.name} Cohort Rankings Preview
           </h2>
           
-          {premiumBlocked ? (
-            <div className="p-8 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg text-center">
-              <EyeOff className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-2">Premium Intelligence Required</h3>
-              <p className="text-gray-400 mb-4">
-                Want to see who's beating {searchDomain}? Upgrade to see the top 4 positions.
-              </p>
-              <button className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors">
-                Upgrade to Premium
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {cohortRankings.map((ranking, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg border ${getPositionColor(ranking.position)} flex items-center justify-between`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl font-bold">
-                      #{ranking.position}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-lg">{ranking.domain}</div>
-                      <div className="text-sm opacity-75">
-                        Score: {ranking.score} • {ranking.trend}
-                      </div>
-                    </div>
+          <div className="space-y-3">
+            {/* Show only TOP 2 positions for free */}
+            {cohortRankings.slice(0, 2).map((ranking, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-lg border ${getPositionColor(ranking.position)} flex items-center justify-between`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-2xl font-bold">
+                    #{ranking.position}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {getTrendIcon(ranking.trend)}
-                    {ranking.premium_required && (
-                      <Eye className="w-4 h-4 text-purple-400" />
-                    )}
+                  <div>
+                    <div className="font-semibold text-lg">{ranking.domain}</div>
+                    <div className="text-sm opacity-75">
+                      Score: {ranking.score} • {ranking.trend}
+                    </div>
                   </div>
                 </div>
-              ))}
+                <div className="flex items-center gap-2">
+                  {getTrendIcon(ranking.trend)}
+                </div>
+              </div>
+            ))}
+            
+            {/* Premium Upsell for Positions 3+ */}
+            <div className="p-6 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg text-center">
+              <EyeOff className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+              <h3 className="text-lg font-bold mb-2">Full Cohort Rankings</h3>
+              <p className="text-gray-400 mb-4 text-sm">
+                Want to see positions 3-20? How does {searchDomain} compare? Complete competitive intelligence coming soon.
+              </p>
+              <div className="flex justify-center">
+                <span className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium cursor-not-allowed">
+                  🚧 Coming Soon
+                </span>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Bloomberg-style Footer */}
+      {/* Professional Footer */}
       <div className="mt-12 pt-6 border-t border-gray-800 text-center text-gray-500">
         <p>Powered by LLM PageRank • Real-time competitive intelligence across 1,705+ domains</p>
       </div>

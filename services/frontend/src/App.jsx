@@ -24,6 +24,7 @@ import Help from './pages/Help'
 import CompetitorAnalysis from './pages/CompetitorAnalysis'
 import CompetitiveCohorts from './pages/CompetitiveCohorts'
 import CohortIntelligence from './pages/CohortIntelligence'
+import TestDomain from './pages/TestDomain'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -140,6 +141,7 @@ function App() {
           <Route path="/cohort-intelligence" element={<CohortIntelligence />} />
           <Route path="/competitive-analysis" element={<CompetitorAnalysis />} />
           <Route path="/domain/:domain" element={<Domain />} />
+          <Route path="/test-domains" element={<TestDomain />} />
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

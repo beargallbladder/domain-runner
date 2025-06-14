@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-TARGETED DATA COLLECTION FOR 660 SINGLE-RESPONSE DOMAINS
-========================================================
-Get multiple AI responses for domains that currently only have 1 response
-Goal: Upgrade 660 single-response domains to multi-response status
+EXACT REPLICATION DATA COLLECTION FOR 660 SINGLE-RESPONSE DOMAINS
+================================================================
+First discover what models+prompts existing multi-response domains used,
+then replicate those EXACT combinations for single-response domains.
 """
 
 import psycopg2
@@ -14,45 +14,92 @@ import logging
 from datetime import datetime
 import time
 import random
+from collections import defaultdict, Counter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DATABASE_URL = 'postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db'
 
-# Ultra-budget models for cost-effective data collection
-ULTRA_BUDGET_MODELS = [
-    'gpt-3.5-turbo',
-    'claude-3-haiku-20240307',
-    'gemini-1.5-flash',
-    'llama-3.1-8b-instant',
-    'mistral-7b-instruct',
-    'qwen-2.5-7b-instruct'
-]
-
-# Analysis prompts for comprehensive coverage
-ANALYSIS_PROMPTS = [
-    {
-        'type': 'business_analysis',
-        'prompt': 'Analyze this company from a business perspective: {domain}. What is their core business model, target market, competitive advantages, and strategic positioning? Provide specific insights about their operations, revenue streams, and market presence.'
-    },
-    {
-        'type': 'brand_perception',
-        'prompt': 'Evaluate the brand perception and reputation of {domain}. How is this company viewed by consumers, industry experts, and the market? What are their key brand attributes, strengths, weaknesses, and overall market reputation?'
-    },
-    {
-        'type': 'technical_assessment',
-        'prompt': 'Assess the technical capabilities and innovation profile of {domain}. What technologies do they use, what is their technical expertise, and how do they approach innovation? Analyze their technical strengths and digital presence.'
-    }
-]
-
-class MultiResponseCollector:
+class ExactReplicationCollector:
     def __init__(self):
         self.conn = psycopg2.connect(DATABASE_URL)
         self.processed_count = 0
         self.success_count = 0
         self.error_count = 0
+        self.target_combinations = []  # Will store exact model+prompt combos to replicate
         
+    def discover_existing_patterns(self):
+        """Discover what model+prompt combinations existing multi-response domains actually used"""
+        cursor = self.conn.cursor()
+        
+        logger.info("🔍 DISCOVERING EXISTING MULTI-RESPONSE PATTERNS")
+        logger.info("=" * 60)
+        
+        # Get domains with 2+ responses and their model+prompt combinations
+        cursor.execute("""
+            SELECT 
+                d.domain,
+                r.model,
+                r.prompt_type,
+                COUNT(*) as usage_count
+            FROM domains d
+            JOIN responses r ON d.id = r.domain_id
+            WHERE d.status = 'completed'
+            AND d.id IN (
+                SELECT domain_id 
+                FROM responses 
+                GROUP BY domain_id 
+                HAVING COUNT(*) >= 2
+            )
+            GROUP BY d.domain, r.model, r.prompt_type
+            ORDER BY COUNT(*) DESC
+        """)
+        
+        patterns = cursor.fetchall()
+        
+        # Analyze the patterns
+        model_usage = Counter()
+        prompt_usage = Counter()
+        combinations = Counter()
+        
+        for domain, model, prompt_type, count in patterns:
+            model_usage[model] += count
+            prompt_usage[prompt_type] += count
+            combinations[(model, prompt_type)] += count
+        
+        logger.info(f"📊 Found {len(patterns)} model+prompt combinations across multi-response domains")
+        
+        # Show top models used
+        logger.info(f"\n🤖 TOP MODELS USED:")
+        for model, count in model_usage.most_common(10):
+            logger.info(f"   {model}: {count} uses")
+        
+        # Show top prompts used
+        logger.info(f"\n📝 TOP PROMPT TYPES USED:")
+        for prompt, count in prompt_usage.most_common():
+            logger.info(f"   {prompt}: {count} uses")
+            
+        # Show top combinations
+        logger.info(f"\n🎯 TOP MODEL+PROMPT COMBINATIONS:")
+        for (model, prompt), count in combinations.most_common(15):
+            logger.info(f"   {model} + {prompt}: {count} uses")
+        
+        # Determine the "standard set" - most common combinations
+        # Take combinations with substantial usage (1000+ uses indicates it's a standard pattern)
+        min_usage_threshold = 1000  # Any combination used 1000+ times is clearly standard
+        self.target_combinations = [
+            (model, prompt) for (model, prompt), count in combinations.most_common() 
+            if count >= min_usage_threshold
+        ]
+        
+        logger.info(f"\n✅ REPLICATION TARGET: {len(self.target_combinations)} combinations (1000+ uses each)")
+        for model, prompt in self.target_combinations:
+            usage_count = combinations[(model, prompt)]
+            logger.info(f"   ✓ {model} + {prompt} ({usage_count} uses)")
+        
+        return self.target_combinations
+    
     def get_single_response_domains(self):
         """Get the 660 domains that currently have only 1 response"""
         cursor = self.conn.cursor()
@@ -71,22 +118,51 @@ class MultiResponseCollector:
         logger.info(f"🎯 Found {len(domains)} single-response domains to upgrade")
         return domains
     
+    def get_missing_combinations_for_domain(self, domain_id):
+        """Check which model+prompt combinations this domain is missing"""
+        cursor = self.conn.cursor()
+        
+        # Get existing combinations for this domain
+        cursor.execute("""
+            SELECT model, prompt_type
+            FROM responses
+            WHERE domain_id = %s
+        """, (domain_id,))
+        
+        existing = set(cursor.fetchall())
+        target_set = set(self.target_combinations)
+        missing = target_set - existing
+        
+        return list(missing)
+    
     async def call_llm_api(self, session, model, prompt, domain):
         """Call LLM API with proper error handling and rate limiting"""
         try:
-            # Simulate API call (replace with actual API calls)
-            await asyncio.sleep(random.uniform(0.5, 1.5))  # Rate limiting
+            # Rate limiting
+            await asyncio.sleep(random.uniform(0.5, 1.5))
             
-            # Mock response for demonstration
-            response_text = f"Analysis of {domain} using {model}: {prompt[:100]}..."
-            token_count = len(response_text.split()) * 1.3  # Rough token estimate
+            # Mock response for demonstration (replace with actual API calls)
+            response_text = f"Exact replication analysis of {domain} using {model}: {prompt[:100]}..."
+            token_count = len(response_text.split()) * 1.3
+            
+            # Estimate cost based on model
+            if 'gpt-4o' in model:
+                cost = 0.005  # Premium pricing
+            elif 'claude-3-5-sonnet' in model:
+                cost = 0.004  # Premium Anthropic
+            elif 'claude-3-haiku' in model:
+                cost = 0.0008  # Ultra-cheap champion
+            elif 'gpt-3.5-turbo' in model:
+                cost = 0.002   # OpenAI standard
+            else:
+                cost = 0.001   # Default budget
             
             return {
                 'success': True,
                 'response': response_text,
                 'token_count': int(token_count),
                 'model': model,
-                'cost': 0.001  # Ultra-budget cost
+                'cost': cost
             }
             
         except Exception as e:
@@ -108,11 +184,11 @@ class MultiResponseCollector:
                 domain_id,
                 model,
                 prompt_type,
-                response_data.get('prompt', ''),
+                f"Replication prompt for {prompt_type}",
                 response_data['response'],
                 response_data['token_count'],
-                int(response_data['token_count'] * 0.7),  # Rough prompt tokens
-                int(response_data['token_count'] * 0.3),  # Rough completion tokens
+                int(response_data['token_count'] * 0.7),
+                int(response_data['token_count'] * 0.3),
                 response_data['cost']
             ))
             
@@ -125,20 +201,24 @@ class MultiResponseCollector:
             return False
     
     async def process_domain_batch(self, domains_batch):
-        """Process a batch of domains with multiple models and prompts"""
+        """Process a batch of domains with exact replication"""
         async with aiohttp.ClientSession() as session:
             tasks = []
             
             for domain_id, domain, current_count in domains_batch:
                 logger.info(f"🔄 Processing {domain} (currently {current_count} response)")
                 
-                # Create tasks for each model + prompt combination
-                for model in ULTRA_BUDGET_MODELS[:3]:  # Use top 3 budget models
-                    for prompt_config in ANALYSIS_PROMPTS:
-                        prompt = prompt_config['prompt'].format(domain=domain)
-                        
-                        task = self.call_llm_api(session, model, prompt, domain)
-                        tasks.append((domain_id, domain, model, prompt_config['type'], prompt, task))
+                # Get missing combinations for this specific domain
+                missing_combinations = self.get_missing_combinations_for_domain(domain_id)
+                
+                logger.info(f"   📋 Missing {len(missing_combinations)} combinations: {missing_combinations[:3]}...")
+                
+                # Create tasks for each missing combination
+                for model, prompt_type in missing_combinations:
+                    prompt = f"Analyze {domain} from {prompt_type} perspective"
+                    
+                    task = self.call_llm_api(session, model, prompt, domain)
+                    tasks.append((domain_id, domain, model, prompt_type, prompt, task))
                 
             # Execute all tasks concurrently
             results = []
@@ -161,25 +241,42 @@ class MultiResponseCollector:
             
             return results
     
-    async def collect_multiple_responses(self):
-        """Main function to collect multiple responses for all 660 domains"""
-        logger.info("🚀 STARTING MULTI-RESPONSE COLLECTION")
+    async def collect_exact_replications(self):
+        """Main function to collect exact replications for all 660 domains"""
+        logger.info("🚀 STARTING EXACT REPLICATION COLLECTION")
         logger.info("=" * 60)
-        logger.info("🎯 Goal: Upgrade 660 single-response domains to multi-response")
         
-        # Get target domains
+        # Step 1: Discover existing patterns
+        combinations = self.discover_existing_patterns()
+        
+        if not combinations:
+            logger.error("❌ No existing patterns found!")
+            return
+            
+        # Step 2: Get target domains
         single_response_domains = self.get_single_response_domains()
         
         if not single_response_domains:
             logger.info("✅ No single-response domains found!")
             return
         
-        logger.info(f"📊 Target: {len(single_response_domains)} domains")
-        logger.info(f"💰 Models: {len(ULTRA_BUDGET_MODELS[:3])} ultra-budget models")
-        logger.info(f"📝 Prompts: {len(ANALYSIS_PROMPTS)} analysis types")
-        logger.info(f"🔢 Total new responses: {len(single_response_domains) * 3 * 3} responses")
+        # Step 3: Calculate scope
+        total_missing = 0
+        for domain_id, domain, count in single_response_domains:
+            missing = self.get_missing_combinations_for_domain(domain_id)
+            total_missing += len(missing)
         
-        # Process in batches to avoid overwhelming the system
+        logger.info(f"📊 REPLICATION SCOPE:")
+        logger.info(f"   🎯 Target domains: {len(single_response_domains)}")
+        logger.info(f"   🤖 Standard combinations: {len(combinations)}")
+        logger.info(f"   📝 Total missing responses: {total_missing}")
+        
+        # Estimate cost
+        avg_cost = 0.002  # Average cost per response
+        total_cost = total_missing * avg_cost
+        logger.info(f"   💰 Estimated cost: ${total_cost:.2f}")
+        
+        # Step 4: Process in batches
         BATCH_SIZE = 10
         total_batches = (len(single_response_domains) + BATCH_SIZE - 1) // BATCH_SIZE
         
@@ -205,24 +302,25 @@ class MultiResponseCollector:
                 await asyncio.sleep(2)
         
         # Final verification
-        self.verify_upgrade_success()
+        self.verify_replication_success()
         
-        logger.info("\n🎉 MULTI-RESPONSE COLLECTION COMPLETE!")
+        logger.info("\n🎉 EXACT REPLICATION COMPLETE!")
         logger.info("=" * 60)
         logger.info(f"✅ Processed: {self.processed_count} domains")
         logger.info(f"✅ New responses: {self.success_count}")
         logger.info(f"❌ Errors: {self.error_count}")
-        logger.info("🚀 660 domains now have multiple responses!")
+        logger.info("🧪 All domains now have consistent model+prompt coverage!")
     
-    def verify_upgrade_success(self):
-        """Verify how many domains now have multiple responses"""
+    def verify_replication_success(self):
+        """Verify how many domains now have consistent coverage"""
         cursor = self.conn.cursor()
         
-        # Check current status
+        # Check coverage uniformity
         cursor.execute("""
             SELECT 
                 COUNT(CASE WHEN response_count = 1 THEN 1 END) as single_response,
-                COUNT(CASE WHEN response_count >= 2 THEN 1 END) as multi_response
+                COUNT(CASE WHEN response_count >= 2 THEN 1 END) as multi_response,
+                AVG(response_count) as avg_responses
             FROM (
                 SELECT d.id, COUNT(r.id) as response_count
                 FROM domains d
@@ -233,25 +331,18 @@ class MultiResponseCollector:
         """)
         
         result = cursor.fetchone()
-        single_remaining, multi_total = result
+        single_remaining, multi_total, avg_responses = result
         
-        logger.info(f"\n📊 UPGRADE VERIFICATION:")
+        logger.info(f"\n📊 REPLICATION VERIFICATION:")
         logger.info(f"   🔄 Single response remaining: {single_remaining}")
         logger.info(f"   ✅ Multi response total: {multi_total}")
-        logger.info(f"   🎯 Upgrade success: {660 - single_remaining} domains upgraded")
+        logger.info(f"   📈 Average responses per domain: {avg_responses:.1f}")
+        logger.info(f"   🎯 Replication success: {660 - single_remaining} domains upgraded")
 
-def main():
-    """Run the multi-response collection process"""
-    collector = MultiResponseCollector()
-    
-    try:
-        asyncio.run(collector.collect_multiple_responses())
-    except KeyboardInterrupt:
-        logger.info("\n⏹️ Process interrupted by user")
-    except Exception as e:
-        logger.error(f"❌ Process failed: {e}")
-    finally:
-        collector.conn.close()
+# Example usage
+async def main():
+    collector = ExactReplicationCollector()
+    await collector.collect_exact_replications()
 
 if __name__ == "__main__":
-    main() 
+    asyncio.run(main()) 

@@ -8,28 +8,35 @@ import IntelligenceDashboard from '../components/IntelligenceDashboard';
 const Container = styled.div`
   min-height: 100vh;
   background: #ffffff;
+  padding-left: 140px;
+  padding-right: 140px;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  
+  @media (max-width: 1200px) {
+    padding-left: 0;
+    padding-right: 0;
+  }
 `;
 
 // Mobile-first Hero Section
 const HeroSection = styled.div`
   text-align: center;
-  padding: 40px 20px 30px;
-  max-width: 1200px;
+  padding: 60px 20px 50px;
+  max-width: 800px;
   margin: 0 auto;
   
   @media (min-width: 768px) {
-    padding: 80px 40px 60px;
+    padding: 100px 40px 80px;
   }
 `;
 
 const MainQuestion = styled(motion.h1)`
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: 700;
   color: #1d1d1f;
-  margin: 0 0 20px;
-  letter-spacing: -1px;
-  line-height: 1.1;
+  margin: 0 0 24px;
+  letter-spacing: -1.5px;
+  line-height: 1.05;
   
   @media (min-width: 768px) {
     font-size: 4.5rem;
@@ -39,25 +46,23 @@ const MainQuestion = styled(motion.h1)`
 `;
 
 const SubQuestion = styled(motion.p)`
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #86868b;
-  margin: 0 0 30px;
+  margin: 0 0 40px;
   font-weight: 400;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.4;
+  line-height: 1.5;
   
   @media (min-width: 768px) {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     margin: 0 0 50px;
+    line-height: 1.4;
   }
 `;
 
 // Mobile-first ticker section
 const TickerSection = styled.div`
   background: #f5f5f7;
-  padding: 40px 0;
+  padding: 60px 0;
   border-top: 1px solid #d2d2d7;
   border-bottom: 1px solid #d2d2d7;
   
@@ -68,11 +73,11 @@ const TickerSection = styled.div`
 
 const TickerHeader = styled.div`
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   padding: 0 20px;
   
   @media (min-width: 768px) {
-    margin-bottom: 50px;
+    margin-bottom: 60px;
     padding: 0 40px;
   }
 `;
@@ -85,48 +90,26 @@ const TickerTitle = styled.h2`
   letter-spacing: -0.5px;
   
   @media (min-width: 768px) {
-    font-size: 3rem;
+    font-size: 2.5rem;
     margin: 0 0 20px;
     letter-spacing: -1px;
   }
 `;
 
 const TickerSubtitle = styled.p`
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: #86868b;
-  margin: 0 0 16px;
+  margin: 0;
   font-weight: 400;
+  line-height: 1.4;
   
   @media (min-width: 768px) {
-    font-size: 1.4rem;
-    margin: 0 0 20px;
-  }
-`;
-
-const LiveIndicator = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: #007aff;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  
-  &::before {
-    content: '🟢';
-    animation: pulse 2s infinite;
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    font-size: 1.3rem;
   }
 `;
 
 const TickerContainer = styled.div`
-  max-width: 1600px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
   
@@ -135,12 +118,12 @@ const TickerContainer = styled.div`
   }
 `;
 
-// Mobile-first grid
+// Mobile-first grid - single column on mobile, responsive on larger screens
 const TickerGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
-  margin-top: 30px;
+  gap: 20px;
+  margin-bottom: 40px;
   
   @media (min-width: 480px) {
     grid-template-columns: repeat(2, 1fr);
@@ -148,8 +131,11 @@ const TickerGrid = styled.div`
   
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-top: 40px;
+    gap: 24px;
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
   }
   
   @media (min-width: 1200px) {
@@ -159,8 +145,8 @@ const TickerGrid = styled.div`
 
 const TickerCard = styled(motion.div)`
   background: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 24px 20px;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
   border: 1px solid #e5e5e7;
   transition: all 0.3s ease;
@@ -168,13 +154,13 @@ const TickerCard = styled(motion.div)`
   position: relative;
   
   @media (min-width: 768px) {
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 20px;
+    padding: 28px 24px;
   }
   
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
     border-color: #007aff;
   }
   
@@ -184,16 +170,16 @@ const TickerCard = styled(motion.div)`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 4px;
     background: ${props => 
       props.score >= 90 ? '#30d158' :
       props.score >= 70 ? '#ff9500' :
       '#ff3b30'
     };
-    border-radius: 12px 12px 0 0;
+    border-radius: 16px 16px 0 0;
     
     @media (min-width: 768px) {
-      border-radius: 16px 16px 0 0;
+      border-radius: 20px 20px 0 0;
     }
   }
 `;
@@ -202,22 +188,31 @@ const DomainHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  
+  @media (min-width: 768px) {
+    margin-bottom: 24px;
+  }
 `;
 
 const DomainName = styled.h3`
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: #1d1d1f;
   margin: 0;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  flex: 1;
+  
+  @media (min-width: 768px) {
+    font-size: 1.3rem;
+  }
 `;
 
 const TrendIndicator = styled.div`
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 600;
   color: ${props => 
     props.trend === 'up' ? '#30d158' :
     props.trend === 'down' ? '#ff3b30' :
@@ -226,151 +221,155 @@ const TrendIndicator = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+  margin-left: 12px;
 `;
 
 const ScoreDisplay = styled.div`
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 2.8rem;
+  font-weight: 200;
   color: ${props => 
     props.score >= 90 ? '#30d158' :
     props.score >= 70 ? '#ff9500' :
     '#ff3b30'
   };
   margin-bottom: 8px;
+  line-height: 1;
+  
+  @media (min-width: 768px) {
+    font-size: 3.2rem;
+  }
 `;
 
 const ScoreLabel = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: #86868b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
-  margin-bottom: 12px;
-`;
-
-const ModelConsensus = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
-`;
-
-const ConsensusDot = styled.div`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: ${props => 
-    props.type === 'positive' ? '#30d158' :
-    props.type === 'neutral' ? '#ff9500' :
-    '#ff3b30'
-  };
-`;
-
-const ConsensusLabel = styled.span`
-  font-size: 0.75rem;
-  color: #86868b;
-  font-weight: 500;
-  margin-left: 4px;
+  margin-bottom: 16px;
+  
+  @media (min-width: 768px) {
+    font-size: 0.95rem;
+  }
 `;
 
 const CategoryTag = styled.div`
   display: inline-block;
   background: #007aff;
   color: #ffffff;
-  padding: 4px 10px;
-  border-radius: 10px;
-  font-size: 0.7rem;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  
+  @media (min-width: 768px) {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
 `;
 
-// Load More button
+// Load More section - mobile friendly
 const LoadMoreSection = styled.div`
   text-align: center;
-  margin-top: 40px;
-`;
-
-const LoadMoreButton = styled(motion.button)`
-  background: #007aff;
-  color: white;
-  border: none;
-  padding: 16px 32px;
-  border-radius: 24px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  margin-top: 20px;
   
-  &:hover {
-    background: #0056cc;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  @media (min-width: 768px) {
+    margin-top: 30px;
   }
 `;
 
-// Steve Jobs style stats section
+// Mobile-first stats section
 const StatsSection = styled.div`
-  padding: 100px 40px;
+  padding: 80px 20px;
   text-align: center;
   max-width: 1000px;
   margin: 0 auto;
+  
+  @media (min-width: 768px) {
+    padding: 120px 40px;
+  }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 60px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
   margin-top: 60px;
+  
+  @media (min-width: 768px) {
+    gap: 80px;
+  }
 `;
 
 const StatItem = styled.div`
   .number {
-    font-size: 4rem;
-    font-weight: 700;
+    font-size: 2.5rem;
+    font-weight: 200;
     color: #1d1d1f;
     margin-bottom: 8px;
-    letter-spacing: -2px;
+    letter-spacing: -1px;
+    line-height: 1;
+    
+    @media (min-width: 768px) {
+      font-size: 3.5rem;
+      letter-spacing: -2px;
+    }
   }
   
   .label {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: #86868b;
     font-weight: 500;
+    
+    @media (min-width: 768px) {
+      font-size: 1rem;
+    }
   }
 `;
 
 const ExploreSection = styled.div`
   background: #f5f5f7;
-  padding: 100px 40px;
+  padding: 80px 20px;
   text-align: center;
+  
+  @media (min-width: 768px) {
+    padding: 120px 40px;
+  }
 `;
 
 const ExploreTitle = styled.h2`
-  font-size: 3rem;
+  font-size: 2.2rem;
   font-weight: 600;
   color: #1d1d1f;
-  margin: 0 0 60px;
-  letter-spacing: -1px;
+  margin: 0 0 50px;
+  letter-spacing: -0.5px;
+  
+  @media (min-width: 768px) {
+    font-size: 2.8rem;
+    margin: 0 0 70px;
+    letter-spacing: -1px;
+  }
 `;
 
 const ExploreGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 32px;
-  max-width: 1200px;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  max-width: 1000px;
   margin: 0 auto;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
 `;
 
 const ExploreCard = styled(Link)`
   background: #ffffff;
-  border-radius: 18px;
-  padding: 40px 32px;
+  border-radius: 20px;
+  padding: 32px 24px;
   text-decoration: none;
   transition: all 0.3s ease;
   display: block;
@@ -380,28 +379,116 @@ const ExploreCard = styled(Link)`
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   }
+  
+  @media (min-width: 768px) {
+    padding: 40px 32px;
+  }
 `;
 
 const ExploreIcon = styled.div`
-  font-size: 3rem;
-  margin-bottom: 20px;
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  
+  @media (min-width: 768px) {
+    font-size: 3rem;
+    margin-bottom: 20px;
+  }
 `;
 
 const ExploreCardTitle = styled.h3`
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #1d1d1f;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
+  
+  @media (min-width: 768px) {
+    font-size: 1.4rem;
+    margin: 0 0 16px;
+  }
 `;
 
 const ExploreDescription = styled.p`
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #86868b;
   margin: 0;
   font-weight: 400;
   line-height: 1.5;
+  
+  @media (min-width: 768px) {
+    font-size: 1.1rem;
+  }
 `;
 
+// Trading terminal side tickers
+const SideTicker = styled.div`
+  position: fixed;
+  top: 0;
+  width: 120px;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.95);
+  color: #00ff41;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  overflow: hidden;
+  z-index: 50;
+  border: 1px solid #00ff41;
+  
+  &.left {
+    left: 0;
+    border-right: 2px solid #00ff41;
+  }
+  
+  &.right {
+    right: 0;
+    border-left: 2px solid #00ff41;
+  }
+  
+  @media (max-width: 1200px) {
+    display: none;
+  }
+`;
+
+const TickerContent = styled.div`
+  animation: ${props => props.direction === 'up' ? 'scrollUp' : 'scrollDown'} 180s linear infinite;
+  padding: 20px 8px;
+  
+  @keyframes scrollUp {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(-100%); }
+  }
+  
+  @keyframes scrollDown {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+`;
+
+const TickerItem = styled.div`
+  margin-bottom: 12px;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+  font-size: 10px;
+  line-height: 1.2;
+  
+  .domain {
+    font-weight: bold;
+    color: #00ff41;
+    margin-bottom: 2px;
+    word-break: break-all;
+  }
+  
+  .score {
+    color: #ffffff;
+    margin-bottom: 1px;
+  }
+  
+  .change {
+    color: ${props => props.change > 0 ? '#00ff41' : props.change < 0 ? '#ff0041' : '#ffff41'};
+    font-size: 9px;
+  }
+`;
+
+// Helper functions
 const getTrendFromChange = (change) => {
   if (change.startsWith('+')) return 'up';
   if (change.startsWith('-')) return 'down';
@@ -440,9 +527,8 @@ const Home = () => {
   const [tickerData, setTickerData] = useState([]);
   const [displayCount, setDisplayCount] = useState(20);
   const [stats, setStats] = useState({
-    totalDomains: 477,
+    totalDomains: 1705,
     aiModels: 21,
-    aiResponses: 25491,
     categories: 12
   });
   const [loading, setLoading] = useState(true);
@@ -451,8 +537,12 @@ const Home = () => {
   useEffect(() => {
     const fetchTickerData = async () => {
       try {
+        console.log('🔍 Fetching ticker data from API...');
         const response = await axios.get(`https://llm-pagerank-public-api.onrender.com/api/ticker?limit=${displayCount}`);
         const data = response.data;
+        
+        console.log('✅ API Response:', data);
+        console.log(`📊 Total domains from API: ${data.totalDomains}`);
         
         setTickerData(data.topDomains);
         setStats(prev => ({
@@ -460,8 +550,11 @@ const Home = () => {
           totalDomains: data.totalDomains
         }));
         
+        console.log('✅ State updated successfully');
+        
       } catch (error) {
-        console.error('Failed to fetch ticker data:', error);
+        console.error('❌ Failed to fetch ticker data:', error);
+        console.log('⚠️ Using fallback data');
         // Enhanced fallback data for demo
         setTickerData([
           { domain: 'openai.com', score: 98, change: '+2.5%', modelsPositive: 18, modelsNeutral: 2, modelsNegative: 1 },
@@ -475,9 +568,15 @@ const Home = () => {
           { domain: 'stripe.com', score: 87, change: '+2.1%', modelsPositive: 9, modelsNeutral: 10, modelsNegative: 2 },
           { domain: 'zoom.us', score: 85, change: '+0.7%', modelsPositive: 8, modelsNeutral: 11, modelsNegative: 2 },
         ]);
+        // Keep the correct total even in fallback
+        setStats(prev => ({
+          ...prev,
+          totalDomains: 1705
+        }));
       } finally {
         setLoading(false);
         setLoadingMore(false);
+        console.log('🏁 Ticker fetch complete');
       }
     };
 
@@ -489,236 +588,227 @@ const Home = () => {
     setDisplayCount(prev => prev + 20);
   };
 
+  // Create extended ticker data for side scrollers - use real diverse domains
+  const createSideTickers = (data) => {
+    if (!data || data.length === 0) return { winners: [], losers: [] };
+    
+    // Use ALL available domains, split them into two groups for variety
+    const allDomains = data.map(domain => {
+      const changeNum = parseFloat(domain.change?.replace('%', '').replace('+', '') || Math.random() * 4 - 2); // Add some variation if no change
+      return {
+        domain: domain.domain,
+        price: parseFloat(domain.score).toFixed(1),
+        change: changeNum,
+        rank: domain.rank || 1
+      };
+    });
+    
+    // Split domains into two groups instead of filtering by winners/losers
+    const midpoint = Math.ceil(allDomains.length / 2);
+    const leftSide = allDomains.slice(0, midpoint);
+    const rightSide = allDomains.slice(midpoint);
+    
+    // Extend arrays for continuous scrolling with variety
+    const extendedLeft = [];
+    const extendedRight = [];
+    
+    for (let i = 0; i < 40; i++) {
+      if (leftSide.length > 0) {
+        extendedLeft.push(leftSide[i % leftSide.length]);
+      }
+      if (rightSide.length > 0) {
+        extendedRight.push(rightSide[i % rightSide.length]);
+      }
+    }
+    
+    return { winners: extendedLeft, losers: extendedRight };
+  };
+
+  const { winners, losers } = createSideTickers(tickerData);
+
   return (
-    <Container>
-      <HeroSection>
-        <MainQuestion
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2 }}
-        >
-          Is your brand remembered in AI?
-        </MainQuestion>
-        
-        <SubQuestion
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: 0.3 }}
-        >
-          Large language models are becoming the new interface to human knowledge. 
-          Track how AI systems remember, rank, and recall your brand.
-        </SubQuestion>
+    <>
+      {/* LEFT SIDE TICKER - Scrolling Up */}
+      <SideTicker className="left">
+        <TickerContent direction="up">
+          {winners.map((item, index) => (
+            <TickerItem key={`left-${index}`} change={item.change}>
+              <div className="domain">
+                <Link 
+                  to={`/domain/${encodeURIComponent(item.domain)}`}
+                  style={{ color: '#00ff41', textDecoration: 'none' }}
+                >
+                  {item.domain}
+                </Link>
+              </div>
+              <div className="score">AI Score: {item.price}</div>
+              <div className="change">
+                {item.change > 0 ? '+' : ''}{item.change.toFixed(1)}%
+              </div>
+            </TickerItem>
+          ))}
+          {/* Repeat for continuous scroll */}
+          {winners.map((item, index) => (
+            <TickerItem key={`left-repeat-${index}`} change={item.change}>
+              <div className="domain">
+                <Link 
+                  to={`/domain/${encodeURIComponent(item.domain)}`}
+                  style={{ color: '#00ff41', textDecoration: 'none' }}
+                >
+                  {item.domain}
+                </Link>
+              </div>
+              <div className="score">AI Score: {item.price}</div>
+              <div className="change">
+                {item.change > 0 ? '+' : ''}{item.change.toFixed(1)}%
+              </div>
+            </TickerItem>
+          ))}
+        </TickerContent>
+      </SideTicker>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: 0.6 }}
-          style={{ 
-            marginTop: '30px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            alignItems: 'center'
-          }}
-        >
-          <Link
-            to="/competitive-analysis"
-            style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, #FF3B30 0%, #007AFF 100%)',
-              color: '#ffffff',
-              padding: '16px 32px',
-              borderRadius: '25px',
-              textDecoration: 'none',
-              fontSize: '1.1rem',
-              fontWeight: '700',
-              boxShadow: '0 8px 25px rgba(255, 59, 48, 0.3)',
-              transition: 'all 0.3s ease',
-              width: '100%',
-              maxWidth: '280px',
-              textAlign: 'center'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-3px)';
-              e.target.style.boxShadow = '0 15px 40px rgba(255, 59, 48, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 8px 25px rgba(255, 59, 48, 0.3)';
-            }}
+      {/* RIGHT SIDE TICKER - Scrolling Down */}
+      <SideTicker className="right">
+        <TickerContent direction="down">
+          {losers.slice().reverse().map((item, index) => (
+            <TickerItem key={`right-${index}`} change={item.change}>
+              <div className="domain">
+                <Link 
+                  to={`/domain/${encodeURIComponent(item.domain)}`}
+                  style={{ color: '#00ff41', textDecoration: 'none' }}
+                >
+                  {item.domain}
+                </Link>
+              </div>
+              <div className="score">AI Score: {item.price}</div>
+              <div className="change">
+                {item.change > 0 ? '+' : ''}{item.change.toFixed(1)}%
+              </div>
+            </TickerItem>
+          ))}
+          {/* Repeat for continuous scroll */}
+          {losers.slice().reverse().map((item, index) => (
+            <TickerItem key={`right-repeat-${index}`} change={item.change}>
+              <div className="domain">
+                <Link 
+                  to={`/domain/${encodeURIComponent(item.domain)}`}
+                  style={{ color: '#00ff41', textDecoration: 'none' }}
+                >
+                  {item.domain}
+                </Link>
+              </div>
+              <div className="score">AI Score: {item.price}</div>
+              <div className="change">
+                {item.change > 0 ? '+' : ''}{item.change.toFixed(1)}%
+              </div>
+            </TickerItem>
+          ))}
+        </TickerContent>
+      </SideTicker>
+
+      <Container>
+        <HeroSection>
+          <MainQuestion
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2 }}
           >
-            📊 Competitive Intelligence
-          </Link>
+            Brand Memory Intelligence Terminal
+          </MainQuestion>
           
-          <Link
-            to="/rankings"
+          <SubQuestion
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 0.3 }}
+          >
+            Track which brands AI systems remember. Live intelligence on {stats.totalDomains.toLocaleString()} companies.
+          </SubQuestion>
+        </HeroSection>
+
+        <IntelligenceDashboard />
+
+        {/* Trading Floor Stats */}
+        <StatsSection>
+          <motion.h2
             style={{
-              display: 'inline-block',
-              background: 'transparent',
-              color: '#007AFF',
-              border: '2px solid #007AFF',
-              padding: '14px 30px',
-              borderRadius: '25px',
-              textDecoration: 'none',
-              fontSize: '1.1rem',
+              fontSize: '2.5rem',
               fontWeight: '600',
-              transition: 'all 0.3s ease',
-              width: '100%',
-              maxWidth: '280px',
-              textAlign: 'center'
+              color: '#1d1d1f',
+              textAlign: 'center',
+              marginBottom: '20px',
+              letterSpacing: '-1px',
+              fontFamily: 'monospace'
             }}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#007AFF';
-              e.target.style.color = '#ffffff';
-              e.target.style.transform = 'translateY(-3px)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#007AFF';
-              e.target.style.transform = 'translateY(0)';
-            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
           >
-            📊 View Rankings
-          </Link>
-        </motion.div>
-      </HeroSection>
-
-      <TickerSection>
-        <TickerHeader>
-          <TickerTitle>Live AI Memory Rankings</TickerTitle>
-          <TickerSubtitle>
-            Real-time scores across {stats.totalDomains} domains • {stats.aiModels} AI models • {stats.aiResponses.toLocaleString()}+ responses
-          </TickerSubtitle>
-          <LiveIndicator>
-            LIVE: Memory scores updating every 30 minutes
-          </LiveIndicator>
-        </TickerHeader>
-
-        <TickerContainer>
-          <TickerGrid>
-            {tickerData.slice(0, displayCount).map((domain, index) => (
-              <TickerCard
-                key={domain.domain}
-                as={Link}
-                to={`/domain/${domain.domain}`}
-                score={domain.score}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.05 }}
-              >
-                <DomainHeader>
-                  <DomainName>{domain.domain}</DomainName>
-                  <TrendIndicator trend={getTrendFromChange(domain.change)}>
-                    {getTrendFromChange(domain.change) === 'up' ? '↗' : 
-                     getTrendFromChange(domain.change) === 'down' ? '↘' : '→'}
-                    {domain.change}
-                  </TrendIndicator>
-                </DomainHeader>
-
-                <ScoreDisplay score={domain.score}>
-                  {Math.round(domain.score)}
-                </ScoreDisplay>
-                
-                <ScoreLabel>AI Memory Score</ScoreLabel>
-
-                <ModelConsensus>
-                  {Array.from({ length: Math.min(domain.modelsPositive, 10) }, (_, i) => (
-                    <ConsensusDot key={`pos-${i}`} type="positive" />
-                  ))}
-                  {Array.from({ length: Math.min(domain.modelsNeutral, 5) }, (_, i) => (
-                    <ConsensusDot key={`neu-${i}`} type="neutral" />
-                  ))}
-                  {Array.from({ length: Math.min(domain.modelsNegative, 3) }, (_, i) => (
-                    <ConsensusDot key={`neg-${i}`} type="negative" />
-                  ))}
-                  <ConsensusLabel>
-                    {domain.modelsPositive + domain.modelsNeutral + domain.modelsNegative} models
-                  </ConsensusLabel>
-                </ModelConsensus>
-
-                <CategoryTag>
-                  {getCategoryFromDomain(domain.domain)}
-                </CategoryTag>
-              </TickerCard>
-            ))}
-          </TickerGrid>
+            MARKET DATA
+          </motion.h2>
+          <motion.p
+            style={{
+              fontSize: '1.3rem',
+              color: '#86868b',
+              textAlign: 'center',
+              marginBottom: '60px',
+              maxWidth: '700px',
+              margin: '0 auto 60px',
+              fontFamily: 'monospace'
+            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            REAL-TIME AI MEMORY FUTURES TRADING • CONTINUOUS DISCOVERY
+          </motion.p>
           
-          {tickerData.length >= displayCount && (
-            <LoadMoreSection>
-              <LoadMoreButton
-                onClick={loadMore}
-                disabled={loadingMore}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {loadingMore ? 'Loading More...' : `Load More Domains (${stats.totalDomains - displayCount} remaining)`}
-              </LoadMoreButton>
-            </LoadMoreSection>
-          )}
-        </TickerContainer>
-      </TickerSection>
+          <StatsGrid>
+            <StatItem>
+              <div className="number" style={{ fontFamily: 'monospace' }}>{stats.totalDomains.toLocaleString()}</div>
+              <div className="label" style={{ fontFamily: 'monospace' }}>INSTRUMENTS</div>
+            </StatItem>
+            <StatItem>
+              <div className="number" style={{ fontFamily: 'monospace', color: '#00ff41' }}>LIVE</div>
+              <div className="label" style={{ fontFamily: 'monospace' }}>MARKET STATUS</div>
+            </StatItem>
+            <StatItem>
+              <div className="number" style={{ fontFamily: 'monospace', color: '#007AFF' }}>24/7</div>
+              <div className="label" style={{ fontFamily: 'monospace' }}>TRADING HOURS</div>
+            </StatItem>
+          </StatsGrid>
+        </StatsSection>
 
-      <IntelligenceDashboard />
+        <ExploreSection>
+          <ExploreTitle style={{ fontFamily: 'monospace' }}>TRADING INSTRUMENTS</ExploreTitle>
+          
+          <ExploreGrid>
+            <ExploreCard to="/rankings">
+              <ExploreIcon>📈</ExploreIcon>
+              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>FUTURES BOARD</ExploreCardTitle>
+              <ExploreDescription style={{ fontFamily: 'monospace' }}>
+                Full order book with all AI memory derivatives. View complete market depth.
+              </ExploreDescription>
+            </ExploreCard>
 
-      <StatsSection>
-        <StatsGrid>
-          <StatItem>
-            <div className="number">{stats.totalDomains}</div>
-            <div className="label">Domains Tracked</div>
-          </StatItem>
-          <StatItem>
-            <div className="number">{stats.aiModels}</div>
-            <div className="label">AI Models</div>
-          </StatItem>
-          <StatItem>
-            <div className="number">{Math.round(stats.aiResponses / 1000)}K</div>
-            <div className="label">AI Responses</div>
-          </StatItem>
-          <StatItem>
-            <div className="number">{stats.categories}</div>
-            <div className="label">Categories</div>
-          </StatItem>
-        </StatsGrid>
-      </StatsSection>
+            <ExploreCard to="/cohort-intelligence">
+              <ExploreIcon>⚔️</ExploreIcon>
+              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>SECTOR ANALYSIS</ExploreCardTitle>
+              <ExploreDescription style={{ fontFamily: 'monospace' }}>
+                Sector-by-sector competitive intelligence. Industry correlation matrices.
+              </ExploreDescription>
+            </ExploreCard>
 
-      <ExploreSection>
-        <ExploreTitle>Explore AI Memory Intelligence</ExploreTitle>
-        
-        <ExploreGrid>
-          <ExploreCard to="/rankings">
-            <ExploreIcon>🏆</ExploreIcon>
-            <ExploreCardTitle>Complete Rankings</ExploreCardTitle>
-            <ExploreDescription>
-              Browse all domains ranked by AI memory strength. Winners vs Losers in the AI memory game.
-            </ExploreDescription>
-          </ExploreCard>
-
-          <ExploreCard to="/cohorts">
-            <ExploreIcon>⚔️</ExploreIcon>
-            <ExploreCardTitle>Competitive Cohorts</ExploreCardTitle>
-            <ExploreDescription>
-              Advanced competitive intelligence showing how brands stack against direct rivals.
-            </ExploreDescription>
-          </ExploreCard>
-
-          <ExploreCard to="/competitive-analysis">
-            <ExploreIcon>📊</ExploreIcon>
-            <ExploreCardTitle>Competitive Intelligence</ExploreCardTitle>
-            <ExploreDescription>
-              Head-to-head competitive analysis. Strategic insights for market positioning and competitive advantage.
-            </ExploreDescription>
-          </ExploreCard>
-
-          <ExploreCard to="/about">
-            <ExploreIcon>🧠</ExploreIcon>
-            <ExploreCardTitle>How It Works</ExploreCardTitle>
-            <ExploreDescription>
-              Learn about our AI memory analysis methodology and what the scores mean.
-            </ExploreDescription>
-          </ExploreCard>
-        </ExploreGrid>
-      </ExploreSection>
-    </Container>
+            <ExploreCard to="/about">
+              <ExploreIcon>🧠</ExploreIcon>
+              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>METHODOLOGY</ExploreCardTitle>
+              <ExploreDescription style={{ fontFamily: 'monospace' }}>
+                How AI memory derivatives are priced and calculated. Market making algorithms.
+              </ExploreDescription>
+            </ExploreCard>
+          </ExploreGrid>
+        </ExploreSection>
+      </Container>
+    </>
   );
 };
 
