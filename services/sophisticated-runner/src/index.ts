@@ -4327,3 +4327,46 @@ class TeslaJOLTMonitor {
     return transitions;
   }
 }
+
+// 🚀 PROCESSING CONTROL ENDPOINTS
+app.post('/process/restart', async (req, res) => {
+  try {
+    console.log('🔄 Manual processing restart triggered...');
+    
+    // Check if there are pending domains
+    const pendingCheck = await pool.query(`SELECT COUNT(*) as count FROM domains WHERE status = 'pending'`);
+    const pendingCount = parseInt(pendingCheck.rows[0].count);
+    
+    if (pendingCount === 0) {
+      return res.json({
+        success: true,
+        message: 'No pending domains to process',
+        pending_domains: 0,
+        action: 'No restart needed'
+      });
+    }
+    
+    // Create new runner instance and restart processing
+    const runner = new SophisticatedRunner();
+    
+    // Start processing in background (don't await)
+    runner.startProcessing().catch(error => {
+      console.error('❌ Processing restart failed:', error);
+    });
+    
+    res.json({
+      success: true,
+      message: `🚀 Processing restarted! Working on ${pendingCount} pending domains`,
+      pending_domains: pendingCount,
+      action: 'Processing loop restarted',
+      note: 'Processing will continue until all domains are complete'
+    });
+    
+  } catch (error) {
+    console.error('❌ Processing restart failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: (error as Error).message 
+    });
+  }
+});
