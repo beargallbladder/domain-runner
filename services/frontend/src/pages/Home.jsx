@@ -795,27 +795,27 @@ const Home = () => {
           <ExploreTitle style={{ fontFamily: 'monospace' }}>MEMORY ANALYSIS TOOLS</ExploreTitle>
           
           <ExploreGrid>
-            <ExploreCard to="/rankings">
-              <ExploreIcon>📈</ExploreIcon>
-              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>MEMORY DERIVATIVES</ExploreCardTitle>
+            <ExploreCard to="/rankings-terminal">
+              <ExploreIcon>💻</ExploreIcon>
+              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>MEMORY TERMINAL</ExploreCardTitle>
               <ExploreDescription style={{ fontFamily: 'monospace' }}>
-                Complete brand memory decay curves and volatility analysis. Track consensus spreads across models.
+                Real-time memory decay curves and threat indicators. Professional terminal interface with live data feeds.
               </ExploreDescription>
             </ExploreCard>
 
-            <ExploreCard to="/cohort-intelligence">
+            <ExploreCard to="/battles">
               <ExploreIcon>⚔️</ExploreIcon>
-              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>SECTOR ANALYSIS</ExploreCardTitle>
+              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>COMPETITIVE BATTLES</ExploreCardTitle>
               <ExploreDescription style={{ fontFamily: 'monospace' }}>
-                Sector-by-sector competitive intelligence. Industry correlation matrices.
+                Head-to-head brand battles. Microsoft vs Google, HubSpot vs Salesforce. Real competitive intelligence.
               </ExploreDescription>
             </ExploreCard>
 
-            <ExploreCard to="/about">
-              <ExploreIcon>🧠</ExploreIcon>
-              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>METHODOLOGY</ExploreCardTitle>
+            <ExploreCard to="/rankings">
+              <ExploreIcon>📊</ExploreIcon>
+              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>RANKINGS</ExploreCardTitle>
               <ExploreDescription style={{ fontFamily: 'monospace' }}>
-                How brand memory half-life is calculated. Memory decay algorithms and consensus measurement.
+                Complete brand memory rankings. Search and discover which brands win the AI memory game.
               </ExploreDescription>
             </ExploreCard>
           </ExploreGrid>

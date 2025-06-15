@@ -348,48 +348,89 @@ function Rankings() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalDomains, setTotalDomains] = useState(0)
+  const [searchLoading, setSearchLoading] = useState(false)
 
+  // Debounced search effect
   useEffect(() => {
-    const fetchRankings = async () => {
-      setLoading(true)
-      console.log('🔍 Fetching rankings...')
-      try {
-        const params = new URLSearchParams({
-          page: currentPage,
-          limit: 50,
-          search: searchTerm,
-          sort: sortBy
-        })
-        
-        const url = `https://llm-pagerank-public-api.onrender.com/api/rankings?${params}`
-        console.log('📡 API URL:', url)
-        
-        const response = await fetch(url)
-        const data = await response.json()
-        
-        console.log('✅ API Response:', data)
-        console.log(`📊 Found ${data.domains?.length || 0} domains`)
-        
-        setRankings(data.domains || [])
-        setTotalPages(data.totalPages || 1)
-        setTotalDomains(data.totalDomains || 0)
-        
-        console.log('✅ Rankings state updated')
-      } catch (error) {
-        console.error('❌ Failed to fetch rankings:', error)
-        setRankings([])
-      } finally {
-        setLoading(false)
-        console.log('🏁 Rankings fetch complete')
-      }
-    }
+    const timeoutId = setTimeout(() => {
+      fetchRankings()
+    }, searchTerm ? 300 : 0) // 300ms debounce for search, immediate for no search
 
-    fetchRankings()
+    return () => clearTimeout(timeoutId)
   }, [currentPage, searchTerm, sortBy])
 
+  const fetchRankings = async () => {
+    if (searchTerm && searchTerm.length < 2) return // Don't search for single characters
+    
+    const isSearching = Boolean(searchTerm)
+    if (isSearching) {
+      setSearchLoading(true)
+    } else {
+      setLoading(true)
+    }
+    
+    console.log(`🔍 ${isSearching ? 'Searching' : 'Fetching'} rankings...`)
+    try {
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 50,
+        sort: sortBy,
+        // Add cache busting
+        _t: Date.now()
+      })
+      
+      // Only add search param if there's actually a search term
+      if (searchTerm && searchTerm.trim()) {
+        params.append('search', searchTerm.toLowerCase().trim())
+      }
+      
+      const url = `https://llm-pagerank-public-api.onrender.com/api/rankings?${params}`
+      console.log('📡 API URL:', url)
+      
+      const response = await fetch(url, {
+        // Force no cache
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`API responded with ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      console.log('✅ API Response:', data)
+      console.log(`📊 Found ${data.domains?.length || 0} domains for "${searchTerm || 'all'}"`)
+      
+      setRankings(data.domains || [])
+      setTotalPages(data.totalPages || 1)
+      setTotalDomains(data.totalDomains || 0)
+      
+      console.log('✅ Rankings state updated')
+    } catch (error) {
+      console.error('❌ Failed to fetch rankings:', error)
+      setRankings([])
+      setTotalDomains(0)
+      setTotalPages(1)
+    } finally {
+      setLoading(false)
+      setSearchLoading(false)
+      console.log('🏁 Rankings fetch complete')
+    }
+  }
+
   const handleSearch = (e) => {
-    setSearchTerm(e.target.value)
-    setCurrentPage(1)
+    const newSearchTerm = e.target.value
+    setSearchTerm(newSearchTerm)
+    setCurrentPage(1) // Reset to first page when searching
+    
+    // Show immediate feedback
+    if (newSearchTerm && newSearchTerm.length >= 2) {
+      setSearchLoading(true)
+    }
   }
 
   const handleSort = (newSortBy) => {
@@ -397,7 +438,12 @@ function Rankings() {
     setCurrentPage(1)
   }
 
-  if (loading) {
+  const clearSearch = () => {
+    setSearchTerm('')
+    setCurrentPage(1)
+  }
+
+  if (loading && !searchLoading) {
     return (
       <Container>
         <LoadingState>
@@ -443,12 +489,50 @@ function Rankings() {
       </Stats>
 
       <Controls>
-        <SearchBox
-          type="text"
-          placeholder="Search domains..."
-          value={searchTerm}
-          onChange={handleSearch}
-        />
+        <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+          <SearchBox
+            type="text"
+            placeholder="Search domains... (try: microsoft, apple, google)"
+            value={searchTerm}
+            onChange={handleSearch}
+            style={{ 
+              borderColor: searchLoading ? '#007AFF' : searchTerm ? '#34C759' : '#e5e5e5',
+              paddingRight: searchTerm ? '40px' : '16px'
+            }}
+          />
+          {searchTerm && (
+            <button
+              onClick={clearSearch}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                fontSize: '18px',
+                color: '#666',
+                cursor: 'pointer'
+              }}
+            >
+              ×
+            </button>
+          )}
+          {searchLoading && (
+            <div style={{
+              position: 'absolute',
+              right: searchTerm ? '40px' : '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '16px',
+              height: '16px',
+              border: '2px solid #007AFF',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          )}
+        </div>
         
         <SortControls>
           <SortButton 
@@ -471,6 +555,32 @@ function Rankings() {
           </SortButton>
         </SortControls>
       </Controls>
+
+      {searchTerm && rankings.length === 0 && !searchLoading && (
+        <div style={{
+          textAlign: 'center',
+          padding: '40px',
+          background: '#fff3cd',
+          border: '1px solid #ffeaa7',
+          borderRadius: '12px',
+          margin: '20px 0'
+        }}>
+          <h3 style={{ marginBottom: '8px', color: '#856404' }}>No results for "{searchTerm}"</h3>
+          <p style={{ color: '#856404', marginBottom: '16px' }}>
+            Try searching for: microsoft, apple, google, amazon, tesla, netflix
+          </p>
+          <button onClick={clearSearch} style={{
+            background: '#007AFF',
+            color: 'white',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}>
+            Clear Search
+          </button>
+        </div>
+      )}
 
       <RankingsTable>
         <TableHeader>
