@@ -25,6 +25,9 @@ import CompetitorAnalysis from './pages/CompetitorAnalysis'
 import CompetitiveCohorts from './pages/CompetitiveCohorts'
 import CohortIntelligence from './pages/CohortIntelligence'
 import TestDomain from './pages/TestDomain'
+import AdLanding from './pages/AdLanding'
+import RankingsTerminal from './pages/RankingsTerminal'
+import CompetitiveBattles from './pages/CompetitiveBattles'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -137,12 +140,15 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/rankings" element={<Rankings />} />
+          <Route path="/rankings-terminal" element={<RankingsTerminal />} />
           <Route path="/cohorts" element={<CompetitiveCohorts />} />
+          <Route path="/battles" element={<CompetitiveBattles />} />
           <Route path="/cohort-intelligence" element={<CohortIntelligence />} />
           <Route path="/competitive-analysis" element={<CompetitorAnalysis />} />
           <Route path="/domain/:domain" element={<Domain />} />
           <Route path="/test-domains" element={<TestDomain />} />
           <Route path="/about" element={<About />} />
+          <Route path="/ad/:company" element={<AdLanding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Main>
