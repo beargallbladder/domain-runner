@@ -1468,8 +1468,8 @@ class SophisticatedRunner {
       console.log(`🎯 Processing: ${domain} (${SERVICE_ID}) - Atomically claimed`);
 
       // 🎯 Select models and prompts based on tiered JOLT architecture
-      const selectedModels = await selectModelsForDomainTiered(domain);
-      const selectedPrompts = await selectPromptsForDomainTiered(domain);
+              const selectedModels = await selectModelsForDomainWithPremiumOverride(domain);
+        const selectedPrompts = await selectPromptsForDomainWithPremiumOverride(domain);
       const tier = await tieredJOLTManager.getJOLTTier(domain);
       
       console.log(`📊 ${domain} analysis plan (${tier} tier): ${selectedModels.length} models × ${selectedPrompts.length} prompts = ${selectedModels.length * selectedPrompts.length} total API calls`);
@@ -2688,22 +2688,25 @@ const premiumDiscoveryMode = new PremiumDiscoveryMode();
 // 💰 PREMIUM DISCOVERY ENDPOINTS - INVESTMENT MODE FOR RICHER TENSOR DATA
 // ============================================================================
 
-// Enable premium discovery mode  
+// Enable FULL premium mode (discovery + processing)
 app.post('/premium/enable', async (req, res) => {
   try {
     premiumDiscoveryMode.enablePremiumMode();
+    enablePremiumProcessingMode();
     
     res.json({
       success: true,
-      message: '💰 Premium Discovery Mode ENABLED!',
+      message: '💰 FULL PREMIUM MODE ENABLED! (Discovery + Processing)',
       changes: {
-        models: 'Upgraded to premium models (gpt-4, claude-3.5-sonnet, grok)',
+        discovery_models: 'Upgraded to premium models (gpt-4, claude-3.5-sonnet, grok)',
+        processing_models: 'ALL domains use premium models (overrides tiered system)',
         competitors_per_domain: '10 instead of 4 (2.5x broader scope)', 
         crisis_detection: 'Multi-model consensus (all 4 premium models)',
-        cost_impact: '4-5x increase for 3-5x quality improvement'
+        comprehensive_analysis: 'ALL domains get 4 prompts × 5 models = 20 responses each',
+        cost_impact: '8-10x increase for comprehensive T=2 tensor generation'
       },
-      investment_strategy: 'Accelerate tensor readiness with higher quality discovery',
-      estimated_cost_increase: '$3-5 → $15-25 per discovery run'
+      investment_strategy: 'Generate publication-ready comprehensive tensor dataset',
+      estimated_cost_increase: '$3-5 → $25-35 for complete analysis'
     });
     
   } catch (error) {
@@ -2714,16 +2717,18 @@ app.post('/premium/enable', async (req, res) => {
   }
 });
 
-// Disable premium discovery mode
+// Disable FULL premium mode (discovery + processing)
 app.post('/premium/disable', async (req, res) => {
   try {
     premiumDiscoveryMode.disablePremiumMode();
+    disablePremiumProcessingMode();
     
     res.json({
       success: true,
-      message: '💰 Premium Discovery Mode DISABLED - back to cost-optimized',
+      message: '💰 FULL PREMIUM MODE DISABLED - back to cost-optimized',
       reverted_to: {
-        models: 'Ultra-cheap models (gpt-4o-mini, claude-haiku)',
+        discovery_models: 'Ultra-cheap models (gpt-4o-mini, claude-haiku)',
+        processing_models: 'Back to tiered system (JOLT = premium, regular = cheap)',
         competitors_per_domain: '4 (standard scope)',
         crisis_detection: 'Single model random selection',
         cost_level: 'Optimized for volume over premium quality'
@@ -4370,3 +4375,44 @@ app.post('/process/restart', async (req, res) => {
     });
   }
 });
+
+// 💰 PREMIUM PROCESSING MODE - OVERRIDE TIERED SYSTEM FOR COMPREHENSIVE ANALYSIS
+let PREMIUM_PROCESSING_MODE = false;
+
+function enablePremiumProcessingMode(): void {
+  PREMIUM_PROCESSING_MODE = true;
+  console.log('💰 PREMIUM PROCESSING MODE: ENABLED');
+  console.log('   - ALL domains will use premium models');
+  console.log('   - Overrides tiered cost control');
+  console.log('   - Comprehensive T=2 tensor generation');
+}
+
+function disablePremiumProcessingMode(): void {
+  PREMIUM_PROCESSING_MODE = false;
+  console.log('💰 PREMIUM PROCESSING MODE: DISABLED - back to tiered processing');
+}
+
+// Modified model selection for premium processing override
+async function selectModelsForDomainWithPremiumOverride(domain: string): Promise<string[]> {
+  if (PREMIUM_PROCESSING_MODE) {
+    // Premium mode: Use ALL model tiers for comprehensive analysis
+    return [
+      ...PREMIUM_MODELS.slice(0, 2),      // 2 premium models
+      ...MIDDLE_TIER_MODELS.slice(0, 2),  // 2 middle tier models  
+      ...ULTRA_CHEAP_MODELS.slice(0, 1)   // 1 ultra cheap model for comparison
+    ];
+  }
+  
+  // Normal tiered processing
+  return await selectModelsForDomainTiered(domain);
+}
+
+async function selectPromptsForDomainWithPremiumOverride(domain: string): Promise<string[]> {
+  if (PREMIUM_PROCESSING_MODE) {
+    // Premium mode: Use ALL comprehensive prompts
+    return ['business_analysis', 'technical_assessment', 'brand_memory_analysis', 'market_intelligence'];
+  }
+  
+  // Normal tiered processing
+  return await selectPromptsForDomainTiered(domain);
+}
