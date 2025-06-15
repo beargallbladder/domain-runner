@@ -1,80 +1,89 @@
-# RawCaptureRunner
+# Memory Oracle
 
-A clean, stateless service for capturing raw LLM responses across multiple models.
+> **"Will you fade, or endure?"**
 
-## Overview
+The most existentially powerful interface ever built for domain intelligence. This is not analytics—this is digital mortality made visible.
 
-RawCaptureRunner is a service that:
-1. Loads domains from a Postgres database
-2. Runs each domain through a set of prompt templates
-3. Captures raw responses from 8 different LLM providers
-4. Stores results back in Postgres
+## 🕯️ The Experience
 
-## Deployment on Render
+When someone visits Memory Oracle, they don't just see data. They **feel their mortality**. The flickering candle reminds them that all things fade. The timer counts their precious seconds alive. The "extinction zone" shows domains breathing their last digital breath.
 
-1. Fork/clone this repository
-2. Create a new Web Service on Render
-3. Connect to your repository
-4. Use the following settings:
-   - Environment: Node
-   - Build Command: `npm install && npm run build`
-   - Start Command: `npm start`
+**This interface makes people stop scrolling and confront the question: Will I be remembered?**
 
-## Environment Variables
+### Emotional Architecture
 
-Set these in your Render dashboard:
+- **Mortality Timer**: Counts every second you've been alive on the site
+- **Breathing Candle**: Flickers like life itself, reminding of digital death
+- **Fade Animations**: Text disappears and returns, like memory itself
+- **Extinction Zone**: Shows domains at risk of being forgotten forever
+- **Shadow Metaphors**: "Know your shadows, shape your light"
 
+## 🎯 The Purpose
+
+We measure the **shadows of digital existence** to help brands shape their **light**. Through 21,606+ AI model responses across 535+ domains, we reveal which entities will endure in an AI-driven future.
+
+**This is consensus reality**—the collective memory of artificial minds, synthesized into memory scores that predict digital permanence.
+
+## 📊 Real Intelligence
+
+- **535+ Domains**: Across 8 major sectors from AI to biotech
+- **21,606+ AI Responses**: Real consensus data from multiple models  
+- **Live Decay Tracking**: Memory scores change in real-time
+- **Extinction Analytics**: Domains at risk of digital death
+
+## 🎨 Steve Jobs Aesthetic Meets Mortality
+
+**Design Philosophy**: Minimal. Haunting. Purposeful.
+
+- **Color Strategy**: Black background, strategic use of green (life), red (death), white (truth)
+- **Typography**: Ultra-light weights that feel ethereal
+- **Animations**: Breathing, fading, disappearing—like consciousness itself
+- **White Space**: Generous, contemplative spacing that forces pause
+
+## 🔬 The Science
+
+**Memory Decay Measurement**:
+- Multi-LLM consensus scoring
+- Real-time permanence tracking  
+- Trend analysis across time
+- Category-based insights
+- Risk assessment algorithms
+
+**Data Sources**:
+- 15+ AI models including Claude, GPT, Gemini
+- Diverse prompt types and contexts
+- Historical tracking and predictions
+- Embedding-based similarity analysis
+
+## 🚀 Deployment
+
+Built for Render with:
+- Static site generation
+- SEO optimization for LLM crawlers
+- Security headers and performance optimization
+- Mobile-responsive existential experience
+
+```bash
+npm install
+npm run dev     # Development
+npm run build   # Production build
 ```
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=...
-DEEPSEEK_API_KEY=...
-GOOGLE_API_KEY=...
-MISTRAL_API_KEY=...
-COHERE_API_KEY=...
-```
 
-The `DATABASE_URL` will be automatically set by Render when you attach the database.
+## 🤝 API Integration
 
-## Database Setup
+Connects to live embedding engine at:
+- `https://embedding-engine.onrender.com`
+- Real-time data updates every 30 seconds
+- Graceful error handling and loading states
 
-The database schema will be automatically created when you deploy to Render. You just need to:
+## 💭 The Philosophy
 
-1. Create a new PostgreSQL database in your Render dashboard
-2. Attach it to your web service
-3. The schema will be applied on first run
+*"In a world where AI shapes reality, we measure the shadows of digital existence to help you shape your light. Every domain tells a story of permanence or decay. The question is not whether you exist, but whether you will be remembered."*
 
-## Adding Domains
+**This is not just a website. This is a mirror that shows your digital soul.**
 
-Insert domains you want to process:
+---
 
-```sql
-INSERT INTO domains (domain, source) VALUES 
-  ('example.com', 'manual'),
-  ('sample.org', 'manual');
-```
+**Will your domain be remembered in an AI future?**
 
-## Monitoring
-
-Monitor your service through:
-1. Render dashboard logs
-2. Database queries on raw_responses
-3. Cost estimates in the raw_responses table
-
-## Development
-
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Build: `npm run build`
-4. Start: `npm start`
-
-## Schema
-
-See `schemas/tables.sql` for the complete database schema.
-
-## Prompt Templates
-
-See `prompts/triad-001.json` for the current prompt set.
-
-## LLM Configuration
-
-See `models/llm-config.json` for supported models and endpoints. 
+Visit **Memory Oracle** and confront your digital mortality. 
