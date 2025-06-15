@@ -1,0 +1,96 @@
+{
+  "industries": {
+    "technology": {
+      "name": "Technology",
+      "sectors": ["ai", "cloud", "software", "hardware", "semiconductors"],
+      "market_cap_threshold": 1000000000,
+      "volatility": "high",
+      "rebrand_frequency": "medium",
+      "ai_relevance": "critical"
+    },
+    "financial_services": {
+      "name": "Financial Services", 
+      "sectors": ["banking", "investment", "insurance", "fintech", "payments"],
+      "market_cap_threshold": 5000000000,
+      "volatility": "medium",
+      "rebrand_frequency": "low",
+      "ai_relevance": "high"
+    },
+    "healthcare": {
+      "name": "Healthcare",
+      "sectors": ["pharmaceuticals", "biotech", "medical_devices", "health_services"],
+      "market_cap_threshold": 2000000000,
+      "volatility": "medium",
+      "rebrand_frequency": "low", 
+      "ai_relevance": "high"
+    },
+    "consumer_goods": {
+      "name": "Consumer Goods",
+      "sectors": ["food_beverage", "retail", "apparel", "luxury", "automotive"],
+      "market_cap_threshold": 1000000000,
+      "volatility": "medium",
+      "rebrand_frequency": "high",
+      "ai_relevance": "medium"
+    },
+    "media_entertainment": {
+      "name": "Media & Entertainment",
+      "sectors": ["streaming", "gaming", "social_media", "traditional_media", "music"],
+      "market_cap_threshold": 500000000,
+      "volatility": "high",
+      "rebrand_frequency": "high",
+      "ai_relevance": "critical"
+    },
+    "energy": {
+      "name": "Energy",
+      "sectors": ["oil_gas", "renewable", "utilities", "mining"],
+      "market_cap_threshold": 10000000000,
+      "volatility": "high",
+      "rebrand_frequency": "low",
+      "ai_relevance": "medium"
+    },
+    "aerospace_defense": {
+      "name": "Aerospace & Defense", 
+      "sectors": ["aerospace", "defense", "space"],
+      "market_cap_threshold": 5000000000,
+      "volatility": "low",
+      "rebrand_frequency": "very_low",
+      "ai_relevance": "high"
+    }
+  },
+  "jolt_criteria": {
+    "brand_transition": {
+      "description": "Complete brand name change or major rebrand",
+      "severity": "high",
+      "additional_prompts": 3
+    },
+    "corporate_restructure": {
+      "description": "Major corporate restructuring or spinoff",
+      "severity": "medium", 
+      "additional_prompts": 2
+    },
+    "acquisition_merger": {
+      "description": "Major acquisition or merger affecting brand identity",
+      "severity": "medium",
+      "additional_prompts": 2
+    },
+    "leadership_change": {
+      "description": "Major leadership change affecting brand direction",
+      "severity": "low",
+      "additional_prompts": 1
+    }
+  },
+  "benchmark_categories": {
+    "memory_decay": {
+      "description": "Rate of AI memory fade over time",
+      "measurement": "percentage_decline_per_month"
+    },
+    "brand_confusion": {
+      "description": "Level of AI confusion between old and new names",
+      "measurement": "consensus_disagreement_score"
+    },
+    "market_impact": {
+      "description": "Business impact of brand transition",
+      "measurement": "revenue_brand_correlation"
+    }
+  }
+} 

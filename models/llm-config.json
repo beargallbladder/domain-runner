@@ -1,0 +1,58 @@
+{
+  "gpt-4": {
+    "provider": "openai",
+    "env_key": "OPENAI_API_KEY",
+    "endpoint": "https://api.openai.com/v1/chat/completions",
+    "model": "gpt-4-turbo-preview",
+    "max_tokens": 1000
+  },
+  "claude-3-opus": {
+    "provider": "anthropic",
+    "env_key": "ANTHROPIC_API_KEY",
+    "endpoint": "https://api.anthropic.com/v1/messages",
+    "model": "claude-3-opus-20240229",
+    "max_tokens": 1000
+  },
+  "claude-3-sonnet": {
+    "provider": "anthropic",
+    "env_key": "ANTHROPIC_API_KEY",
+    "endpoint": "https://api.anthropic.com/v1/messages",
+    "model": "claude-3-sonnet-20240229",
+    "max_tokens": 1000
+  },
+  "deepseek-v3": {
+    "provider": "deepseek",
+    "env_key": "DEEPSEEK_API_KEY",
+    "endpoint": "https://api.deepseek.com/v1/chat/completions",
+    "model": "deepseek-chat",
+    "max_tokens": 1000
+  },
+  "gemini-1.5-pro": {
+    "provider": "google",
+    "env_key": "GOOGLE_API_KEY",
+    "endpoint": "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent",
+    "model": "gemini-1.5-pro",
+    "max_tokens": 1000
+  },
+  "mistral-medium": {
+    "provider": "mistral",
+    "env_key": "MISTRAL_API_KEY",
+    "endpoint": "https://api.mistral.ai/v1/chat/completions",
+    "model": "mistral-medium",
+    "max_tokens": 1000
+  },
+  "command-r-plus": {
+    "provider": "cohere",
+    "env_key": "COHERE_API_KEY",
+    "endpoint": "https://api.cohere.ai/v1/generate",
+    "model": "command-r-plus",
+    "max_tokens": 1000
+  },
+  "mixtral-8x7b": {
+    "provider": "mistral",
+    "env_key": "MISTRAL_API_KEY",
+    "endpoint": "https://api.mistral.ai/v1/chat/completions",
+    "model": "mixtral-8x7b",
+    "max_tokens": 1000
+  }
+} 
