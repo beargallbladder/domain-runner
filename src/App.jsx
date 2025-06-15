@@ -2,15 +2,32 @@ import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import styled, { createGlobalStyle, keyframes } from 'styled-components'
 import Landing from './pages/Landing'
-import Domain from './pages/Domain'
-import Categories from './pages/Categories'
-import About from './pages/About'
-import Navigation from './components/Navigation'
 import Home from './pages/Home'
-import DomainReport from './pages/DomainReport'
-import DomainDirectory from './pages/DomainDirectory'
-import Leaderboard from './pages/Leaderboard'
+import About from './pages/About'
+import Domain from './pages/Domain'
 import ComingSoon from './pages/ComingSoon'
+import Navigation from './components/Navigation'
+import PlausibleScript from './components/PlausibleScript'
+import Rankings from './pages/Rankings'
+import DomainSEO from './pages/DomainSEO'
+import Contact from './pages/Contact'
+import NotFound from './pages/NotFound'
+import Layout from './components/Layout'
+import Dashboard from './pages/Dashboard'
+import Settings from './pages/Settings'
+import Profile from './pages/Profile'
+import Analysis from './pages/Analysis'
+import Reports from './pages/Reports'
+import Alerts from './pages/Alerts'
+import Integrations from './pages/Integrations'
+import Help from './pages/Help'
+import CompetitorAnalysis from './pages/CompetitorAnalysis'
+import CompetitiveCohorts from './pages/CompetitiveCohorts'
+import CohortIntelligence from './pages/CohortIntelligence'
+import TestDomain from './pages/TestDomain'
+import AdLanding from './pages/AdLanding'
+import CompetitiveBattles from './pages/CompetitiveBattles'
+import Api from './pages/Api'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -113,23 +130,6 @@ const Main = styled.main`
   flex: 1;
 `
 
-// Plausible Analytics Script
-const PlausibleScript = () => {
-  React.useEffect(() => {
-    const script = document.createElement('script');
-    script.defer = true;
-    script.setAttribute('data-domain', 'llmpagerank.com');
-    script.src = 'https://plausible.io/js/script.js';
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
-
-  return null;
-};
-
 function App() {
   return (
     <AppContainer>
@@ -139,14 +139,18 @@ function App() {
       <Main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/domains" element={<DomainDirectory />} />
-          <Route path="/domain/:domainName" element={<Domain />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/categories/:category" element={<Categories />} />
+          <Route path="/rankings" element={<Rankings />} />
+          <Route path="/leaderboard" element={<Rankings />} />
+          <Route path="/cohorts" element={<CompetitiveCohorts />} />
+          <Route path="/battles" element={<CompetitiveBattles />} />
+          <Route path="/cohort-intelligence" element={<CohortIntelligence />} />
+          <Route path="/competitive-analysis" element={<CompetitorAnalysis />} />
+          <Route path="/domain/:domain" element={<Domain />} />
+          <Route path="/test-domains" element={<TestDomain />} />
           <Route path="/about" element={<About />} />
-          <Route path="/premium" element={<ComingSoon />} />
-          <Route path="/coming-soon" element={<ComingSoon />} />
+          <Route path="/api" element={<Api />} />
+          <Route path="/ad/:company" element={<AdLanding />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Main>
     </AppContainer>

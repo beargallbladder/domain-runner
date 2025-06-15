@@ -166,7 +166,7 @@ const DomainDirectory = () => {
   useEffect(() => {
     const fetchDomains = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/domains`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/rankings?limit=100`);
         setDomains(response.data.domains || []);
         setLoading(false);
       } catch (error) {
@@ -180,10 +180,10 @@ const DomainDirectory = () => {
 
   const filteredDomains = domains.filter(domain => {
     if (filter === 'all') return true;
-    if (filter === 'high-score') return domain.memory_score >= 80;
-    if (filter === 'medium-score') return domain.memory_score >= 60 && domain.memory_score < 80;
-    if (filter === 'low-score') return domain.memory_score < 60;
-    if (filter === 'alerts') return domain.reputation_risk > 50;
+    if (filter === 'high-score') return domain.score >= 80;
+    if (filter === 'medium-score') return domain.score >= 60 && domain.score < 80;
+    if (filter === 'low-score') return domain.score < 60;
+    if (filter === 'alerts') return domain.modelsNegative > 2;
     return true;
   });
 

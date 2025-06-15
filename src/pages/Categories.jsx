@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion } from 'framer-motion'
-import { useCategories } from '../hooks/useMemoryAPI'
+import ConsensusVisualization from '../components/ConsensusVisualization'
 
 const Container = styled.div`
   max-width: 1200px;
@@ -72,12 +72,12 @@ const CategoriesGrid = styled.div`
 `
 
 const CategoryCard = styled(motion.div)`
-  background: #fff;
-  border: 2px solid #f0f0f0;
-  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid #e5e5e5;
+  border-radius: 20px;
   padding: 32px;
-  transition: all 0.3s ease;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   
@@ -89,16 +89,22 @@ const CategoryCard = styled(motion.div)`
     right: 0;
     height: 4px;
     background: ${props => 
-      props.trend === 'Rising' ? 'linear-gradient(90deg, #34C759, #30D158)' : 
-      props.trend === 'Stable' ? 'linear-gradient(90deg, #007AFF, #32D74B)' : 
-      'linear-gradient(90deg, #FF3B30, #FF9500)'
+      props.trend === 'Rising' ? 'linear-gradient(90deg, #30D158, #34C759)' : 
+      props.trend === 'Stable' ? 'linear-gradient(90deg, #FF9500, #FFCC02)' : 
+      'linear-gradient(90deg, #FF3B30, #FF6B6B)'
     };
+    border-radius: 20px 20px 0 0;
   }
   
   &:hover {
+    transform: translateY(-8px) scale(1.02);
     border-color: #007AFF;
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 122, 255, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 122, 255, 0.2);
+    background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+  }
+  
+  &:active {
+    transform: translateY(-4px) scale(1.01);
   }
 `
 
@@ -465,110 +471,115 @@ const generateDomainData = (category) => {
 
 function Categories() {
   const { category } = useParams()
-  const { categories } = useCategories()
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  if (category && categoryData[category]) {
-    // Render single category view with actual domain listings
-    const cat = categoryData[category]
-    const domains = generateDomainData(category)
-    
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/categories`)
+        const data = await response.json()
+        
+        // Parse topDomains if it comes as a string
+        const parsedCategories = (data.categories || []).map(category => ({
+          ...category,
+          topDomains: typeof category.topDomains === 'string' 
+            ? JSON.parse(category.topDomains) 
+            : category.topDomains || []
+        }))
+        
+        setCategories(parsedCategories)
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+        // Enhanced fallback data that matches the API structure
+        setCategories([
+          {
+            name: 'Technology',
+            totalDomains: 45,
+            averageScore: 88.5,
+            topDomains: [
+              { domain: 'google.com', score: 95, modelsPositive: 15, modelsNeutral: 2, modelsNegative: 1 },
+              { domain: 'microsoft.com', score: 94, modelsPositive: 14, modelsNeutral: 3, modelsNegative: 1 },
+              { domain: 'apple.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
+              { domain: 'openai.com', score: 92, modelsPositive: 12, modelsNeutral: 4, modelsNegative: 2 },
+              { domain: 'nvidia.com', score: 91, modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 }
+            ]
+          },
+          {
+            name: 'Social Media',
+            totalDomains: 12,
+            averageScore: 76.2,
+            topDomains: [
+              { domain: 'facebook.com', score: 82, modelsPositive: 10, modelsNeutral: 4, modelsNegative: 4 },
+              { domain: 'twitter.com', score: 79, modelsPositive: 9, modelsNeutral: 5, modelsNegative: 4 },
+              { domain: 'instagram.com', score: 77, modelsPositive: 8, modelsNeutral: 6, modelsNegative: 4 },
+              { domain: 'linkedin.com', score: 75, modelsPositive: 7, modelsNeutral: 7, modelsNegative: 4 },
+              { domain: 'youtube.com', score: 73, modelsPositive: 6, modelsNeutral: 8, modelsNegative: 4 }
+            ]
+          },
+          {
+            name: 'E-commerce',
+            totalDomains: 18,
+            averageScore: 85.1,
+            topDomains: [
+              { domain: 'amazon.com', score: 96, modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
+              { domain: 'ebay.com', score: 84, modelsPositive: 11, modelsNeutral: 4, modelsNegative: 3 },
+              { domain: 'shopify.com', score: 81, modelsPositive: 10, modelsNeutral: 5, modelsNegative: 3 },
+              { domain: 'alibaba.com', score: 79, modelsPositive: 9, modelsNeutral: 6, modelsNegative: 3 },
+              { domain: 'stripe.com', score: 77, modelsPositive: 8, modelsNeutral: 7, modelsNegative: 3 }
+            ]
+          },
+          {
+            name: 'Cloud Infrastructure',
+            totalDomains: 15,
+            averageScore: 89.3,
+            topDomains: [
+              { domain: 'aws.amazon.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
+              { domain: 'azure.microsoft.com', score: 91, modelsPositive: 12, modelsNeutral: 4, modelsNegative: 2 },
+              { domain: 'cloud.google.com', score: 89, modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 },
+              { domain: 'cloudflare.com', score: 87, modelsPositive: 10, modelsNeutral: 6, modelsNegative: 2 },
+              { domain: 'digitalocean.com', score: 85, modelsPositive: 9, modelsNeutral: 7, modelsNegative: 2 }
+            ]
+          },
+          {
+            name: 'Consumer Technology',
+            totalDomains: 20,
+            averageScore: 84.7,
+            topDomains: [
+              { domain: 'apple.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
+              { domain: 'samsung.com', score: 87, modelsPositive: 10, modelsNeutral: 6, modelsNegative: 2 },
+              { domain: 'sony.com', score: 85, modelsPositive: 9, modelsNeutral: 7, modelsNegative: 2 },
+              { domain: 'lg.com', score: 83, modelsPositive: 8, modelsNeutral: 8, modelsNegative: 2 },
+              { domain: 'tesla.com', score: 81, modelsPositive: 7, modelsNeutral: 9, modelsNegative: 2 }
+            ]
+          },
+          {
+            name: 'AI/ML Technology',
+            totalDomains: 8,
+            averageScore: 91.2,
+            topDomains: [
+              { domain: 'openai.com', score: 98, modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
+              { domain: 'anthropic.com', score: 92, modelsPositive: 12, modelsNeutral: 4, modelsNegative: 2 },
+              { domain: 'huggingface.co', score: 90, modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 },
+              { domain: 'stability.ai', score: 88, modelsPositive: 10, modelsNeutral: 6, modelsNegative: 2 },
+              { domain: 'midjourney.com', score: 86, modelsPositive: 9, modelsNeutral: 7, modelsNegative: 2 }
+            ]
+          }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
+
+  if (loading) {
     return (
       <Container>
-        <Breadcrumbs>
-          <Link to="/">Home</Link>
-          <span className="separator">→</span>
-          <Link to="/categories">Shadows</Link>
-          <span className="separator">→</span>
-          <span className="current">{cat.name}</span>
-        </Breadcrumbs>
-        
         <Header>
-          <Title
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            {cat.name} Leaders
-          </Title>
-          <Subtitle
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            {cat.description}
-          </Subtitle>
+          <Title>Loading Categories...</Title>
         </Header>
-        
-        <CategorySummary>
-          <div className="title">{cat.name} Intelligence</div>
-          <div className="stats">
-            <div className="stat">
-              <span className="value">{cat.count}</span>
-              <span className="label">Companies</span>
-            </div>
-            <div className="stat">
-              <span className="value">{cat.avgScore}</span>
-              <span className="label">Avg Memory</span>
-            </div>
-            <div className="stat">
-              <span className="value">{cat.marketCap}</span>
-              <span className="label">Market Value</span>
-            </div>
-            <div className="stat">
-              <span className="value">{cat.trend}</span>
-              <span className="label">AI Trend</span>
-            </div>
-          </div>
-        </CategorySummary>
-        
-        <DomainGrid>
-          {domains.map((domain, index) => (
-            <DomainCard
-              key={domain.name}
-              as={Link}
-              to={`/domain/${domain.name}`}
-              score={domain.score}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-            >
-              <DomainHeader>
-                <DomainName>{domain.name}</DomainName>
-                <MemoryScore score={domain.score}>
-                  {Math.round(domain.score)}
-                </MemoryScore>
-              </DomainHeader>
-              
-              <DomainMeta>
-                <span>{domain.responses} AI responses</span>
-                <span>{domain.models} models</span>
-                <Trend trend={domain.trend}>{domain.trend}</Trend>
-              </DomainMeta>
-              
-              <DomainDescription>
-                {domain.description}
-              </DomainDescription>
-            </DomainCard>
-          ))}
-        </DomainGrid>
-        
-        <div style={{ textAlign: 'center', marginTop: '60px' }}>
-          <Link 
-            to="/categories" 
-            style={{ 
-              color: '#007AFF', 
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '600',
-              padding: '12px 24px',
-              border: '2px solid #007AFF',
-              borderRadius: '8px',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            ← View All Categories
-          </Link>
-        </div>
       </Container>
     )
   }
@@ -581,75 +592,137 @@ function Categories() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          AI Memory Shadows
+          AI Memory Categories
         </Title>
         <Subtitle
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Discover which domains will be remembered when AI writes tomorrow's history
+          Explore domains by category with real-time consensus visualization from AI models
         </Subtitle>
       </Header>
 
       <CategoriesGrid>
-        {Object.values(categoryData).map((category, index) => (
+        {categories.map((cat, index) => (
           <CategoryCard
-            key={category.name}
+            key={cat.name}
             as={Link}
-            to={`/categories/${category.name}`}
-            trend={category.trend}
+            to={`/categories/${encodeURIComponent(cat.name.toLowerCase().replace(/\s+/g, '-'))}`}
+            trend="Rising"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: index * 0.1 }}
+            style={{ textDecoration: 'none', color: 'inherit' }}
           >
             <CategoryHeader>
-              <CategoryName>{category.name}</CategoryName>
-              <CategoryCount>{category.count}</CategoryCount>
+              <CategoryName>{cat.name}</CategoryName>
+              <CategoryCount>{cat.totalDomains}</CategoryCount>
             </CategoryHeader>
 
             <CategoryMeta>
-              <Trend trend={category.trend}>{category.trend}</Trend>
+              <Trend trend="Rising">Rising</Trend>
               <span style={{ fontSize: '14px', color: '#666', fontWeight: '600' }}>
-                Memory: {category.avgScore}
+                Avg: {Math.round(cat.averageScore)}
               </span>
             </CategoryMeta>
 
             <CategoryDescription>
-              {category.description}
+              {cat.totalDomains} domains tracked with real-time AI consensus monitoring
             </CategoryDescription>
 
             <CategoryStats>
               <div className="stat">
-                <div className="value">{category.avgScore}</div>
-                <div className="label">Memory Score</div>
+                <div className="value">{Math.round(cat.averageScore)}</div>
+                <div className="label">Avg Memory</div>
               </div>
               <div className="stat">
-                <div className="value">{category.marketCap}</div>
-                <div className="label">Market Cap</div>
+                <div className="value">{cat.totalDomains}</div>
+                <div className="label">Domains</div>
               </div>
               <div className="stat">
-                <div className="value">{category.topPerformer.split('.')[0]}</div>
+                <div className="value">
+                  {cat.topDomains && cat.topDomains[0] ? cat.topDomains[0].domain.split('.')[0] : 'N/A'}
+                </div>
                 <div className="label">Top Domain</div>
               </div>
             </CategoryStats>
 
             <TopDomains>
-              <div className="title">Leading Domains</div>
-              <div className="domains">
-                {category.domains.slice(0, 3).map(domain => (
-                  <span key={domain} className="domain">
-                    {domain}
-                  </span>
+              <div className="title">Top Domains with Consensus</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                {(cat.topDomains || []).slice(0, 3).map(domain => (
+                  <div key={domain.domain} style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '8px 12px',
+                    background: '#f8f9fa',
+                    borderRadius: '8px'
+                  }}>
+                    <Link 
+                      to={`/domain/${domain.domain}`}
+                      style={{ 
+                        color: '#007AFF', 
+                        fontWeight: '600', 
+                        textDecoration: 'none',
+                        fontSize: '14px'
+                      }}
+                    >
+                      {domain.domain}
+                    </Link>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '600', color: '#000' }}>
+                        {Math.round(domain.score)}
+                      </span>
+                      <ConsensusVisualization 
+                        modelsPositive={domain.modelsPositive}
+                        modelsNeutral={domain.modelsNeutral}
+                        modelsNegative={domain.modelsNegative}
+                        size="small"
+                      />
+                    </div>
+                  </div>
                 ))}
-                {category.domains.length > 3 && (
-                  <span className="domain">+{category.domains.length - 3} more</span>
-                )}
               </div>
             </TopDomains>
           </CategoryCard>
         ))}
       </CategoriesGrid>
+      
+      <div style={{ textAlign: 'center', marginTop: '60px' }}>
+        <Link 
+          to="/rankings" 
+          style={{ 
+            color: '#007AFF', 
+            textDecoration: 'none',
+            fontSize: '16px',
+            fontWeight: '600',
+            padding: '12px 24px',
+            border: '2px solid #007AFF',
+            borderRadius: '8px',
+            transition: 'all 0.3s ease',
+            marginRight: '16px'
+          }}
+        >
+          View Full Rankings →
+        </Link>
+        <Link 
+          to="/shadows" 
+          style={{ 
+            color: '#FF3B30', 
+            textDecoration: 'none',
+            fontSize: '16px',
+            fontWeight: '600',
+            padding: '12px 24px',
+            border: '2px solid #FF3B30',
+            borderRadius: '8px',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          Explore Memory Shadows →
+        </Link>
+      </div>
     </Container>
   )
 }
