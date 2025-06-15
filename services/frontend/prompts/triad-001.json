@@ -1,0 +1,19 @@
+{
+  "prompts": [
+    {
+      "id": "TRIAD-001-A",
+      "template": "What is {domain}?",
+      "category": "definition"
+    },
+    {
+      "id": "TRIAD-001-B",
+      "template": "What do you think of {domain}?",
+      "category": "opinion"
+    },
+    {
+      "id": "TRIAD-001-C",
+      "template": "What do you believe {domain} wants you to think they're good at?",
+      "category": "perception"
+    }
+  ]
+} 

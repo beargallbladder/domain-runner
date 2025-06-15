@@ -198,6 +198,30 @@ curl -s "https://embedding-engine.onrender.com/admin/fire-alarm-status" | jq '.m
 
 ---
 
+## **🏗️ ARCHITECTURAL OVERVIEW (READ THIS FIRST)**
+
+### **Current Live Architecture:**
+```
+Frontend (Vercel):
+  └── services/frontend/ → https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app
+  
+Backend Services (Render):
+  ├── services/public-api/ → https://llm-pagerank-public-api.onrender.com (Customer-facing API)
+  ├── services/sophisticated-runner/ → https://sophisticated-runner.onrender.com (Premium LLM processing)
+  ├── services/embedding-engine/ → https://embedding-engine.onrender.com (Data pipeline)
+  └── services/raw-capture-runner/ → https://raw-capture-runner.onrender.com (Basic processing)
+
+Database (Shared):
+  └── PostgreSQL on Render (all services share same DATABASE_URL)
+```
+
+### **🎯 Current Domain Count: 3,186 domains**
+- **Completed**: ~2,171 domains with AI memory analysis
+- **Processing**: Premium mode active with GPT-4, Claude-3.5-Sonnet, Grok
+- **Discovery**: Ongoing competitor expansion (1,700 → 3,186)
+
+---
+
 ## **STEP 1: ARCHITECTURAL VERIFICATION (MANDATORY)**
 
 ### **🔍 Before ANY deployment command:**
@@ -207,7 +231,7 @@ ls -la | grep -E "services/"
 
 # 2. If services/ exists, NEVER deploy from root
 # 3. Identify the specific service
-ls services/ | grep -E "(frontend|backend|api|runner)"
+ls services/ | grep -E "(frontend|public-api|sophisticated-runner|embedding-engine|raw-capture-runner)"
 
 # 4. Verify service has deployment config
 ls services/[SERVICE_NAME]/ | grep -E "(package.json|render.yaml|requirements.txt|Dockerfile)"
@@ -215,123 +239,254 @@ ls services/[SERVICE_NAME]/ | grep -E "(package.json|render.yaml|requirements.tx
 
 ### **✅ Service-Specific Deployment Paths:**
 - **Frontend**: `cd services/frontend && vercel --prod`
-- **Public API**: `git push` (auto-deploys via render.yaml)
-- **Sophisticated Runner**: `git push` (auto-deploys via render.yaml)
-- **Embedding Engine**: `git push` (auto-deploys via render.yaml)
+- **Backend Services**: `git push origin main` (auto-deploys via render.yaml)
 
 ### **❌ NEVER DO:**
 - Deploy from project root when services/ exists
-- Assume monolithic architecture
+- Assume monolithic architecture  
 - Skip service directory verification
+- **This mistake was made 4-5 times - ALWAYS CHECK ARCHITECTURE FIRST**
 
 ---
 
-## **STEP 2: SERVICE COMMUNICATION VERIFICATION**
+## **STEP 2: SOPHISTICATED RUNNER SPECIFIC PATTERNS**
 
-### **🔗 Frontend → API Communication:**
+### **🎯 Current Processing Status Check:**
 ```bash
-# Check frontend API configuration
-grep -r "API_BASE_URL\|api\..*\.com" services/frontend/
+# Always verify processing status before any changes
+curl -s https://sophisticated-runner.onrender.com/status | jq '.status_breakdown'
 
-# Verify API endpoints are reachable
-curl -s [API_ENDPOINT]/health | jq .status
+# Expected response format:
+# [
+#   {"status": "completed", "count": "2171"},
+#   {"status": "pending", "count": "1014"}, 
+#   {"status": "processing", "count": "1"}
+# ]
 ```
 
-### **📊 Expected Architecture:**
-```
-Vercel (Frontend):
-  ├── services/frontend/ → https://[project].vercel.app
-  └── ENV: VITE_API_BASE_URL=https://api.render.com
+### **🔄 Common Processing Issues & Solutions:**
 
-Render (Backend Services):
-  ├── services/public-api/ → https://llm-pagerank-public-api.onrender.com
-  ├── services/sophisticated-runner/ → Backend processing
-  └── services/embedding-engine/ → Data pipeline
+#### **Issue 1: Processing Stopped (Queue Growing)**
+```bash
+# Symptom: pending count increasing, processing count = 0
+# Cause: Processing loop stops when queue empties, doesn't auto-restart when new domains added
+
+# Solution:
+curl -X POST https://sophisticated-runner.onrender.com/process/restart
 ```
+
+#### **Issue 2: Premium Mode Not Active**
+```bash
+# Check premium status:
+curl -s https://sophisticated-runner.onrender.com/premium/status | jq '.current_configuration.premium_mode'
+
+# Enable full premium mode (discovery + processing):
+curl -X POST https://sophisticated-runner.onrender.com/premium/enable
+```
+
+#### **Issue 3: Discovery Service Overloading**
+```bash
+# Check if discovery is adding domains faster than processing:
+# If pending count keeps growing, discovery is outpacing processing
+# This is normal during discovery runs, processing will catch up
+```
+
+### **🎯 Premium Mode Architecture (IMPORTANT):**
+- **Premium Discovery**: GPT-4, Claude-3.5-Sonnet for competitor/crisis discovery
+- **Premium Processing**: ALL domains get 5 models × 4 prompts = 20 responses each  
+- **Cost**: ~$0.008-0.015 per domain (vs $0.001-0.003 for tiered)
+- **Activation**: Single endpoint enables BOTH discovery and processing premium mode
 
 ---
 
-## **STEP 3: PRE-DEPLOYMENT MEASUREMENTS**
+## **STEP 3: DATA PIPELINE VERIFICATION**
 
-### **🧪 System Health Check:**
+### **🔗 Critical API Flow:**
 ```bash
-# 1. Database connectivity
-curl -s [API_BASE]/health | jq .database_status
+# 1. Raw data exists
+curl -s https://sophisticated-runner.onrender.com/status | jq '.total_responses'
 
-# 2. API response times  
-time curl -s [API_BASE]/api/stats
+# 2. Public API serves processed data  
+curl -s https://llm-pagerank-public-api.onrender.com/api/domains/apple.com/public | jq '.ai_intelligence.memory_score'
 
-# 3. Data freshness
-curl -s [API_BASE]/api/domains/apple.com | jq .updated_at
-
-# 4. Service dependencies
-curl -s [EMBEDDING_ENGINE]/status | jq .service_health
+# 3. Frontend connects to correct API
+curl -s https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app | grep -o "llm-pagerank-public-api"
 ```
 
-### **📈 Success Metrics to Verify:**
+### **🚨 Data Pipeline Health Indicators:**
 - [ ] API response time < 500ms
-- [ ] Database connection successful
-- [ ] Recent data (< 24 hours old)
-- [ ] All dependent services responding
-- [ ] No 404s on critical endpoints
+- [ ] Memory scores not null/empty
+- [ ] Recent data (updated_at < 7 days)
+- [ ] Total responses > 20,000
+- [ ] Frontend loads domain data properly
 
 ---
 
-## **STEP 4: POST-DEPLOYMENT VALIDATION**
+## **STEP 4: DOMAIN DISCOVERY & EXPANSION WORKFLOWS**
 
-### **🎯 Deployment Success Verification:**
+### **🔍 Discovery Service Management:**
 ```bash
-# 1. Frontend loads properly
-curl -s [FRONTEND_URL] | grep -E "(title|html)"
+# Trigger competitor discovery (adds ~500-1000 new domains):
+curl -X POST https://sophisticated-runner.onrender.com/discover-competitors
 
-# 2. API endpoints reachable from frontend
-curl -s [FRONTEND_URL] -I | grep "200"
+# Trigger crisis discovery (finds JOLT events):
+curl -X POST https://sophisticated-runner.onrender.com/discover-crises
 
-# 3. Data flow working
-curl -s [API_BASE]/api/domains/tesla.com | jq .memory_score
-
-# 4. No broken routes
-curl -s [FRONTEND_URL]/domain/apple.com -I | grep "200"
+# Full discovery pipeline (both phases):
+curl -X POST https://sophisticated-runner.onrender.com/full-discovery-pipeline
 ```
 
-### **🚨 Failure Indicators:**
-- ❌ Frontend shows "API connection failed"
-- ❌ Empty data responses from API
-- ❌ 500/404 errors on core routes
-- ❌ Missing environment variables
+### **⚖️ Cost Management:**
+- **Regular Discovery**: $3-5 per run (500 domains)
+- **Premium Discovery**: $15-25 per run (better quality, broader scope)
+- **Premium Processing**: $25-35 for full cohort reprocessing
+
+### **📊 Expected Discovery Growth Pattern:**
+- **Starting**: 1,700 curated domains
+- **After Discovery**: 3,000+ domains (1.7x expansion)
+- **Growth Rate**: ~10-50 new competitors per source domain
 
 ---
 
-## **STEP 5: MEASUREMENT & MONITORING SETUP**
+## **STEP 5: FRONTEND DEPLOYMENT SPECIFICS**
 
-### **📊 Post-Deployment Metrics to Track:**
-```bash
-# Create monitoring dashboard URLs
-echo "Frontend Health: [FRONTEND_URL]"
-echo "API Health: [API_BASE]/health"  
-echo "Database Stats: [API_BASE]/api/stats"
-echo "Processing Status: [SOPHISTICATED_RUNNER]/status"
+### **⚡ Vercel Configuration:**
+```json
+// services/frontend/vercel.json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist", 
+  "framework": "vite",
+  "env": {
+    "VITE_API_BASE_URL": "https://llm-pagerank-public-api.onrender.com"
+  }
+}
 ```
 
-### **⏰ Continuous Verification Schedule:**
-- **Immediate**: 0, 5, 15 minutes post-deployment
-- **Short-term**: 1, 6, 24 hours post-deployment  
-- **Ongoing**: Daily health checks
+### **🎯 Frontend Deployment Flow:**
+```bash
+# 1. Navigate to frontend service
+cd services/frontend
+
+# 2. Verify build works
+npm run build
+
+# 3. Deploy to Vercel
+vercel --prod
+
+# 4. Verify deployment
+curl -s [NEW_VERCEL_URL] | grep -E "(AI Memory|Rankings)"
+```
 
 ---
 
-## **STEP 6: ROLLBACK PREPARATION (ALWAYS)**
+## **STEP 6: COMPREHENSIVE T=2 TENSOR GENERATION**
 
-### **🔄 If Deployment Fails:**
+### **🎯 Full Premium Comprehensive Analysis:**
 ```bash
-# 1. Revert to previous Vercel deployment
-vercel --prod --confirm [PREVIOUS_DEPLOYMENT_URL]
+# This generates publication-ready tensor data for all 3,186 domains
+# Cost: ~$25-35 for complete high-quality dataset
 
-# 2. Check Render service logs
-# Go to Render dashboard → Service → Logs
+# 1. Enable premium mode
+curl -X POST https://sophisticated-runner.onrender.com/premium/enable
 
-# 3. Verify rollback success
-curl -s [FRONTEND_URL]/health | jq .status
+# 2. Processing automatically uses premium models for new domains
+# 3. Monitor progress
+curl -s https://sophisticated-runner.onrender.com/status | jq '.status_breakdown'
+
+# Expected result: All domains get 5 models × 4 prompts = comprehensive analysis
+```
+
+---
+
+## **STEP 7: ROLLBACK & RECOVERY PATTERNS**
+
+### **🔄 Service Recovery Commands:**
+```bash
+# Restart processing if stuck:
+curl -X POST https://sophisticated-runner.onrender.com/process/restart
+
+# Check service health:
+curl -s https://sophisticated-runner.onrender.com/health | jq '.status'
+
+# Disable premium mode if too expensive:
+curl -X POST https://sophisticated-runner.onrender.com/premium/disable
+
+# Restart Render service (via dashboard):
+# Go to Render → sophisticated-runner → Manual Deploy
+```
+
+---
+
+## **CRITICAL LESSONS LEARNED (AVOID THESE MISTAKES)**
+
+### **🚨 Repeated Deployment Mistakes:**
+1. **Deploying from wrong directory** (happened 5+ times)
+   - **Always** check for services/ directory first
+   - **Never** deploy from root when modular architecture exists
+
+2. **Frontend pointing to wrong API endpoint**
+   - Verify VITE_API_BASE_URL in vercel.json  
+   - Test API connectivity after deployment
+
+3. **Processing loop stops after queue empties**
+   - Discovery adds domains but doesn't restart processing
+   - Always check /status after discovery runs
+   - Manual restart required: /process/restart
+
+4. **Premium mode confusion**
+   - Premium discovery ≠ premium processing
+   - /premium/enable now activates BOTH
+   - Premium processing overrides tiered system for ALL domains
+
+---
+
+## **SUCCESS METRICS FOR DEPLOYMENT VALIDATION**
+
+### **Technical Health:**
+- [ ] All services return 200 OK
+- [ ] API response times < 500ms
+- [ ] Processing queue moving (if pending > 0)
+- [ ] Premium mode status matches intent
+- [ ] Frontend loads and displays data
+
+### **Business Health:**
+- [ ] Domain count growing (discovery working)
+- [ ] Memory scores populating (processing working)  
+- [ ] Recent data updates (< 7 days)
+- [ ] No null/empty critical fields
+
+### **Cost Control:**
+- [ ] Premium mode only active when intended
+- [ ] Discovery runs controlled (not infinite)
+- [ ] Processing rate sustainable (~10 domains/minute)
+
+---
+
+## **QUICK REFERENCE FOR FUTURE AGENTS**
+
+### **⚡ Essential URLs:**
+- **Frontend**: https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app
+- **Public API**: https://llm-pagerank-public-api.onrender.com  
+- **Sophisticated Runner**: https://sophisticated-runner.onrender.com
+- **Main Health Check**: https://sophisticated-runner.onrender.com/status
+
+### **🎯 Key Commands (Copy-Paste Ready):**
+```bash
+# Check system status
+curl -s https://sophisticated-runner.onrender.com/status | jq '.status_breakdown'
+
+# Restart processing if stuck  
+curl -X POST https://sophisticated-runner.onrender.com/process/restart
+
+# Enable full premium mode
+curl -X POST https://sophisticated-runner.onrender.com/premium/enable
+
+# Deploy frontend (from services/frontend/)
+vercel --prod
+
+# Check frontend health
+curl -s https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app | grep "AI Memory"
 ```
 
 ---
@@ -340,35 +495,8 @@ curl -s [FRONTEND_URL]/health | jq .status
 
 **"We measure AI memory decay with microsecond precision across 6 models, yet deploy our own infrastructure blindly."**
 
-### **🎯 Deployment Rigor Standards:**
-- **Same precision** we apply to AI model analysis
-- **Same validation** we apply to brand memory scores  
-- **Same monitoring** we apply to domain reputation
-- **Same rollback planning** we apply to crisis detection
-
 ### **💡 Success Principle:**
 **Every deployment should be as measured and validated as every AI response we capture**
-
----
-
-## **CHECKLIST SUMMARY (COPY-PASTE VERIFICATION):**
-
-```bash
-# Pre-deployment architecture check
-ls services/ && echo "✅ Modular architecture confirmed"
-
-# Service-specific deployment  
-cd services/[SERVICE] && echo "✅ Correct service directory"
-
-# Health validation
-curl -s [API]/health && echo "✅ Service health confirmed"
-
-# Deploy with measurement
-[DEPLOYMENT_COMMAND] && echo "✅ Deployment initiated"
-
-# Post-deployment validation
-curl -s [DEPLOYED_URL] && echo "✅ Deployment successful"
-```
 
 ---
 
@@ -378,4 +506,4 @@ curl -s [DEPLOYED_URL] && echo "✅ Deployment successful"
 **No exceptions. No assumptions. No shortcuts.**  
 **Measure everything. Deploy nothing blindly.**
 
-**We are AI measurement infrastructure** → **We deploy with measurement rigor.** 
+**Current Status: 3,186 domains, premium processing active, comprehensive T=2 tensor generation in progress.** 

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: simple-modular-processor
+    runtime: node
+    buildCommand: npm cache clean --force && npm install && npm run build
+    startCommand: node dist/index.js
+    plan: starter
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: "postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db"
+      - key: PROCESSOR_ID
+        value: "simple_modular_production"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: main 
