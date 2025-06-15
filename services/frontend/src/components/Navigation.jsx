@@ -156,9 +156,8 @@ function Navigation() {
 
   const navItems = [
     { path: '/', label: 'Home' },
-    { path: '/rankings-terminal', label: 'Terminal' },
-    { path: '/battles', label: 'Battles' },
     { path: '/rankings', label: 'Rankings' },
+    { path: '/battles', label: 'Battles' },
     { path: '/about', label: 'About' }
   ];
 

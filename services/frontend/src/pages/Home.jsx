@@ -795,11 +795,11 @@ const Home = () => {
           <ExploreTitle style={{ fontFamily: 'monospace' }}>MEMORY ANALYSIS TOOLS</ExploreTitle>
           
           <ExploreGrid>
-            <ExploreCard to="/rankings-terminal">
-              <ExploreIcon>💻</ExploreIcon>
-              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>MEMORY TERMINAL</ExploreCardTitle>
+            <ExploreCard to="/rankings">
+              <ExploreIcon>📊</ExploreIcon>
+              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>AI MEMORY RANKINGS</ExploreCardTitle>
               <ExploreDescription style={{ fontFamily: 'monospace' }}>
-                Real-time memory decay curves and threat indicators. Professional terminal interface with live data feeds.
+                Complete brand memory rankings with Terminal and Clean views. Search Microsoft, Apple, Google and discover which brands win the AI memory game.
               </ExploreDescription>
             </ExploreCard>
 
@@ -811,11 +811,11 @@ const Home = () => {
               </ExploreDescription>
             </ExploreCard>
 
-            <ExploreCard to="/rankings">
-              <ExploreIcon>📊</ExploreIcon>
-              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>RANKINGS</ExploreCardTitle>
+            <ExploreCard to="/about">
+              <ExploreIcon>🧠</ExploreIcon>
+              <ExploreCardTitle style={{ fontFamily: 'monospace' }}>METHODOLOGY</ExploreCardTitle>
               <ExploreDescription style={{ fontFamily: 'monospace' }}>
-                Complete brand memory rankings. Search and discover which brands win the AI memory game.
+                How brand memory is calculated. Memory decay algorithms and consensus measurement across 21 AI models.
               </ExploreDescription>
             </ExploreCard>
           </ExploreGrid>

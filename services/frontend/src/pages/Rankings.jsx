@@ -340,6 +340,129 @@ const Pagination = styled.div`
   }
 `
 
+const ViewToggle = styled.div`
+  display: flex;
+  gap: 8px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 4px;
+`;
+
+const ViewButton = styled.button`
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: ${props => props.active ? '#007AFF' : 'transparent'};
+  color: ${props => props.active ? '#ffffff' : '#666666'};
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+
+  &:hover {
+    background: ${props => props.active ? '#007AFF' : '#e0e0e0'};
+  }
+`;
+
+const TerminalContainer = styled.div`
+  background: #0D1117;
+  color: #00FF87;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  min-height: 100vh;
+  padding: 20px;
+`;
+
+const TerminalTable = styled.div`
+  background: #161B22;
+  border: 1px solid #30363D;
+  border-radius: 8px;
+  overflow: hidden;
+`;
+
+const TerminalHeader = styled.div`
+  background: #1C2128;
+  padding: 16px 20px;
+  border-bottom: 1px solid #30363D;
+  font-weight: 600;
+  color: #58A6FF;
+  font-size: 14px;
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 200px 120px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 60px 1fr 100px;
+    
+    .hide-mobile {
+      display: none;
+    }
+  }
+`;
+
+const TerminalRow = styled(motion.div)`
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 200px 120px;
+  padding: 20px;
+  border-bottom: 1px solid #30363D;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #1C2128;
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 60px 1fr 100px;
+    
+    .hide-mobile {
+      display: none;
+    }
+  }
+`;
+
+const TerminalRank = styled.div`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${props => 
+    props.rank === 1 ? '#FFD700' :
+    props.rank === 2 ? '#C0C0C0' :
+    props.rank === 3 ? '#CD7F32' :
+    '#00FF87'
+  };
+  display: flex;
+  align-items: center;
+`;
+
+const TerminalDomain = styled.div`
+  .domain-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 4px;
+  }
+  
+  .domain-meta {
+    font-size: 12px;
+    color: #8B949E;
+  }
+`;
+
+const TerminalScore = styled.div`
+  font-size: 20px;
+  font-weight: 700;
+  color: ${props => 
+    props.score >= 90 ? '#00FF87' : 
+    props.score >= 70 ? '#58A6FF' : 
+    props.score >= 50 ? '#FFD93D' : '#FF6B6B'
+  };
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 function Rankings() {
   const [rankings, setRankings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -349,6 +472,7 @@ function Rankings() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalDomains, setTotalDomains] = useState(0)
   const [searchLoading, setSearchLoading] = useState(false)
+  const [viewMode, setViewMode] = useState('clean') // 'clean' or 'terminal'
 
   // Debounced search effect
   useEffect(() => {
@@ -443,18 +567,7 @@ function Rankings() {
     setCurrentPage(1)
   }
 
-  if (loading && !searchLoading) {
-    return (
-      <Container>
-        <LoadingState>
-          <div className="spinner"></div>
-          <div className="title">Loading Memory Rankings...</div>
-        </LoadingState>
-      </Container>
-    )
-  }
-
-  return (
+  const renderCleanView = () => (
     <Container>
       <Header>
         <Title
@@ -533,6 +646,21 @@ function Rankings() {
             }} />
           )}
         </div>
+        
+        <ViewToggle>
+          <ViewButton 
+            active={viewMode === 'clean'} 
+            onClick={() => setViewMode('clean')}
+          >
+            📊 Clean
+          </ViewButton>
+          <ViewButton 
+            active={viewMode === 'terminal'} 
+            onClick={() => setViewMode('terminal')}
+          >
+            💻 Terminal
+          </ViewButton>
+        </ViewToggle>
         
         <SortControls>
           <SortButton 
@@ -674,7 +802,153 @@ function Rankings() {
         </button>
       </Pagination>
     </Container>
-  )
+  );
+
+  const renderTerminalView = () => (
+    <TerminalContainer>
+      <div style={{ 
+        background: '#1C2128', 
+        padding: '20px', 
+        borderRadius: '8px', 
+        marginBottom: '20px',
+        border: '1px solid #30363D'
+      }}>
+        <h1 style={{ 
+          color: '#00FF87', 
+          margin: '0 0 8px', 
+          fontSize: '1.8rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: '#00FF87',
+            animation: 'pulse 2s infinite'
+          }}></div>
+          AI MEMORY RANKINGS TERMINAL
+        </h1>
+        <p style={{ color: '#58A6FF', margin: 0, fontSize: '1rem' }}>
+          LIVE COMPETITIVE INTELLIGENCE • {totalDomains.toLocaleString()} DOMAINS TRACKED
+        </p>
+      </div>
+
+      <div style={{ 
+        background: '#161B22', 
+        padding: '20px', 
+        borderRadius: '8px', 
+        marginBottom: '20px',
+        border: '1px solid #30363D',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto',
+        gap: '20px',
+        alignItems: 'center'
+      }}>
+        <SearchBox
+          type="text"
+          placeholder="> search domains..."
+          value={searchTerm}
+          onChange={handleSearch}
+          style={{ 
+            background: '#0D1117',
+            border: '2px solid #30363D',
+            color: '#00FF87',
+            fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace'
+          }}
+        />
+        
+        <ViewToggle>
+          <ViewButton 
+            active={viewMode === 'clean'} 
+            onClick={() => setViewMode('clean')}
+          >
+            📊 Clean
+          </ViewButton>
+          <ViewButton 
+            active={viewMode === 'terminal'} 
+            onClick={() => setViewMode('terminal')}
+          >
+            💻 Terminal
+          </ViewButton>
+        </ViewToggle>
+      </div>
+
+      <TerminalTable>
+        <TerminalHeader>
+          <span>RANK</span>
+          <span>DOMAIN</span>
+          <span>MEMORY</span>
+          <span className="hide-mobile">CONSENSUS</span>
+          <span className="hide-mobile">TREND</span>
+        </TerminalHeader>
+        
+        {rankings.map((domain, index) => {
+          const globalRank = (currentPage - 1) * 50 + index + 1
+          return (
+            <TerminalRow
+              key={domain.domain}
+              as={Link}
+              to={`/domain/${domain.domain}`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
+            >
+              <TerminalRank rank={globalRank}>
+                {globalRank}
+              </TerminalRank>
+              
+              <TerminalDomain>
+                <div className="domain-name">{domain.domain}</div>
+                <div className="domain-meta">
+                  {domain.modelsPositive + domain.modelsNeutral + domain.modelsNegative} models • 
+                  LIVE DATA
+                </div>
+              </TerminalDomain>
+              
+              <TerminalScore score={domain.score}>
+                {Math.round(domain.score)}
+              </TerminalScore>
+              
+              <div className="hide-mobile" style={{ color: '#8B949E' }}>
+                <ConsensusVisualization 
+                  modelsPositive={domain.modelsPositive}
+                  modelsNeutral={domain.modelsNeutral}
+                  modelsNegative={domain.modelsNegative}
+                  size="small"
+                />
+              </div>
+              
+              <div className="hide-mobile" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: domain.trend?.startsWith('+') ? '#00FF87' : '#FF6B6B'
+              }}>
+                {domain.trend}
+              </div>
+            </TerminalRow>
+          )
+        })}
+      </TerminalTable>
+    </TerminalContainer>
+  );
+
+  if (loading && !searchLoading) {
+    return (
+      <Container>
+        <LoadingState>
+          <div className="spinner"></div>
+          <div className="title">Loading Memory Rankings...</div>
+        </LoadingState>
+      </Container>
+    )
+  }
+
+  return viewMode === 'terminal' ? renderTerminalView() : renderCleanView();
 }
 
 export default Rankings 

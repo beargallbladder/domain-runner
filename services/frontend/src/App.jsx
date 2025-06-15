@@ -26,7 +26,6 @@ import CompetitiveCohorts from './pages/CompetitiveCohorts'
 import CohortIntelligence from './pages/CohortIntelligence'
 import TestDomain from './pages/TestDomain'
 import AdLanding from './pages/AdLanding'
-import RankingsTerminal from './pages/RankingsTerminal'
 import CompetitiveBattles from './pages/CompetitiveBattles'
 
 // Subtle drift animation for text
@@ -140,7 +139,6 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/rankings" element={<Rankings />} />
-          <Route path="/rankings-terminal" element={<RankingsTerminal />} />
           <Route path="/cohorts" element={<CompetitiveCohorts />} />
           <Route path="/battles" element={<CompetitiveBattles />} />
           <Route path="/cohort-intelligence" element={<CohortIntelligence />} />
