@@ -1434,28 +1434,38 @@ class SophisticatedRunner {
   }
 
   async processNextBatch(): Promise<void> {
+    const client = await pool.connect();
     try {
-      // Query pending domains using exact same logic as raw-capture-runner - NO processor_id filtering
-      const result = await pool.query(`
-        SELECT id, domain FROM domains 
-        WHERE status = 'pending'
-        ORDER BY created_at ASC
-        LIMIT 1
+      // 🚨 RACE CONDITION FIX: Atomic domain claiming with transaction isolation
+      await client.query('BEGIN');
+      
+      // Query pending domains with atomic claiming to prevent race conditions
+      const result = await client.query(`
+        UPDATE domains 
+        SET status = 'processing',
+            last_processed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id IN (
+          SELECT id FROM domains 
+          WHERE status = 'pending' 
+            AND (source IS NULL OR source != 'simple_modular_v1')  -- Avoid conflicts with modular processor
+          ORDER BY created_at ASC
+          LIMIT 1
+          FOR UPDATE SKIP LOCKED  -- Critical: Skip locked rows to prevent blocking
+        )
+        RETURNING id, domain
       `);
 
       if (result.rows.length === 0) {
-        console.log('✅ No pending domains available');
+        await client.query('ROLLBACK');
+        console.log('✅ No pending domains available (or all locked by other processors)');
         return;
       }
 
       const { id, domain } = result.rows[0];
-      console.log(`🎯 Processing: ${domain} (${SERVICE_ID})`);
-
-      // Mark as processing - same as raw-capture-runner
-      await pool.query(
-        'UPDATE domains SET status = $1, last_processed_at = NOW() WHERE id = $2',
-        ['processing', id]
-      );
+      await client.query('COMMIT');
+      
+      console.log(`🎯 Processing: ${domain} (${SERVICE_ID}) - Atomically claimed`);
 
       // 🎯 Select models and prompts based on tiered JOLT architecture
       const selectedModels = await selectModelsForDomainTiered(domain);
@@ -1527,6 +1537,7 @@ class SophisticatedRunner {
       console.log(`✅ Completed comprehensive processing: ${domain} (${SERVICE_ID})`);
       
     } catch (error) {
+      await client.query('ROLLBACK');
       console.error('❌ Processing error:', error);
       
       // Reset failed domains for retry - same as raw-capture-runner
@@ -1538,6 +1549,8 @@ class SophisticatedRunner {
       } catch (resetError) {
         console.error('❌ Failed to reset domain status:', resetError);
       }
+    } finally {
+      client.release();
     }
   }
 
