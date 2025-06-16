@@ -3,49 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import IntelligenceDashboard from '../components/IntelligenceDashboard';
+import DigitalMemoryHero from '../components/DigitalMemoryHero';
 
 const Container = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #000000;
   color: #ffffff;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+`;
+
+const ContentSection = styled.section`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 40px 20px;
   text-align: center;
-`;
-
-const HeroSection = styled.section`
-  max-width: 800px;
-  margin-bottom: 60px;
-`;
-
-const MainTitle = styled(motion.h1)`
-  font-size: 3.5rem;
-  font-weight: 300;
-  margin-bottom: 24px;
-  letter-spacing: -1px;
-  line-height: 1.1;
-  
-  @media (min-width: 768px) {
-    font-size: 4.5rem;
-    margin-bottom: 32px;
-  }
-`;
-
-const Subtitle = styled(motion.p)`
-  font-size: 1.4rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 300;
-  line-height: 1.5;
-  margin-bottom: 48px;
-  
-  @media (min-width: 768px) {
-    font-size: 1.6rem;
-    margin-bottom: 64px;
-  }
 `;
 
 const SearchSection = styled(motion.div)`
@@ -55,6 +29,8 @@ const SearchSection = styled(motion.div)`
   padding: 40px;
   margin-bottom: 48px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 600px;
+  width: 100%;
 `;
 
 const SearchBox = styled.input`
@@ -237,101 +213,88 @@ const Home = () => {
 
   return (
     <Container>
-      <HeroSection>
-        <MainTitle
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          Where does your brand rank in AI memory?
-        </MainTitle>
-        
-        <Subtitle
+      {/* New Digital Memory Hero Section */}
+      <DigitalMemoryHero name="Your Brand" />
+      
+      {/* Search and Stats Section */}
+      <ContentSection>
+        <SearchSection
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
         >
-          See how 21 AI models remember your brand vs competitors. 
-          Get your AI trust score in seconds.
-        </Subtitle>
-      </HeroSection>
+          <SearchBox
+            type="text"
+            placeholder="Enter your domain (e.g., apple.com, microsoft.com)"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={handleKeyPress}
+          />
+          
+          <SearchButton 
+            onClick={handleSearch}
+            disabled={loading || !searchTerm.trim()}
+          >
+            {loading ? (
+              <>
+                Analyzing...
+                <LoadingSpinner />
+              </>
+            ) : (
+              "Get My AI Memory Score"
+            )}
+          </SearchButton>
+          
+          <ExampleSearches>
+            <div className="label">Try these examples:</div>
+            <div className="examples">
+              {['apple.com', 'microsoft.com', 'tesla.com', 'netflix.com', 'stripe.com'].map(domain => (
+                <ExampleChip 
+                  key={domain} 
+                  onClick={() => handleExampleSearch(domain)}
+                >
+                  {domain}
+                </ExampleChip>
+              ))}
+            </div>
+          </ExampleSearches>
+        </SearchSection>
 
-      <SearchSection
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.4 }}
-      >
-        <SearchBox
-          type="text"
-          placeholder="Enter your domain (e.g., apple.com, microsoft.com)"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyPress={handleKeyPress}
-        />
-        
-        <SearchButton 
-          onClick={handleSearch}
-          disabled={loading || !searchTerm.trim()}
+        <QuickStats
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
         >
-          {loading ? (
-            <>
-              Analyzing...
-              <LoadingSpinner />
-            </>
-          ) : (
-            "Get My AI Memory Score"
-          )}
-        </SearchButton>
-        
-        <ExampleSearches>
-          <div className="label">Try these examples:</div>
-          <div className="examples">
-            {['apple.com', 'microsoft.com', 'tesla.com', 'netflix.com', 'stripe.com'].map(domain => (
-              <ExampleChip 
-                key={domain} 
-                onClick={() => handleExampleSearch(domain)}
-              >
-                {domain}
-              </ExampleChip>
-            ))}
-          </div>
-        </ExampleSearches>
-      </SearchSection>
+          <StatCard>
+            <div className="number">3,618</div>
+            <div className="label">Brands Tracked</div>
+          </StatCard>
+          <StatCard>
+            <div className="number">17</div>
+            <div className="label">AI Models</div>
+          </StatCard>
+          <StatCard>
+            <div className="number">Real-time</div>
+            <div className="label">Memory Tracking</div>
+          </StatCard>
+        </QuickStats>
 
-      <QuickStats
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.6 }}
-      >
-        <StatCard>
-          <div className="number">1,700+</div>
-          <div className="label">Brands Tracked</div>
-        </StatCard>
-        <StatCard>
-          <div className="number">21</div>
-          <div className="label">AI Models</div>
-        </StatCard>
-        <StatCard>
-          <div className="number">50K+</div>
-          <div className="label">Data Points</div>
-        </StatCard>
-      </QuickStats>
-
-      <QuickLinks
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.8 }}
-      >
-        <QuickLink onClick={() => navigate('/leaderboard')}>
-          🏆 See Full Leaderboard
-        </QuickLink>
-        <QuickLink onClick={() => navigate('/battles')}>
-          ⚔️ Brand vs Brand
-        </QuickLink>
-        <QuickLink onClick={() => navigate('/api')}>
-          🚀 API Access
-        </QuickLink>
-      </QuickLinks>
+        <QuickLinks
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+        >
+          <QuickLink onClick={() => navigate('/rankings')}>
+            🏆 See Full Rankings
+          </QuickLink>
+          <QuickLink onClick={() => navigate('/battles')}>
+            ⚔️ Brand vs Brand
+          </QuickLink>
+          <QuickLink onClick={() => navigate('/api')}>
+            🚀 API Access
+          </QuickLink>
+        </QuickLinks>
+      </ContentSection>
     </Container>
   );
 };
