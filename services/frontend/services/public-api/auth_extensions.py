@@ -19,6 +19,9 @@ import os
 from typing import Optional, Dict, List
 import logging
 
+# Import email service
+from email_service import email_service
+
 # Security configuration
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
@@ -155,6 +158,16 @@ def add_auth_endpoints(app, pool):
                              domains_tracked, domains_limit, api_calls_used, api_calls_limit, created_at
                 """, user_data.email, password_hash, user_data.full_name)
                 
+                # Send welcome email
+                try:
+                    email_service.send_welcome_email(
+                        user_data.email, 
+                        user_data.full_name or user_data.email.split('@')[0]
+                    )
+                    logger.info(f"Welcome email sent to: {user_data.email}")
+                except Exception as e:
+                    logger.warning(f"Failed to send welcome email to {user_data.email}: {e}")
+                
                 logger.info(f"New user registered: {user_data.email}")
                 return UserResponse(**dict(user), id=str(user['id']))
                 
@@ -211,6 +224,49 @@ def add_auth_endpoints(app, pool):
         Get current user profile and subscription info
         """
         return UserResponse(**current_user, id=str(current_user['id']))
+
+    @app.post("/api/auth/request-password-reset")
+    async def request_password_reset(email_data: dict):
+        """
+        🔐 REQUEST PASSWORD RESET
+        Send password reset email with secure token
+        """
+        email = email_data.get('email')
+        if not email:
+            raise HTTPException(status_code=400, detail="Email required")
+        
+        try:
+            async with pool.acquire() as conn:
+                # Check if user exists
+                user = await conn.fetchrow("SELECT id, email FROM users WHERE email = $1", email)
+                
+                if user:
+                    # Generate reset token
+                    reset_token = secrets.token_urlsafe(32)
+                    
+                    # Store reset token (expires in 1 hour)
+                    await conn.execute("""
+                        INSERT INTO password_reset_tokens (user_id, token, expires_at, created_at)
+                        VALUES ($1, $2, NOW() + INTERVAL '1 hour', NOW())
+                        ON CONFLICT (user_id) DO UPDATE SET
+                            token = EXCLUDED.token,
+                            expires_at = EXCLUDED.expires_at,
+                            created_at = EXCLUDED.created_at
+                    """, user['id'], reset_token)
+                    
+                    # Send password reset email
+                    try:
+                        email_service.send_password_reset_email(email, reset_token)
+                        logger.info(f"Password reset email sent to: {email}")
+                    except Exception as e:
+                        logger.warning(f"Failed to send password reset email to {email}: {e}")
+                
+                # Always return success (security: don't reveal if email exists)
+                return {"message": "If this email exists, a password reset link has been sent"}
+                
+        except Exception as e:
+            logger.error(f"Password reset request failed: {e}")
+            raise HTTPException(status_code=500, detail="Password reset request failed")
 
     # ============================================
     # USER DOMAIN MANAGEMENT

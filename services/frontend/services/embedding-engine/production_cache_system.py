@@ -18,6 +18,9 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 import time
+import psutil
+import gc
+from contextlib import contextmanager
 
 # Production Configuration
 @dataclass
@@ -29,6 +32,10 @@ class ProductionConfig:
     similarity_threshold: float = 0.85
     consensus_threshold_high: float = 0.7
     consensus_threshold_low: float = 0.4
+    # Memory Management
+    max_memory_gb: float = 1.5  # Circuit breaker at 1.5GB
+    warning_memory_gb: float = 1.0  # Warning at 1GB
+    min_batch_size: int = 1  # Minimum when memory is high
 
 # Production Logging
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +63,16 @@ class ProductionCacheSystem:
     def __init__(self, config: ProductionConfig):
         self.config = config
         self.pool = None
-        self.metrics = {'processed': 0, 'failed': 0, 'alerts_generated': 0}
+        self.process = psutil.Process()
+        self.peak_memory_mb = 0
+        self.circuit_breaker_active = False
+        self.metrics = {
+            'processed': 0, 
+            'failed': 0, 
+            'alerts_generated': 0,
+            'memory_warnings': 0,
+            'memory_cleanups': 0
+        }
     
     async def initialize(self):
         """Initialize with connection pooling"""
@@ -67,6 +83,62 @@ class ProductionCacheSystem:
         )
         await self.create_production_tables()
         logger.info("🚀 Production cache system initialized")
+    
+    def get_memory_usage_gb(self) -> float:
+        """Get current memory usage in GB"""
+        memory_info = self.process.memory_info()
+        usage_mb = memory_info.rss / 1024 / 1024
+        self.peak_memory_mb = max(self.peak_memory_mb, usage_mb)
+        return usage_mb / 1024
+    
+    def check_memory_status(self) -> Dict:
+        """Check memory status and adjust batch size"""
+        current_gb = self.get_memory_usage_gb()
+        
+        status = {
+            'current_gb': current_gb,
+            'peak_gb': self.peak_memory_mb / 1024,
+            'status': 'healthy',
+            'recommended_batch_size': self.config.batch_size,
+            'circuit_breaker': False
+        }
+        
+        # Circuit breaker logic
+        if current_gb >= self.config.max_memory_gb:
+            status['status'] = 'CRITICAL'
+            status['circuit_breaker'] = True
+            status['recommended_batch_size'] = 0
+            self.circuit_breaker_active = True
+            logger.error(f"🚨 MEMORY CIRCUIT BREAKER: {current_gb:.2f}GB")
+            
+        elif current_gb >= self.config.warning_memory_gb:
+            status['status'] = 'warning'
+            status['recommended_batch_size'] = self.config.min_batch_size
+            self.metrics['memory_warnings'] += 1
+            logger.warning(f"⚠️ Memory warning: {current_gb:.2f}GB")
+            
+        return status
+    
+    async def force_memory_cleanup(self):
+        """Force garbage collection and cleanup"""
+        logger.info("🧹 Forcing memory cleanup...")
+        
+        # Clear model cache if memory is critical
+        if self.get_memory_usage_gb() >= self.config.max_memory_gb:
+            EmbeddingModelSingleton._model = None
+            logger.info("🔄 Cleared model cache to free memory")
+        
+        # Force garbage collection
+        collected = gc.collect()
+        self.metrics['memory_cleanups'] += 1
+        
+        new_usage = self.get_memory_usage_gb()
+        logger.info(f"✅ Cleanup: {collected} objects collected, now {new_usage:.2f}GB")
+        
+        # Reset circuit breaker if memory is back to normal
+        if new_usage < self.config.warning_memory_gb and self.circuit_breaker_active:
+            self.circuit_breaker_active = False
+            logger.info("✅ Circuit breaker reset")
     
     async def create_production_tables(self):
         """Create production tables with fire alarm columns"""
@@ -308,9 +380,26 @@ class ProductionCacheSystem:
         return [theme for theme, score in sorted(scores.items(), key=lambda x: x[1], reverse=True)[:3]]
     
     async def generate_batch(self, batch_size: int = 5, offset: int = 0) -> Dict:
-        """FIXES: Batch processing with proper transaction management"""
+        """FIXES: Batch processing with memory management and circuit breakers"""
         
         try:
+            # Check memory status before starting
+            memory_status = self.check_memory_status()
+            if memory_status['circuit_breaker']:
+                await self.force_memory_cleanup()
+                memory_status = self.check_memory_status()
+                if memory_status['circuit_breaker']:
+                    return {
+                        "status": "memory_error",
+                        "message": f"Memory usage too high: {memory_status['current_gb']:.2f}GB",
+                        "metrics": self.metrics
+                    }
+            
+            # Adjust batch size based on memory
+            effective_batch_size = min(batch_size, memory_status['recommended_batch_size'])
+            if effective_batch_size != batch_size:
+                logger.info(f"📉 Reduced batch size: {batch_size} → {effective_batch_size} (memory: {memory_status['current_gb']:.2f}GB)")
+            
             # Get domains to process
             async with self.pool.acquire() as conn:
                 domains = await conn.fetch("""
@@ -322,7 +411,7 @@ class ProductionCacheSystem:
                     HAVING COUNT(r.id) >= 5
                     ORDER BY COUNT(r.id) DESC
                     LIMIT $1 OFFSET $2
-                """, batch_size, offset)
+                """, effective_batch_size, offset)
             
             if not domains:
                 return {"status": "complete", "metrics": self.metrics}
@@ -339,13 +428,21 @@ class ProductionCacheSystem:
             if successful:
                 await self.batch_insert_cache(successful)
             
+            # Final memory check
+            final_memory = self.get_memory_usage_gb()
+            if final_memory > self.config.warning_memory_gb:
+                await self.force_memory_cleanup()
+            
             return {
                 "status": "success",
                 "processed": len(successful),
                 "failed": len(domains) - len(successful),
-                "next_offset": offset + batch_size,
-                "has_more": len(domains) == batch_size,
+                "next_offset": offset + effective_batch_size,
+                "has_more": len(domains) == effective_batch_size,
                 "fire_alarms_generated": self.metrics['alerts_generated'],
+                "memory_usage_gb": final_memory,
+                "peak_memory_gb": self.peak_memory_mb / 1024,
+                "memory_warnings": self.metrics['memory_warnings'],
                 "metrics": self.metrics
             }
             

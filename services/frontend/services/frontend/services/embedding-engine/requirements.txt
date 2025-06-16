@@ -1,0 +1,17 @@
+# Layer 1: Database Service Dependencies
+Flask==2.3.3
+python-dotenv==1.0.0
+psycopg2-binary==2.9.7
+
+# Production Database Dependencies (Fire Alarm System)
+asyncpg==0.29.0
+
+# Layer 2: Embedding Dependencies (compatible versions)
+sentence-transformers==2.2.2
+torch==2.1.0
+transformers==4.35.0
+numpy==1.24.3
+huggingface-hub==0.17.3
+
+# Layer 3: Analysis Dependencies  
+scipy==1.11.4

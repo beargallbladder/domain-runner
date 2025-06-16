@@ -1,0 +1,247 @@
+{
+  "domains": [
+    {
+      "domain": "openai.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "anthropic.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "deepmind.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "mistral.ai",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "tesla.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "apple.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "google.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "microsoft.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "nvidia.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "meta.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "amazon.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "netflix.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "stripe.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "shopify.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "salesforce.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "adobe.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "github.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "figma.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "canva.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "spotify.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "coinbase.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "binance.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "paypal.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    },
+    {
+      "domain": "substack.com",
+      "source": "premium_mega_analysis",
+      "priority": "high",
+      "analysis_types": [
+        "business_analysis",
+        "content_strategy",
+        "technical_assessment"
+      ]
+    }
+  ],
+  "total_count": 24,
+  "created_at": "2025-06-09T05:13:32.120Z",
+  "instructions": "Add these domains to the raw-capture-runner database for processing"
+}
