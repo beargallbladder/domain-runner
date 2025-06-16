@@ -5,8 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
+    "start:graceful": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "build": "tsc",
+    "postinstall": "npm run build",
     "test": "node dist/test.js",
     "test:jolt": "./test_jolt.sh",
     "test:jolt:migrate": "./test_jolt.sh http://localhost:10000 --migrate",
