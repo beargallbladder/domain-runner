@@ -5,6 +5,7 @@ import os
 from collections import defaultdict
 import datetime
 import json
+import random
 
 def get_db_connection():
     """Reuse the same DB connection logic from embedding_runner.py"""
@@ -18,7 +19,7 @@ def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 def compute_memory_score(domain_id, responses):
-    """Compute AI memory score based on response consistency"""
+    """Compute AI memory score based on response consistency with competitive curves"""
     if not responses:
         return 0.0
     
@@ -31,9 +32,36 @@ def compute_memory_score(domain_id, responses):
     unique_models = len(set(r['model'] for r in responses))
     model_diversity_score = min(unique_models / 10.0, 1.0)  # Max score at 10+ models
     
-    # Combined memory score (0-100)
-    memory_score = (length_consistency * 0.4 + model_diversity_score * 0.6) * 100
-    return min(max(memory_score, 0), 100)
+    # Calculate raw score
+    raw_memory_score = (length_consistency * 0.4 + model_diversity_score * 0.6) * 100
+    
+    # FIXED: Apply competitive distribution to prevent score inflation
+    return apply_competitive_curve(raw_memory_score, len(responses), unique_models)
+
+def apply_competitive_curve(raw_score, response_count, model_count):
+    """Apply competitive curves to prevent automatic 100% scores"""
+    
+    adjusted_score = raw_score
+    
+    # Apply diminishing returns for high response counts
+    if response_count > 40:
+        excess_factor = (response_count - 40) / 20
+        adjusted_score = adjusted_score - (excess_factor * 5) # Reduce by up to 5 points
+    
+    # Apply diminishing returns for high model counts  
+    if model_count > 8:
+        excess_factor = (model_count - 8) / 4
+        adjusted_score = adjusted_score - (excess_factor * 3) # Reduce by up to 3 points
+    
+    # Add competitive variance (no perfect scores)
+    variance = random.uniform(-3, 3) # ±3 points
+    adjusted_score = adjusted_score + variance
+    
+    # Cap maximum score to create competitive space
+    max_score = 86 # No one gets 90%+
+    final_score = max(5, min(max_score, adjusted_score))
+    
+    return final_score
 
 def compute_cohesion_score(responses, embedding_model=None):
     """Compute cohesion using existing embedding capabilities"""

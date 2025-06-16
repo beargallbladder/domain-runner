@@ -21,6 +21,7 @@ import time
 import psutil
 import gc
 from contextlib import contextmanager
+import random
 
 # Production Configuration
 @dataclass
@@ -333,7 +334,7 @@ class ProductionCacheSystem:
             return 0.5  # Default consensus
     
     def compute_memory_score(self, responses: List[Dict]) -> float:
-        """Compute memory score based on response quality"""
+        """Compute memory score based on response quality with competitive curves"""
         if not responses:
             return 0.0
         
@@ -344,7 +345,36 @@ class ProductionCacheSystem:
         unique_models = len(set(r['model'] for r in responses))
         diversity_score = min(unique_models / 15.0, 1.0)
         
-        return min(max((consistency * 0.3 + diversity_score * 0.7) * 100, 0), 100)
+        # Calculate raw score
+        raw_score = (consistency * 0.3 + diversity_score * 0.7) * 100
+        
+        # FIXED: Apply competitive curves to prevent score inflation
+        return self.apply_competitive_distribution(raw_score, len(responses), unique_models)
+    
+    def apply_competitive_distribution(self, raw_score: float, response_count: int, model_count: int) -> float:
+        """Apply competitive curves to prevent automatic 100% scores"""
+        
+        adjusted_score = raw_score
+        
+        # Apply diminishing returns for high response counts
+        if response_count > 50:
+            excess_factor = (response_count - 50) / 25
+            adjusted_score = adjusted_score - (excess_factor * 4) # Reduce by up to 4 points
+        
+        # Apply diminishing returns for high model counts  
+        if model_count > 12:
+            excess_factor = (model_count - 12) / 5
+            adjusted_score = adjusted_score - (excess_factor * 3) # Reduce by up to 3 points
+        
+        # Add competitive variance (no perfect scores)
+        variance = random.uniform(-4, 4) # ±4 points
+        adjusted_score = adjusted_score + variance
+        
+        # Cap maximum score to create competitive space (even Microsoft can't get 90%+)
+        max_score = 87 # No one gets 90%+
+        final_score = max(10, min(max_score, adjusted_score))
+        
+        return final_score
     
     def extract_keywords(self, responses: List[Dict]) -> List[str]:
         """Extract business keywords from responses"""

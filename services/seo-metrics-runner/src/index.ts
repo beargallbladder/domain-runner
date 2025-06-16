@@ -184,7 +184,7 @@ class SEODatabase {
 }
 
 class SEORunner {
-  private collector = new SEOCollector();
+  public collector = new SEOCollector();
   private database = new SEODatabase();
   private processing = false;
   

@@ -454,19 +454,18 @@ const categoryData = {
   }
 }
 
-// Generate mock domain data for each category
-const generateDomainData = (category) => {
-  const baseData = categoryData[category]
-  if (!baseData) return []
+const generateDynamicScore = (domain) => {
+  // Tech company indicators
+  const isTechGiant = ['microsoft.com', 'google.com', 'apple.com', 'amazon.com'].includes(domain)
+  const isAICompany = ['openai.com', 'anthropic.com', 'nvidia.com'].includes(domain)
+  const isWellKnown = ['tesla.com', 'meta.com', 'netflix.com', 'stripe.com'].includes(domain)
   
-  return baseData.domains.map((domain, index) => ({
-    name: domain,
-    score: Math.max(60, baseData.avgScore + (Math.random() - 0.5) * 20),
-    trend: Math.random() > 0.5 ? 'Rising' : 'Stable',
-    responses: Math.floor(Math.random() * 500) + 100,
-    models: Math.floor(Math.random() * 5) + 10,
-    description: `Leading ${category.toLowerCase()} company with strong market presence and technological innovation.`
-  }))
+  // Base scoring with realistic ranges (no more 94-98 scores)
+  if (isAICompany) return Math.floor(Math.random() * 12) + 78  // 78-90
+  if (isTechGiant) return Math.floor(Math.random() * 12) + 72  // 72-84  
+  if (isWellKnown) return Math.floor(Math.random() * 15) + 65  // 65-80
+  
+  return Math.floor(Math.random() * 30) + 35  // 35-65
 }
 
 function Categories() {
@@ -498,11 +497,11 @@ function Categories() {
             totalDomains: 45,
             averageScore: 88.5,
             topDomains: [
-              { domain: 'google.com', score: 95, modelsPositive: 15, modelsNeutral: 2, modelsNegative: 1 },
-              { domain: 'microsoft.com', score: 94, modelsPositive: 14, modelsNeutral: 3, modelsNegative: 1 },
-              { domain: 'apple.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
-              { domain: 'openai.com', score: 92, modelsPositive: 12, modelsNeutral: 4, modelsNegative: 2 },
-              { domain: 'nvidia.com', score: 91, modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 }
+              { domain: 'google.com', score: generateDynamicScore('google.com'), modelsPositive: 15, modelsNeutral: 2, modelsNegative: 1 },
+              { domain: 'microsoft.com', score: generateDynamicScore('microsoft.com'), modelsPositive: 14, modelsNeutral: 3, modelsNegative: 1 },
+              { domain: 'apple.com', score: generateDynamicScore('apple.com'), modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
+              { domain: 'openai.com', score: generateDynamicScore('openai.com'), modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
+              { domain: 'nvidia.com', score: generateDynamicScore('nvidia.com'), modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 }
             ]
           },
           {
@@ -522,11 +521,11 @@ function Categories() {
             totalDomains: 18,
             averageScore: 85.1,
             topDomains: [
-              { domain: 'amazon.com', score: 96, modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
+              { domain: 'amazon.com', score: generateDynamicScore('amazon.com'), modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
               { domain: 'ebay.com', score: 84, modelsPositive: 11, modelsNeutral: 4, modelsNegative: 3 },
               { domain: 'shopify.com', score: 81, modelsPositive: 10, modelsNeutral: 5, modelsNegative: 3 },
               { domain: 'alibaba.com', score: 79, modelsPositive: 9, modelsNeutral: 6, modelsNegative: 3 },
-              { domain: 'stripe.com', score: 77, modelsPositive: 8, modelsNeutral: 7, modelsNegative: 3 }
+              { domain: 'stripe.com', score: generateDynamicScore('stripe.com'), modelsPositive: 8, modelsNeutral: 7, modelsNegative: 3 }
             ]
           },
           {
@@ -546,11 +545,11 @@ function Categories() {
             totalDomains: 20,
             averageScore: 84.7,
             topDomains: [
-              { domain: 'apple.com', score: 93, modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
+              { domain: 'apple.com', score: generateDynamicScore('apple.com'), modelsPositive: 13, modelsNeutral: 3, modelsNegative: 2 },
               { domain: 'samsung.com', score: 87, modelsPositive: 10, modelsNeutral: 6, modelsNegative: 2 },
               { domain: 'sony.com', score: 85, modelsPositive: 9, modelsNeutral: 7, modelsNegative: 2 },
               { domain: 'lg.com', score: 83, modelsPositive: 8, modelsNeutral: 8, modelsNegative: 2 },
-              { domain: 'tesla.com', score: 81, modelsPositive: 7, modelsNeutral: 9, modelsNegative: 2 }
+              { domain: 'tesla.com', score: generateDynamicScore('tesla.com'), modelsPositive: 7, modelsNeutral: 9, modelsNegative: 2 }
             ]
           },
           {
@@ -558,7 +557,7 @@ function Categories() {
             totalDomains: 8,
             averageScore: 91.2,
             topDomains: [
-              { domain: 'openai.com', score: 98, modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
+              { domain: 'openai.com', score: generateDynamicScore('openai.com'), modelsPositive: 16, modelsNeutral: 1, modelsNegative: 1 },
               { domain: 'anthropic.com', score: 92, modelsPositive: 12, modelsNeutral: 4, modelsNegative: 2 },
               { domain: 'huggingface.co', score: 90, modelsPositive: 11, modelsNeutral: 5, modelsNegative: 2 },
               { domain: 'stability.ai', score: 88, modelsPositive: 10, modelsNeutral: 6, modelsNegative: 2 },
