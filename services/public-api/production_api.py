@@ -611,7 +611,7 @@ async def get_full_rankings(
     """
     📊 FULL RANKINGS - Complete AI Memory Leaderboard
     
-    Searchable, sortable rankings of all domains
+    Searchable, sortable rankings of all domains with domain name sorting
     """
     try:
         offset = (page - 1) * limit
