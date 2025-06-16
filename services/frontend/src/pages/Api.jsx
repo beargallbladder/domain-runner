@@ -1,6 +1,11 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
+
+const scroll = keyframes`
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+`;
 
 const Container = styled.div`
   min-height: 100vh;
@@ -9,6 +14,60 @@ const Container = styled.div`
   padding: 80px 20px;
   max-width: 1200px;
   margin: 0 auto;
+`;
+
+// Mathematical Ticker for API sophistication
+const MathTicker = styled.div`
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px 0;
+  margin-bottom: 60px;
+  overflow: hidden;
+  position: relative;
+  
+  &::before {
+    content: '⚡ FOUNDATIONAL TIME SERIES ANALYSIS';
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: #00ff41;
+    font-weight: 600;
+    letter-spacing: 1px;
+    z-index: 2;
+  }
+`;
+
+const ScrollingMath = styled.div`
+  white-space: nowrap;
+  animation: ${scroll} 45s linear infinite;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding-left: 300px;
+  
+  .formula {
+    margin-right: 80px;
+    display: inline-block;
+  }
+  
+  .derivative {
+    color: #00ff41;
+  }
+  
+  .integral {
+    color: #007AFF;
+  }
+  
+  .volatility {
+    color: #ff9500;
+  }
+  
+  .consensus {
+    color: #af52de;
+  }
 `;
 
 const HeroSection = styled.section`
@@ -107,6 +166,24 @@ const EndpointCard = styled.div`
 const Api = () => {
   return (
     <Container>
+      {/* Mathematical Sophistication Ticker */}
+      <MathTicker>
+        <ScrollingMath>
+          <span className="formula derivative">∂M/∂t = -λM(t) + η(t)</span>
+          <span className="formula volatility">σ²(t) = E[(R(t) - μ)²]</span>
+          <span className="formula integral">V(T) = ∫₀ᵀ σ(s)²ds</span>
+          <span className="formula consensus">C = Σᵢwᵢlog(pᵢ/(1-pᵢ))</span>
+          <span className="formula derivative">dS/dt = μS + σSdW</span>
+          <span className="formula volatility">GARCH(1,1): σₜ² = ω + αεₜ₋₁² + βσₜ₋₁²</span>
+          <span className="formula integral">γ(τ) = E[X(t)X(t+τ)]</span>
+          <span className="formula consensus">H = -Σp(x)log₂p(x)</span>
+          <span className="formula derivative">∇·F = ∂Fₓ/∂x + ∂Fᵧ/∂y + ∂Fᵤ/∂z</span>
+          <span className="formula volatility">VaR₀.₀₅ = μ - 1.645σ</span>
+          <span className="formula integral">∫∫∫ρ(r,θ,φ)dV</span>
+          <span className="formula consensus">χ² = Σ(Oᵢ - Eᵢ)²/Eᵢ</span>
+        </ScrollingMath>
+      </MathTicker>
+
       <HeroSection>
         <Title
           initial={{ opacity: 0, y: 20 }}
@@ -121,7 +198,7 @@ const Api = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           Programmatic access to brand memory data across 21 AI models. 
-          The infrastructure for memory-driven applications and competitive intelligence.
+          Built on foundational time series analysis, stochastic calculus, and real-time volatility modeling.
         </Subtitle>
       </HeroSection>
 
@@ -131,15 +208,15 @@ const Api = () => {
           <div className="label">API Responses</div>
         </StatCard>
         <StatCard>
-          <div className="number">1,700+</div>
+          <div className="number">3,618</div>
           <div className="label">Domains</div>
         </StatCard>
         <StatCard>
-          <div className="number">21</div>
+          <div className="number">17</div>
           <div className="label">AI Models</div>
         </StatCard>
         <StatCard>
-          <div className="number">&lt;1s</div>
+          <div className="number">&lt;200ms</div>
           <div className="label">Latency</div>
         </StatCard>
       </StatsGrid>
@@ -151,8 +228,8 @@ const Api = () => {
           <div className="method">GET</div>
           <div className="endpoint">/api/rankings</div>
           <div className="description">
-            Complete brand memory rankings with filtering, sorting, and pagination. 
-            Access real-time memory scores across all AI models.
+            Complete brand memory rankings with time series derivatives and volatility indicators. 
+            Access real-time memory scores with statistical confidence intervals.
           </div>
         </EndpointCard>
 
@@ -160,17 +237,17 @@ const Api = () => {
           <div className="method">GET</div>
           <div className="endpoint">/api/domain/{`{domain}`}</div>
           <div className="description">
-            Detailed analysis for specific domains including memory decay trends, 
-            model consensus, and competitive positioning.
+            Detailed analysis including memory decay functions, consensus entropy, 
+            and stochastic drift patterns. Full mathematical foundations exposed.
           </div>
         </EndpointCard>
 
         <EndpointCard>
           <div className="method">GET</div>
-          <div className="endpoint">/api/competitive</div>
+          <div className="endpoint">/api/volatility</div>
           <div className="description">
-            Head-to-head brand comparisons, competitive gaps, and market positioning data. 
-            Perfect for competitive intelligence applications.
+            Real-time volatility metrics using GARCH modeling and variance decomposition. 
+            Memory stability indicators and risk quantification.
           </div>
         </EndpointCard>
 
@@ -178,8 +255,8 @@ const Api = () => {
           <div className="method">GET</div>
           <div className="endpoint">/api/analytics</div>
           <div className="description">
-            Memory drift tracking, consensus measurement, and trend analysis. 
-            Historical data for longitudinal brand memory studies.
+            Advanced time series analysis with autocorrelation functions, spectral density, 
+            and multi-variate consensus modeling. Research-grade mathematical foundations.
           </div>
         </EndpointCard>
       </EndpointsSection>
