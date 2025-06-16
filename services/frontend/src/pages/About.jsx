@@ -156,7 +156,7 @@ function About() {
       </ManifestoText>
       
       <Signature>
-        <div className="author">-Sam</div>
+        <div className="author">samkim@samkim.com</div>
       </Signature>
       
       <Contact>
