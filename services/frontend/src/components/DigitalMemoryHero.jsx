@@ -16,6 +16,17 @@ const memoryFade = keyframes`
   100% { opacity: 0.3; }
 `
 
+const mathFadeIn = keyframes`
+  0% { opacity: 0; transform: translateY(20px) rotate(-2deg); }
+  50% { opacity: 0.15; transform: translateY(0px) rotate(0deg); }
+  100% { opacity: 0.08; transform: translateY(-10px) rotate(1deg); }
+`
+
+const mathFloat = keyframes`
+  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.08; }
+  50% { transform: translateY(-5px) rotate(0.5deg); opacity: 0.12; }
+`
+
 const HeroContainer = styled.div`
   min-height: 80vh;
   background: #000;
@@ -156,11 +167,73 @@ const CTA = styled.button`
   margin-top: 2rem;
   opacity: ${props => props.visible ? 1 : 0};
   transform: translateY(${props => props.visible ? 0 : 20}px);
+  z-index: 3;
+  position: relative;
   
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
   }
+`
+
+// Beautiful Mind: Mathematical Shadow Layer
+const MathFormula = styled.div`
+  position: absolute;
+  font-family: 'Times New Roman', serif;
+  font-size: ${props => props.size || '0.9rem'};
+  color: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  z-index: 0;
+  animation: ${mathFadeIn} 3s ease-in-out ${props => props.delay || 0}s forwards,
+             ${mathFloat} 8s ease-in-out infinite ${props => (props.delay || 0) + 3}s;
+  
+  ${props => props.position === 'topLeft' && `
+    top: 10%;
+    left: 5%;
+    transform: rotate(-5deg);
+  `}
+  
+  ${props => props.position === 'topRight' && `
+    top: 8%;
+    right: 8%;
+    transform: rotate(3deg);
+  `}
+  
+  ${props => props.position === 'midLeft' && `
+    top: 40%;
+    left: 3%;
+    transform: rotate(-2deg);
+  `}
+  
+  ${props => props.position === 'midRight' && `
+    top: 35%;
+    right: 4%;
+    transform: rotate(4deg);
+  `}
+  
+  ${props => props.position === 'bottomLeft' && `
+    bottom: 20%;
+    left: 6%;
+    transform: rotate(2deg);
+  `}
+  
+  ${props => props.position === 'bottomRight' && `
+    bottom: 15%;
+    right: 7%;
+    transform: rotate(-3deg);
+  `}
+  
+  ${props => props.position === 'centerLeft' && `
+    top: 60%;
+    left: 8%;
+    transform: rotate(-1deg);
+  `}
+  
+  ${props => props.position === 'centerRight' && `
+    top: 65%;
+    right: 6%;
+    transform: rotate(2deg);
+  `}
 `
 
 const models = [
@@ -183,11 +256,64 @@ const memories = [
   { model: 'Bard', text: 'No relevant information found in training data.', strength: 'none' }
 ]
 
-const DigitalMemoryHero = ({ name = "Your Name" }) => {
-  const [phase, setPhase] = useState('intro') // intro -> querying -> revealing -> complete
+// Beautiful Mind: The Mathematical Formulas
+const mathFormulas = [
+  { 
+    formula: 'σ(decay) = e^(-λt) × ω_consensus', 
+    position: 'topLeft', 
+    delay: 0.5,
+    size: '0.8rem'
+  },
+  { 
+    formula: 'cos_sim = Σ(A·B) / (||A|| × ||B||)', 
+    position: 'topRight', 
+    delay: 1.2,
+    size: '0.9rem'
+  },
+  { 
+    formula: '∂S/∂t = -α∇²S + β(I - S)', 
+    position: 'midLeft', 
+    delay: 2.1,
+    size: '0.85rem'
+  },
+  { 
+    formula: 'H(M) = -Σp(m_i)log₂p(m_i)', 
+    position: 'midRight', 
+    delay: 1.8,
+    size: '0.8rem'
+  },
+  { 
+    formula: 'μ_drift = ∫₀ᵗ f(τ)·w(t-τ)dτ', 
+    position: 'bottomLeft', 
+    delay: 2.7,
+    size: '0.85rem'
+  },
+  { 
+    formula: 'CI = x̄ ± z_(α/2) × σ/√n', 
+    position: 'bottomRight', 
+    delay: 3.2,
+    size: '0.8rem'
+  },
+  { 
+    formula: 'R_consensus = Π(r_i^w_i) / Σw_i', 
+    position: 'centerLeft', 
+    delay: 2.9,
+    size: '0.75rem'
+  },
+  { 
+    formula: 'λ_max(C) → semantic_stability', 
+    position: 'centerRight', 
+    delay: 3.5,
+    size: '0.8rem'
+  }
+]
+
+const DigitalMemoryHero = ({ name = "Your Brand" }) => {
+  const [phase, setPhase] = useState('intro') // intro -> querying -> revealing -> complete -> mathematical
   const [activeModel, setActiveModel] = useState(0)
   const [currentMemory, setCurrentMemory] = useState(null)
   const [showCTA, setShowCTA] = useState(false)
+  const [showMath, setShowMath] = useState(false)
 
   useEffect(() => {
     const sequence = async () => {
@@ -211,6 +337,11 @@ const DigitalMemoryHero = ({ name = "Your Name" }) => {
       
       setPhase('complete')
       setShowCTA(true)
+      
+      // Beautiful Mind: Show mathematical formulas after completion
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      setPhase('mathematical')
+      setShowMath(true)
     }
 
     sequence()
@@ -228,7 +359,7 @@ const DigitalMemoryHero = ({ name = "Your Name" }) => {
             `${currentMemory.model} has no memory of you` :
             `${currentMemory.model} remembers:`
         )}
-        {phase === 'complete' && "Some remember. Some forget. Some never knew you at all."}
+        {(phase === 'complete' || phase === 'mathematical') && "Some remember. Some forget. Some never knew you at all."}
       </StatusText>
 
       <QueryContainer>
@@ -259,6 +390,18 @@ const DigitalMemoryHero = ({ name = "Your Name" }) => {
             </>
           )}
         </MemoryResponse>
+        
+        {/* Beautiful Mind: Mathematical Shadow Layer */}
+        {showMath && mathFormulas.map((math, index) => (
+          <MathFormula
+            key={index}
+            position={math.position}
+            delay={math.delay}
+            size={math.size}
+          >
+            {math.formula}
+          </MathFormula>
+        ))}
       </QueryContainer>
 
       <CTA visible={showCTA}>
