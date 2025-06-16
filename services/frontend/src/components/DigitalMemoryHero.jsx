@@ -228,7 +228,7 @@ const DigitalMemoryHero = ({ name = "Your Name" }) => {
             `${currentMemory.model} has no memory of you` :
             `${currentMemory.model} remembers:`
         )}
-        {phase === 'complete' && "Your shadow in AI memory is measured. Now you can see your light."}
+        {phase === 'complete' && "Some remember. Some forget. Some never knew you at all."}
       </StatusText>
 
       <QueryContainer>
