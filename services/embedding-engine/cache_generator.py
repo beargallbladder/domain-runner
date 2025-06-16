@@ -30,13 +30,14 @@ def compute_memory_score(domain_id, responses):
     
     # Score based on model count and consistency
     unique_models = len(set(r['model'] for r in responses))
-    model_diversity_score = min(unique_models / 10.0, 1.0)  # Max score at 10+ models
+    model_diversity_score = min(unique_models / 15.0, 1.0)  # Max score at 15+ models
+    response_volume_score = min(len(responses) / 30.0, 1.0)  # Max score at 30+ responses
     
-    # Calculate raw score
-    raw_memory_score = (length_consistency * 0.4 + model_diversity_score * 0.6) * 100
+    # Calculate base score
+    base_score = (length_consistency * 0.3 + model_diversity_score * 0.4 + response_volume_score * 0.3) * 100
     
     # FIXED: Apply competitive distribution to prevent score inflation
-    return apply_competitive_curve(raw_memory_score, len(responses), unique_models)
+    return apply_competitive_curve(base_score, len(responses), unique_models)
 
 def apply_competitive_curve(raw_score, response_count, model_count):
     """Apply competitive curves to prevent automatic 100% scores"""
@@ -45,23 +46,33 @@ def apply_competitive_curve(raw_score, response_count, model_count):
     
     # Apply diminishing returns for high response counts
     if response_count > 40:
-        excess_factor = (response_count - 40) / 20
-        adjusted_score = adjusted_score - (excess_factor * 5) # Reduce by up to 5 points
+        excess_factor = (response_count - 40) / 25
+        adjusted_score = adjusted_score - (excess_factor * 6) # Reduce by up to 6 points
     
     # Apply diminishing returns for high model counts  
-    if model_count > 8:
-        excess_factor = (model_count - 8) / 4
-        adjusted_score = adjusted_score - (excess_factor * 3) # Reduce by up to 3 points
+    if model_count > 12:
+        excess_factor = (model_count - 12) / 6
+        adjusted_score = adjusted_score - (excess_factor * 4) # Reduce by up to 4 points
     
     # Add competitive variance (no perfect scores)
-    variance = random.uniform(-3, 3) # ±3 points
+    variance = random.uniform(-4, 4) # ±4 points
     adjusted_score = adjusted_score + variance
     
-    # Cap maximum score to create competitive space
-    max_score = 86 # No one gets 90%+
-    final_score = max(5, min(max_score, adjusted_score))
+    # Create realistic score distribution - NO 90%+ SCORES
+    if adjusted_score >= 85:
+        max_score = random.uniform(78, 85)  # High performers: 78-85%
+    elif adjusted_score >= 75:
+        max_score = random.uniform(68, 78)  # Good performers: 68-78%
+    elif adjusted_score >= 60:
+        max_score = random.uniform(55, 70)  # Average: 55-70%
+    elif adjusted_score >= 45:
+        max_score = random.uniform(40, 60)  # Below average: 40-60%
+    else:
+        max_score = random.uniform(20, 45)  # Poor: 20-45%
     
-    return final_score
+    final_score = max(15, min(max_score, adjusted_score))
+    
+    return round(final_score, 1)
 
 def compute_cohesion_score(responses, embedding_model=None):
     """Compute cohesion using existing embedding capabilities"""
