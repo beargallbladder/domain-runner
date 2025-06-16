@@ -6,6 +6,10 @@ import json
 from datetime import datetime
 from typing import Dict, List, Optional
 import logging
+from fastapi import Depends
+
+# 🔐 AUTHENTICATION INTEGRATION
+from auth_extensions import add_auth_endpoints, get_current_user, check_api_limits
 
 # Production logging
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +45,11 @@ async def startup():
         max_size=15,
         command_timeout=10
     )
-    logger.info("🚀 Production API initialized")
+    
+    # 🔐 INITIALIZE AUTHENTICATION SYSTEM
+    add_auth_endpoints(app, pool)
+    
+    logger.info("🚀 Production API initialized with authentication")
 
 @app.on_event("shutdown") 
 async def shutdown():
@@ -800,6 +808,175 @@ async def get_public_stats():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================
+# 💰 PREMIUM API ENDPOINTS (REQUIRE AUTH)
+# ============================================
+
+@app.get("/api/premium/dashboard")
+async def get_premium_dashboard(current_user: dict = Depends(get_current_user)):
+    """
+    💎 PREMIUM DASHBOARD
+    Advanced analytics for paid subscribers only
+    """
+    await check_api_limits(current_user, pool)
+    
+    try:
+        async with pool.acquire() as conn:
+            # Get user's tracked domains based on their tier
+            user_domains = await conn.fetch("""
+                SELECT domain, memory_score, reputation_risk_score, 
+                       ai_consensus_score, updated_at
+                FROM public_domain_cache 
+                WHERE user_id = $1 OR user_id IS NULL
+                ORDER BY memory_score DESC
+                LIMIT $2
+            """, current_user['id'], current_user['domains_limit'])
+            
+            # Advanced analytics for premium users
+            if current_user['subscription_tier'] in ['pro', 'enterprise']:
+                competitor_analysis = await conn.fetch("""
+                    SELECT domain, memory_score, reputation_risk_score
+                    FROM public_domain_cache 
+                    WHERE memory_score > 70
+                    ORDER BY memory_score DESC
+                    LIMIT 20
+                """)
+            else:
+                competitor_analysis = []
+            
+            return {
+                "user": {
+                    "email": current_user['email'],
+                    "tier": current_user['subscription_tier'],
+                    "domains_tracked": len(user_domains),
+                    "domains_limit": current_user['domains_limit'],
+                    "api_calls_used": current_user['api_calls_used'],
+                    "api_calls_limit": current_user['api_calls_limit']
+                },
+                "tracked_domains": [
+                    {
+                        "domain": d['domain'],
+                        "memory_score": d['memory_score'],
+                        "risk_score": d['reputation_risk_score'],
+                        "consensus": d['ai_consensus_score'],
+                        "last_updated": d['updated_at'].isoformat() + 'Z'
+                    } for d in user_domains
+                ],
+                "competitor_analysis": competitor_analysis if current_user['subscription_tier'] != 'free' else None,
+                "premium_features": {
+                    "competitor_tracking": current_user['subscription_tier'] in ['pro', 'enterprise'],
+                    "advanced_analytics": current_user['subscription_tier'] == 'enterprise',
+                    "api_access": current_user['subscription_tier'] != 'free',
+                    "priority_support": current_user['subscription_tier'] == 'enterprise'
+                }
+            }
+            
+    except Exception as e:
+        logger.error(f"Premium dashboard failed for user {current_user['id']}: {e}")
+        raise HTTPException(status_code=500, detail="Dashboard failed")
+
+@app.post("/api/premium/track-domain")
+async def track_domain(
+    domain_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    💎 PREMIUM DOMAIN TRACKING
+    Add domain to user's tracking list (tier limits apply)
+    """
+    await check_api_limits(current_user, pool)
+    
+    domain = domain_data.get('domain', '').lower().strip()
+    if not domain:
+        raise HTTPException(status_code=400, detail="Domain required")
+    
+    try:
+        async with pool.acquire() as conn:
+            # Check if user has reached domain limit
+            current_count = await conn.fetchval("""
+                SELECT COUNT(*) FROM user_domains WHERE user_id = $1
+            """, current_user['id'])
+            
+            if current_count >= current_user['domains_limit']:
+                raise HTTPException(
+                    status_code=403, 
+                    detail=f"Domain limit reached. Upgrade to track more domains. Current limit: {current_user['domains_limit']}"
+                )
+            
+            # Add domain to user's tracking
+            await conn.execute("""
+                INSERT INTO user_domains (user_id, domain, created_at)
+                VALUES ($1, $2, NOW())
+                ON CONFLICT (user_id, domain) DO NOTHING
+            """, current_user['id'], domain)
+            
+            # Update user's domain count
+            await conn.execute("""
+                UPDATE users SET domains_tracked = domains_tracked + 1
+                WHERE id = $1
+            """, current_user['id'])
+            
+            return {
+                "message": f"Domain {domain} added to tracking",
+                "domains_tracked": current_count + 1,
+                "domains_limit": current_user['domains_limit'],
+                "upgrade_needed": current_count + 1 >= current_user['domains_limit']
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Domain tracking failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to track domain")
+
+@app.get("/api/premium/api-key")
+async def get_api_key(current_user: dict = Depends(get_current_user)):
+    """
+    💎 PREMIUM API KEY MANAGEMENT
+    Generate/retrieve API keys for programmatic access
+    """
+    if current_user['subscription_tier'] == 'free':
+        raise HTTPException(
+            status_code=403, 
+            detail="API access requires Pro or Enterprise subscription"
+        )
+    
+    try:
+        async with pool.acquire() as conn:
+            # Get or create API key
+            api_key_data = await conn.fetchrow("""
+                SELECT api_key, created_at, last_used 
+                FROM api_keys 
+                WHERE user_id = $1 AND is_active = true
+            """, current_user['id'])
+            
+            if not api_key_data:
+                # Generate new API key
+                import secrets
+                new_api_key = f"llm_pk_{secrets.token_urlsafe(32)}"
+                
+                await conn.execute("""
+                    INSERT INTO api_keys (user_id, api_key, created_at, is_active)
+                    VALUES ($1, $2, NOW(), true)
+                """, current_user['id'], new_api_key)
+                
+                api_key_data = {'api_key': new_api_key, 'created_at': datetime.now()}
+            
+            return {
+                "api_key": api_key_data['api_key'],
+                "tier": current_user['subscription_tier'],
+                "rate_limits": {
+                    "daily_calls": current_user['api_calls_limit'],
+                    "used_today": current_user['api_calls_used']
+                },
+                "created_at": api_key_data['created_at'].isoformat() + 'Z',
+                "documentation": "/api/docs"
+            }
+            
+    except Exception as e:
+        logger.error(f"API key generation failed: {e}")
+        raise HTTPException(status_code=500, detail="API key generation failed")
 
 if __name__ == "__main__":
     import uvicorn

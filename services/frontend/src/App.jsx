@@ -29,6 +29,17 @@ import AdLanding from './pages/AdLanding'
 import CompetitiveBattles from './pages/CompetitiveBattles'
 import Api from './pages/Api'
 
+// 🔐 AUTHENTICATION COMPONENTS
+import { AuthProvider } from './contexts/AuthContext'
+import Login from './components/Auth/Login'
+import Register from './components/Auth/Register'
+import PremiumDashboard from './pages/PremiumDashboard'
+import Pricing from './pages/Pricing'
+import ApiKeys from './pages/ApiKeys'
+
+// 🛡️ PROTECTED ROUTE COMPONENT
+import ProtectedRoute from './components/ProtectedRoute'
+
 // Subtle drift animation for text
 const textDrift = keyframes`
   0%, 100% { 
@@ -132,28 +143,85 @@ const Main = styled.main`
 
 function App() {
   return (
-    <AppContainer>
-      <GlobalStyle />
-      <PlausibleScript />
-      <Navigation />
-      <Main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/rankings" element={<Rankings />} />
-          <Route path="/leaderboard" element={<Rankings />} />
-          <Route path="/cohorts" element={<CompetitiveCohorts />} />
-          <Route path="/battles" element={<CompetitiveBattles />} />
-          <Route path="/cohort-intelligence" element={<CohortIntelligence />} />
-          <Route path="/competitive-analysis" element={<CompetitorAnalysis />} />
-          <Route path="/domain/:domain" element={<Domain />} />
-          <Route path="/test-domains" element={<TestDomain />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/api" element={<Api />} />
-          <Route path="/ad/:company" element={<AdLanding />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Main>
-    </AppContainer>
+    <AuthProvider>
+      <AppContainer>
+        <GlobalStyle />
+        <PlausibleScript />
+        <Navigation />
+        <Main>
+          <Routes>
+            {/* 🌐 PUBLIC ROUTES */}
+            <Route path="/" element={<Home />} />
+            <Route path="/rankings" element={<Rankings />} />
+            <Route path="/leaderboard" element={<Rankings />} />
+            <Route path="/cohorts" element={<CompetitiveCohorts />} />
+            <Route path="/battles" element={<CompetitiveBattles />} />
+            <Route path="/cohort-intelligence" element={<CohortIntelligence />} />
+            <Route path="/competitive-analysis" element={<CompetitorAnalysis />} />
+            <Route path="/domain/:domain" element={<Domain />} />
+            <Route path="/test-domains" element={<TestDomain />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/api" element={<Api />} />
+            <Route path="/ad/:company" element={<AdLanding />} />
+            <Route path="/pricing" element={<Pricing />} />
+            
+            {/* 🔐 AUTHENTICATION ROUTES */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* 💎 PREMIUM PROTECTED ROUTES */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <PremiumDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/premium" element={
+              <ProtectedRoute>
+                <PremiumDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/api-keys" element={
+              <ProtectedRoute minTier="pro">
+                <ApiKeys />
+              </ProtectedRoute>
+            } />
+            <Route path="/analysis" element={
+              <ProtectedRoute>
+                <Analysis />
+              </ProtectedRoute>
+            } />
+            <Route path="/reports" element={
+              <ProtectedRoute minTier="pro">
+                <Reports />
+              </ProtectedRoute>
+            } />
+            <Route path="/alerts" element={
+              <ProtectedRoute minTier="pro">
+                <Alerts />
+              </ProtectedRoute>
+            } />
+            <Route path="/integrations" element={
+              <ProtectedRoute minTier="enterprise">
+                <Integrations />
+              </ProtectedRoute>
+            } />
+            <Route path="/help" element={<Help />} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Main>
+      </AppContainer>
+    </AuthProvider>
   )
 }
 
