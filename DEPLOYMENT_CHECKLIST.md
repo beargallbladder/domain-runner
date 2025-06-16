@@ -206,14 +206,14 @@ Frontend (Vercel):
   └── services/frontend/ → https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app
   
 Backend Services (Render):
-  ├── services/public-api/ → https://llm-pagerank-public-api.onrender.com (Customer-facing API)
+  ├── services/public-api/ → https://llm-pagerank-public-api.onrender.com (Customer-facing API) ✅ AUTH INTEGRATED
   ├── services/sophisticated-runner/ → https://sophisticated-runner.onrender.com (Premium LLM processing)
   ├── services/embedding-engine/ → https://embedding-engine.onrender.com (Data pipeline)
   ├── services/raw-capture-runner/ → https://raw-capture-runner.onrender.com (Basic processing)
-  └── services/seo-metrics-runner/ → https://seo-metrics-runner.onrender.com (SEO→AI correlation)
+  └── services/seo-metrics-runner/ → https://seo-metrics-runner.onrender.com (SEO→AI correlation) 🔄 DEPLOYING
 
-Database (Shared):
-  └── PostgreSQL on Render (all services share same DATABASE_URL from raw-capture-db)
+Database (Render):
+  └── PostgreSQL: raw-capture-db (3,618 domains + user accounts + subscription management)
 ```
 
 ### **🎯 Current Domain Count: 3,618 domains**
@@ -231,371 +231,174 @@ Database (Shared):
 
 ---
 
-## **STEP 1: ARCHITECTURAL VERIFICATION (MANDATORY)**
+## **💰 SAAS BUSINESS MODEL - TIERED AUTHENTICATION COMPLETE**
 
-### **🔍 Before ANY deployment command:**
-```bash
-# 1. Check if this is modular architecture
-ls -la | grep services
+### **🔐 AUTHENTICATION SYSTEM STATUS: ✅ FULLY INTEGRATED**
+- **Backend**: `auth_extensions.py` → Integrated into `app.py`
+- **Frontend**: `AuthProvider` → Wrapped around main App
+- **Database**: User tables, subscription tiers, API keys, billing integration
+- **JWT Security**: Token-based authentication with proper validation
 
-# 2. If services/ exists, NEVER deploy from root
-# 3. Identify the specific service
-ls services/ | grep -E "(frontend|public-api|sophisticated-runner|embedding-engine|raw-capture-runner|seo-metrics-runner)"
+### **💎 SUBSCRIPTION TIERS IMPLEMENTED:**
+```
+Free Tier:
+├── 1 domain tracking
+├── 10 API calls/day  
+├── Basic memory scores
+├── Public leaderboard access
+└── Community support
 
-# 4. Verify service has deployment config
-ls services/[SERVICE_NAME]/ | grep -E "(package.json|render.yaml|requirements.txt|Dockerfile)"
+Pro Tier ($49/month):
+├── 10 domains tracking
+├── 1,000 API calls/day
+├── Advanced analytics
+├── Competitor analysis
+├── API access + keys
+├── Email alerts
+└── Priority support
+
+Enterprise Tier ($199/month):
+├── 100+ domains tracking
+├── 10,000 API calls/day
+├── White-label reports
+├── Advanced integrations
+├── Custom analytics
+├── Dedicated support
+└── SLA guarantees
 ```
 
-### **✅ Service-Specific Deployment Paths:**
-- **Frontend**: `cd services/frontend && vercel --prod`
-- **Backend Services**: `git push origin main` (auto-deploys via render.yaml)
-- **SEO Metrics Runner**: `git push origin main` (auto-deploys via render.yaml)
-
-### **❌ NEVER DO:**
-- Deploy from project root when services/ exists
-- Assume monolithic architecture  
-- Skip service directory verification
-- **This mistake was made 4-5 times - ALWAYS CHECK ARCHITECTURE FIRST**
+### **🛡️ PREMIUM FEATURES PROTECTED:**
+- **Route Protection**: `ProtectedRoute` component with tier enforcement
+- **API Rate Limiting**: Usage tracking and enforcement per tier
+- **Feature Gates**: UI elements disabled/enabled based on subscription
+- **Premium Endpoints**: `/api/premium/*` require authentication
 
 ---
 
-## **STEP 2: SEO METRICS RUNNER SPECIFIC PATTERNS**
+## **🎯 KEY PAGES & FUNCTIONALITY**
 
-### **🎯 SEO→AI Experiment Commands:**
+### **🌐 PUBLIC PAGES:**
+- **Home**: `/` → Public leaderboard and demo
+- **Rankings**: `/rankings` → AI memory leaderboard  
+- **Pricing**: `/pricing` → Tiered plans with feature comparison
+- **About**: `/about` → Platform explanation
+- **API Docs**: `/api` → Public API documentation
+
+### **🔐 AUTHENTICATION PAGES:**
+- **Login**: `/login` → User authentication
+- **Register**: `/register` → Account creation with tier selection
+
+### **💎 PREMIUM PROTECTED PAGES:**
+- **Dashboard**: `/dashboard` → Premium analytics dashboard
+- **API Keys**: `/api-keys` → Pro+ API key management
+- **Settings**: `/settings` → Account & subscription management
+- **Reports**: `/reports` → Pro+ advanced reporting
+- **Alerts**: `/alerts` → Pro+ monitoring alerts
+- **Integrations**: `/integrations` → Enterprise integrations
+
+---
+
+## **🚀 DEPLOYMENT SEQUENCE (FOLLOW THIS ORDER)**
+
+### **1. PRE-DEPLOYMENT VERIFICATION:**
 ```bash
-# Check service health
-curl -s https://seo-metrics-runner.onrender.com/health | jq
+# Check all services are committed
+git status
 
-# Get service status and metrics collected
-curl -s https://seo-metrics-runner.onrender.com/status | jq
+# Verify authentication integration
+curl -s https://llm-pagerank-public-api.onrender.com/auth/health
 
-# Test single domain collection
-curl -s https://seo-metrics-runner.onrender.com/test/apple.com | jq
-
-# Preview correlation analysis
-curl -s https://seo-metrics-runner.onrender.com/correlation/preview | jq
-
-# LAUNCH $25 EXPERIMENT
-curl -X POST https://seo-metrics-runner.onrender.com/collect/start
+# Test premium endpoints (requires token)
+curl -s https://llm-pagerank-public-api.onrender.com/api/premium/dashboard \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-### **🔬 Expected SEO Metrics Per Domain:**
-- **Performance**: HTTP status, load time, page size
-- **Technical**: HTTPS, mobile viewport, DOM structure  
-- **Content**: Meta tags, H1 count, schema markup
-- **Advanced**: Internal/external links, security headers
-- **AI Correlation**: Schema types, structured data richness
+### **2. BACKEND DEPLOYMENT:**
+```bash
+# Main API with authentication
+curl -s https://llm-pagerank-public-api.onrender.com/health | jq '.status'
 
-### **⚖️ Cost & Business Model:**
-- **Collection Cost**: $0.004-0.008 per domain
-- **Total Experiment**: $13-25 for all 3,618 domains  
+# Premium endpoints test
+curl -s https://llm-pagerank-public-api.onrender.com/api/premium/api-key \
+  -H "Authorization: Bearer JWT_TOKEN"
+
+# SEO Metrics Runner
+curl -s https://seo-metrics-runner.onrender.com/health
+```
+
+### **3. FRONTEND DEPLOYMENT:**
+```bash
+# Authentication flow test
+curl -s https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app/login
+
+# Premium dashboard access
+curl -s https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app/dashboard
+
+# Pricing page with tiers
+curl -s https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app/pricing
+```
+
+---
+
+## **🔬 $25 SEO→AI CORRELATION EXPERIMENT STATUS**
+
+### **💰 BUSINESS MODEL INTEGRATION:**
+- **Free Users**: Can view public experiment results
+- **Pro Users**: Can add domains to correlation tracking  
+- **Enterprise**: Custom correlation analysis and white-label reports
+
+### **📊 EXPERIMENT METRICS:**
+- **Total Investment**: $25 for 3,618 domains
+- **Data Points**: 54,270+ (15 SEO metrics × 3,618 domains)
 - **Business Value**: $500 audits → $10K+ optimization packages
-- **Enterprise Potential**: $25K+ annual monitoring contracts
+- **Revenue Model**: Subscription tiers + premium API access
 
 ---
 
-## **STEP 3: SOPHISTICATED RUNNER SPECIFIC PATTERNS**
+## **🎯 WHAT'S NEXT - FUTURE ROADMAP**
 
-### **🎯 Current Processing Status Check:**
-```bash
-# Always verify processing status before any changes
-curl -s https://sophisticated-runner.onrender.com/status | jq '.status_breakdown'
+### **📈 IMMEDIATE PRIORITIES:**
+1. **Stripe Integration**: Payment processing for subscriptions
+2. **Email System**: Automated alerts and notifications  
+3. **Advanced Analytics**: Time-series correlation analysis
+4. **Mobile App**: iOS/Android native apps
 
-# Expected response format:
-# [
-#   {"status": "completed", "count": "2171"},
-#   {"status": "pending", "count": "1447"}, 
-#   {"status": "processing", "count": "1"}
-# ]
-```
-
-### **🔄 Common Processing Issues & Solutions:**
-
-#### **Issue 1: Processing Stopped (Queue Growing)**
-```bash
-# Symptom: pending count increasing, processing count = 0
-# Cause: Processing loop stops when queue empties, doesn't auto-restart when new domains added
-
-# Solution:
-curl -X POST https://sophisticated-runner.onrender.com/process/restart
-```
-
-#### **Issue 2: Premium Mode Not Active**
-```bash
-# Check premium status:
-curl -s https://sophisticated-runner.onrender.com/premium/status | jq '.current_configuration.premium_mode'
-
-# Enable full premium mode (discovery + processing):
-curl -X POST https://sophisticated-runner.onrender.com/premium/enable
-```
-
-### **🎯 Premium Mode Architecture (IMPORTANT):**
-- **Premium Discovery**: GPT-4, Claude-3.5-Sonnet for competitor/crisis discovery
-- **Premium Processing**: ALL domains get 5 models × 4 prompts = 20 responses each  
-- **Cost**: ~$0.008-0.015 per domain (vs $0.001-0.003 for tiered)
-- **Activation**: Single endpoint enables BOTH discovery and processing premium mode
+### **🚀 ADVANCED FEATURES:**
+1. **White-Label Platform**: Enterprise custom branding
+2. **API SDK**: Official libraries for popular languages
+3. **Slack/Teams Integration**: Real-time alerts
+4. **Custom Reports**: Automated PDF generation
 
 ---
 
-## **STEP 4: DATA PIPELINE VERIFICATION**
+## **✅ DEPLOYMENT CHECKLIST CONFIRMATION**
 
-### **🔗 Critical API Flow:**
-```bash
-# 1. Raw data exists
-curl -s https://sophisticated-runner.onrender.com/status | jq '.total_responses'
+**Before deploying, confirm ALL items below:**
 
-# 2. Public API serves processed data  
-curl -s https://llm-pagerank-public-api.onrender.com/api/domains/apple.com/public | jq '.ai_intelligence.memory_score'
+- [ ] All code committed and pushed to `origin/main`
+- [ ] Authentication system tested and working
+- [ ] Premium endpoints require proper authentication
+- [ ] Subscription tiers enforce correct limits
+- [ ] Frontend routes properly protected
+- [ ] API rate limiting functional
+- [ ] Database migrations completed
+- [ ] SEO metrics runner operational
+- [ ] Payment integration ready (when Stripe added)
+- [ ] Error handling and logging in place
 
-# 3. Frontend connects to correct API
-curl -s https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app | grep -o "llm-pagerank-public-api"
-
-# 4. SEO metrics correlation ready
-curl -s https://seo-metrics-runner.onrender.com/correlation/preview | jq '.correlation_preview'
-```
-
-### **🚨 Data Pipeline Health Indicators:**
-- [ ] API response time < 500ms
-- [ ] Memory scores not null/empty
-- [ ] Recent data (updated_at < 7 days)
-- [ ] Total responses > 40,000 (expanded from 20,000)
-- [ ] Frontend loads domain data properly
-- [ ] SEO metrics collection active
+**Only deploy when ALL checkboxes are marked ✅**
 
 ---
 
-## **STEP 5: DOMAIN DISCOVERY & EXPANSION WORKFLOWS**
+## **🚨 EMERGENCY ROLLBACK PROCEDURE**
 
-### **🔍 Discovery Service Management:**
-```bash
-# Trigger competitor discovery (adds ~500-1000 new domains):
-curl -X POST https://sophisticated-runner.onrender.com/discover-competitors
-
-# Trigger crisis discovery (finds JOLT events):
-curl -X POST https://sophisticated-runner.onrender.com/discover-crises
-
-# Full discovery pipeline (both phases):
-curl -X POST https://sophisticated-runner.onrender.com/full-discovery-pipeline
-```
-
-### **⚖️ Cost Management:**
-- **Regular Discovery**: $3-5 per run (500 domains)
-- **Premium Discovery**: $15-25 per run (better quality, broader scope)
-- **Premium Processing**: $25-35 for full cohort reprocessing
-- **SEO Experiment**: $13-25 for all domains (one-time)
-
-### **📊 Expected Discovery Growth Pattern:**
-- **Starting**: 1,700 curated domains
-- **Current**: 3,618 domains (2.1x expansion)
-- **Growth Rate**: ~10-50 new competitors per source domain
+If deployment fails:
+1. **Immediate**: Revert git to last known working commit
+2. **Backend**: Check Render service logs for errors
+3. **Frontend**: Verify Vercel deployment status
+4. **Database**: Ensure no data corruption
+5. **User Impact**: Check if subscriptions/payments affected
 
 ---
 
-## **STEP 6: FRONTEND DEPLOYMENT SPECIFICS**
-
-### **⚡ Vercel Configuration:**
-```json
-// services/frontend/vercel.json
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist", 
-  "framework": "vite",
-  "env": {
-    "VITE_API_BASE_URL": "https://llm-pagerank-public-api.onrender.com"
-  }
-}
-```
-
-### **🎯 Frontend Deployment Flow:**
-```bash
-# 1. Navigate to frontend service
-cd services/frontend
-
-# 2. Verify build works
-npm run build
-
-# 3. Deploy to Vercel
-vercel --prod
-
-# 4. Verify deployment
-curl -s [NEW_VERCEL_URL] | grep -E "(AI Memory|Rankings)"
-```
-
----
-
-## **STEP 7: SEO→AI CORRELATION EXPERIMENT LAUNCH**
-
-### **🚀 The $25 Experiment Launch Sequence:**
-```bash
-# 1. Verify service health
-curl -s https://seo-metrics-runner.onrender.com/health | jq '.status'
-
-# 2. Check current metrics collected
-curl -s https://seo-metrics-runner.onrender.com/status | jq '.metrics_collected'
-
-# 3. Test sample domain
-curl -s https://seo-metrics-runner.onrender.com/test/apple.com | jq '.metrics'
-
-# 4. LAUNCH FULL EXPERIMENT
-curl -X POST https://seo-metrics-runner.onrender.com/collect/start
-
-# 5. Monitor progress
-curl -s https://seo-metrics-runner.onrender.com/status | jq '.status'
-```
-
-### **📊 Expected Experiment Results:**
-- **47,000+ Data Points**: 15 metrics × 3,618 domains
-- **Correlation Discoveries**:
-  - Fast sites → Higher AI memory scores
-  - Schema markup → Reduced AI hallucinations  
-  - HTTPS → Better AI brand recall
-  - Mobile optimization → Improved AI accuracy
-
-### **💰 Business Impact Validation:**
-- **Traditional SEO professionals** → **AI memory architects**
-- **$25 experiment** → **$10K+ optimization packages**
-- **Technical SEO skills** → **MORE valuable in AI era**
-
----
-
-## **STEP 8: ROLLBACK & RECOVERY PATTERNS**
-
-### **🔄 Service Recovery Commands:**
-```bash
-# Restart processing if stuck:
-curl -X POST https://sophisticated-runner.onrender.com/process/restart
-
-# Check service health:
-curl -s https://sophisticated-runner.onrender.com/health | jq '.status'
-
-# SEO metrics runner restart (if needed):
-# Go to Render → seo-metrics-runner → Manual Deploy
-
-# Disable premium mode if too expensive:
-curl -X POST https://sophisticated-runner.onrender.com/premium/disable
-```
-
----
-
-## **CRITICAL LESSONS LEARNED (AVOID THESE MISTAKES)**
-
-### **🚨 Repeated Deployment Mistakes:**
-1. **Deploying from wrong directory** (happened 5+ times)
-   - **Always** check for services/ directory first
-   - **Never** deploy from root when modular architecture exists
-
-2. **Frontend pointing to wrong API endpoint**
-   - Verify VITE_API_BASE_URL in vercel.json  
-   - Test API connectivity after deployment
-
-3. **Processing loop stops after queue empties**
-   - Discovery adds domains but doesn't restart processing
-   - Always check /status after discovery runs
-   - Manual restart required: /process/restart
-
-4. **Premium mode confusion**
-   - Premium discovery ≠ premium processing
-   - /premium/enable now activates BOTH
-   - Premium processing overrides tiered system for ALL domains
-
-5. **SEO metrics runner deployment**
-   - Uses same DATABASE_URL as other services (raw-capture-db)
-   - JavaScript production version (no TypeScript compilation)
-   - Auto-deploys via render.yaml on git push
-
----
-
-## **SUCCESS METRICS FOR DEPLOYMENT VALIDATION**
-
-### **Technical Health:**
-- [ ] All services return 200 OK
-- [ ] API response times < 500ms
-- [ ] Processing queue moving (if pending > 0)
-- [ ] Premium mode status matches intent
-- [ ] Frontend loads and displays data
-- [ ] SEO metrics runner collecting data
-
-### **Business Health:**
-- [ ] Domain count growing (discovery working)
-- [ ] Memory scores populating (processing working)  
-- [ ] Recent data updates (< 7 days)
-- [ ] No null/empty critical fields
-- [ ] SEO→AI correlation data available
-
-### **Cost Control:**
-- [ ] Premium mode only active when intended
-- [ ] Discovery runs controlled (not infinite)
-- [ ] Processing rate sustainable (~10 domains/minute)
-- [ ] SEO experiment within $25 budget
-
----
-
-## **QUICK REFERENCE FOR FUTURE AGENTS**
-
-### **⚡ Essential URLs:**
-- **Frontend**: https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app
-- **Public API**: https://llm-pagerank-public-api.onrender.com  
-- **Sophisticated Runner**: https://sophisticated-runner.onrender.com
-- **SEO Metrics Runner**: https://seo-metrics-runner.onrender.com
-- **Main Health Check**: https://sophisticated-runner.onrender.com/status
-
-### **🎯 Key Commands (Copy-Paste Ready):**
-```bash
-# Check system status
-curl -s https://sophisticated-runner.onrender.com/status | jq '.status_breakdown'
-
-# Restart processing if stuck  
-curl -X POST https://sophisticated-runner.onrender.com/process/restart
-
-# Enable full premium mode
-curl -X POST https://sophisticated-runner.onrender.com/premium/enable
-
-# Launch $25 SEO experiment
-curl -X POST https://seo-metrics-runner.onrender.com/collect/start
-
-# Deploy frontend (from services/frontend/)
-vercel --prod
-
-# Check frontend health
-curl -s https://frontend-lhmtyty1k-sams-projects-bf92499c.vercel.app | grep "AI Memory"
-```
-
----
-
-## **🚀 THE DERIVATIVES INSIGHT (PROFOUND FOUNDATION)**
-
-### **Scientific Rigor → Infinite Derivatives:**
-Our data model is **so pure and rigorous** that we can derive anything:
-- **Decay timelines** → Predict memory degradation curves
-- **Decay defense** → Identify what prevents memory loss  
-- **Event correlation** → Map SEO changes to memory drift
-- **Benchmarking** → Comparative brand memory analysis
-- **International systems** → Cross-cultural memory patterns
-- **Temporal relationships** → Major events to memory drift timing
-
-### **The Foundation Enables:**
-- **Bloomberg Terminal for AI SEO health**
-- **Derivatives marketplace for AI memory intelligence**
-- **Scientific bridge from traditional SEO → AI era**
-- **Measurable proof that SEO skills are MORE valuable**
-
----
-
-## **MEASUREMENT PHILOSOPHY:**
-
-**"We measure AI memory decay with microsecond precision across 6 models, yet deploy our own infrastructure blindly."**
-
-### **💡 Success Principle:**
-**Every deployment should be as measured and validated as every AI response we capture**
-
-**The $25 experiment proves we can do anything from derivatives because we have the rigor.** 🔥
-
----
-
-## **NEVER AGAIN COMMITMENT:**
-
-**I will reference this checklist before EVERY deployment command.**  
-**No exceptions. No assumptions. No shortcuts.**  
-**Measure everything. Deploy nothing blindly.**
-
-**Current Status: 3,618 domains, premium processing active, comprehensive T=2 tensor generation in progress.** 
+**🎯 REMEMBER: This checklist keeps all agents synchronized on our complete AI Brand Intelligence SaaS platform status.** 
