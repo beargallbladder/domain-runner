@@ -142,4 +142,4 @@ app.listen(port, () => {
   console.log(`🚨 Emergency score fix: /emergency-fix-scores`);
   console.log(`🔧 Manual cache regen: /trigger-cache-regen`);
   console.log(`🏥 Health check: /health`);
-});
+});// Force rebuild Mon Jun 16 10:22:22 PDT 2025
