@@ -1236,25 +1236,37 @@ class SophisticatedRunner {
         console.log(`🔬 Jolt domains provide ground truth benchmarks for brand transition analysis`);
     }
     async processNextBatch() {
+        const client = await pool.connect();
         try {
-            // Query pending domains using exact same logic as raw-capture-runner - NO processor_id filtering
-            const result = await pool.query(`
-        SELECT id, domain FROM domains 
-        WHERE status = 'pending'
-        ORDER BY created_at ASC
-        LIMIT 1
+            // 🚨 RACE CONDITION FIX: Atomic domain claiming with transaction isolation
+            await client.query('BEGIN');
+            // Query pending domains with atomic claiming to prevent race conditions
+            const result = await client.query(`
+        UPDATE domains 
+        SET status = 'processing',
+            last_processed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id IN (
+          SELECT id FROM domains 
+          WHERE status = 'pending' 
+            AND (source IS NULL OR source != 'simple_modular_v1')  -- Avoid conflicts with modular processor
+          ORDER BY created_at ASC
+          LIMIT 1
+          FOR UPDATE SKIP LOCKED  -- Critical: Skip locked rows to prevent blocking
+        )
+        RETURNING id, domain
       `);
             if (result.rows.length === 0) {
-                console.log('✅ No pending domains available');
+                await client.query('ROLLBACK');
+                console.log('✅ No pending domains available (or all locked by other processors)');
                 return;
             }
             const { id, domain } = result.rows[0];
-            console.log(`🎯 Processing: ${domain} (${SERVICE_ID})`);
-            // Mark as processing - same as raw-capture-runner
-            await pool.query('UPDATE domains SET status = $1, last_processed_at = NOW() WHERE id = $2', ['processing', id]);
+            await client.query('COMMIT');
+            console.log(`🎯 Processing: ${domain} (${SERVICE_ID}) - Atomically claimed`);
             // 🎯 Select models and prompts based on tiered JOLT architecture
-            const selectedModels = await selectModelsForDomainTiered(domain);
-            const selectedPrompts = await selectPromptsForDomainTiered(domain);
+            const selectedModels = await selectModelsForDomainWithPremiumOverride(domain);
+            const selectedPrompts = await selectPromptsForDomainWithPremiumOverride(domain);
             const tier = await tieredJOLTManager.getJOLTTier(domain);
             console.log(`📊 ${domain} analysis plan (${tier} tier): ${selectedModels.length} models × ${selectedPrompts.length} prompts = ${selectedModels.length * selectedPrompts.length} total API calls`);
             if (tier === 'core') {
@@ -1311,6 +1323,7 @@ class SophisticatedRunner {
             console.log(`✅ Completed comprehensive processing: ${domain} (${SERVICE_ID})`);
         }
         catch (error) {
+            await client.query('ROLLBACK');
             console.error('❌ Processing error:', error);
             // Reset failed domains for retry - same as raw-capture-runner
             try {
@@ -1319,6 +1332,9 @@ class SophisticatedRunner {
             catch (resetError) {
                 console.error('❌ Failed to reset domain status:', resetError);
             }
+        }
+        finally {
+            client.release();
         }
     }
     async getStatus() {
@@ -2333,21 +2349,24 @@ const premiumDiscoveryMode = new PremiumDiscoveryMode();
 // ============================================================================
 // 💰 PREMIUM DISCOVERY ENDPOINTS - INVESTMENT MODE FOR RICHER TENSOR DATA
 // ============================================================================
-// Enable premium discovery mode  
+// Enable FULL premium mode (discovery + processing)
 app.post('/premium/enable', async (req, res) => {
     try {
         premiumDiscoveryMode.enablePremiumMode();
+        enablePremiumProcessingMode();
         res.json({
             success: true,
-            message: '💰 Premium Discovery Mode ENABLED!',
+            message: '💰 FULL PREMIUM MODE ENABLED! (Discovery + Processing)',
             changes: {
-                models: 'Upgraded to premium models (gpt-4, claude-3.5-sonnet, grok)',
+                discovery_models: 'Upgraded to premium models (gpt-4, claude-3.5-sonnet, grok)',
+                processing_models: 'ALL domains use premium models (overrides tiered system)',
                 competitors_per_domain: '10 instead of 4 (2.5x broader scope)',
                 crisis_detection: 'Multi-model consensus (all 4 premium models)',
-                cost_impact: '4-5x increase for 3-5x quality improvement'
+                comprehensive_analysis: 'ALL domains get 4 prompts × 5 models = 20 responses each',
+                cost_impact: '8-10x increase for comprehensive T=2 tensor generation'
             },
-            investment_strategy: 'Accelerate tensor readiness with higher quality discovery',
-            estimated_cost_increase: '$3-5 → $15-25 per discovery run'
+            investment_strategy: 'Generate publication-ready comprehensive tensor dataset',
+            estimated_cost_increase: '$3-5 → $25-35 for complete analysis'
         });
     }
     catch (error) {
@@ -2357,15 +2376,17 @@ app.post('/premium/enable', async (req, res) => {
         });
     }
 });
-// Disable premium discovery mode
+// Disable FULL premium mode (discovery + processing)
 app.post('/premium/disable', async (req, res) => {
     try {
         premiumDiscoveryMode.disablePremiumMode();
+        disablePremiumProcessingMode();
         res.json({
             success: true,
-            message: '💰 Premium Discovery Mode DISABLED - back to cost-optimized',
+            message: '💰 FULL PREMIUM MODE DISABLED - back to cost-optimized',
             reverted_to: {
-                models: 'Ultra-cheap models (gpt-4o-mini, claude-haiku)',
+                discovery_models: 'Ultra-cheap models (gpt-4o-mini, claude-haiku)',
+                processing_models: 'Back to tiered system (JOLT = premium, regular = cheap)',
                 competitors_per_domain: '4 (standard scope)',
                 crisis_detection: 'Single model random selection',
                 cost_level: 'Optimized for volume over premium quality'
@@ -3777,5 +3798,76 @@ class TeslaJOLTMonitor {
         }
         return transitions;
     }
+}
+// 🚀 PROCESSING CONTROL ENDPOINTS
+app.post('/process/restart', async (req, res) => {
+    try {
+        console.log('🔄 Manual processing restart triggered...');
+        // Check if there are pending domains
+        const pendingCheck = await pool.query(`SELECT COUNT(*) as count FROM domains WHERE status = 'pending'`);
+        const pendingCount = parseInt(pendingCheck.rows[0].count);
+        if (pendingCount === 0) {
+            return res.json({
+                success: true,
+                message: 'No pending domains to process',
+                pending_domains: 0,
+                action: 'No restart needed'
+            });
+        }
+        // Create new runner instance and restart processing
+        const runner = new SophisticatedRunner();
+        // Start processing in background (don't await)
+        runner.startProcessing().catch(error => {
+            console.error('❌ Processing restart failed:', error);
+        });
+        res.json({
+            success: true,
+            message: `🚀 Processing restarted! Working on ${pendingCount} pending domains`,
+            pending_domains: pendingCount,
+            action: 'Processing loop restarted',
+            note: 'Processing will continue until all domains are complete'
+        });
+    }
+    catch (error) {
+        console.error('❌ Processing restart failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+// 💰 PREMIUM PROCESSING MODE - OVERRIDE TIERED SYSTEM FOR COMPREHENSIVE ANALYSIS
+let PREMIUM_PROCESSING_MODE = false;
+function enablePremiumProcessingMode() {
+    PREMIUM_PROCESSING_MODE = true;
+    console.log('💰 PREMIUM PROCESSING MODE: ENABLED');
+    console.log('   - ALL domains will use premium models');
+    console.log('   - Overrides tiered cost control');
+    console.log('   - Comprehensive T=2 tensor generation');
+}
+function disablePremiumProcessingMode() {
+    PREMIUM_PROCESSING_MODE = false;
+    console.log('💰 PREMIUM PROCESSING MODE: DISABLED - back to tiered processing');
+}
+// Modified model selection for premium processing override
+async function selectModelsForDomainWithPremiumOverride(domain) {
+    if (PREMIUM_PROCESSING_MODE) {
+        // Premium mode: Use ALL model tiers for comprehensive analysis
+        return [
+            ...PREMIUM_MODELS.slice(0, 2),
+            ...MIDDLE_TIER_MODELS.slice(0, 2),
+            ...ULTRA_CHEAP_MODELS.slice(0, 1) // 1 ultra cheap model for comparison
+        ];
+    }
+    // Normal tiered processing
+    return await selectModelsForDomainTiered(domain);
+}
+async function selectPromptsForDomainWithPremiumOverride(domain) {
+    if (PREMIUM_PROCESSING_MODE) {
+        // Premium mode: Use ALL comprehensive prompts
+        return ['business_analysis', 'technical_assessment', 'brand_memory_analysis', 'market_intelligence'];
+    }
+    // Normal tiered processing
+    return await selectPromptsForDomainTiered(domain);
 }
 //# sourceMappingURL=index.js.map

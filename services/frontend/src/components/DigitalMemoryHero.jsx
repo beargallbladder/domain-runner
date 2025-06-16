@@ -6,9 +6,18 @@ const fadeIn = keyframes`
   to { opacity: 1; }
 `
 
-const pulseGlow = keyframes`
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
+// Much slower, gentler memory fade animation
+const memoryGlow = keyframes`
+  0%, 100% { 
+    opacity: 0.7; 
+    transform: scale(1); 
+    filter: brightness(1);
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.01); 
+    filter: brightness(1.05);
+  }
 `
 
 const Container = styled.div`
@@ -21,6 +30,11 @@ const Container = styled.div`
   justify-content: center;
   padding: 40px 20px;
   text-align: center;
+  
+  @media (max-width: 768px) {
+    padding: 20px 15px;
+    min-height: 100vh;
+  }
 `
 
 const BrandName = styled.div`
@@ -31,7 +45,12 @@ const BrandName = styled.div`
   animation: ${fadeIn} 0.8s ease-out;
   
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
   }
 `
 
@@ -44,7 +63,13 @@ const Question = styled.div`
   animation: ${fadeIn} 0.8s ease-out 1s forwards;
   
   @media (max-width: 768px) {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
+    margin-bottom: 30px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
   }
 `
 
@@ -55,6 +80,18 @@ const ModelsContainer = styled.div`
   max-width: 1000px;
   width: 100%;
   margin-bottom: 50px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-width: 320px;
+  }
 `
 
 const ModelBubble = styled.div`
@@ -62,21 +99,48 @@ const ModelBubble = styled.div`
   border: 2px solid ${props => props.active ? props.color : '#333'};
   border-radius: 20px;
   padding: 20px;
-  transition: all 0.5s ease;
+  transition: all 0.8s ease;
   opacity: ${props => props.active ? 1 : 0.3};
-  animation: ${props => props.active ? pulseGlow : 'none'} 2s infinite;
+  animation: ${props => props.active ? memoryGlow : 'none'} 4s ease-in-out infinite;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 14px;
+  }
   
   .model-name {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 10px;
     color: ${props => props.active ? '#000000' : '#ffffff'};
+    
+    @media (max-width: 768px) {
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    
+    @media (max-width: 480px) {
+      font-size: 0.9rem;
+    }
   }
   
   .memory-status {
     font-size: 0.9rem;
     color: ${props => props.active ? '#000000' : '#aaaaaa'};
     font-weight: 500;
+    line-height: 1.3;
+    
+    @media (max-width: 768px) {
+      font-size: 0.8rem;
+    }
+    
+    @media (max-width: 480px) {
+      font-size: 0.75rem;
+    }
   }
 `
 
@@ -90,7 +154,14 @@ const FinalMessage = styled.div`
   animation: ${fadeIn} 1s ease-out forwards;
   
   @media (max-width: 768px) {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    max-width: 600px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.3rem;
+    max-width: 300px;
+    line-height: 1.3;
   }
 `
 
@@ -116,19 +187,19 @@ export default function DigitalMemoryHero() {
       // Step 2: Show question after 2s
       setTimeout(() => setCurrentStep(1), 2000)
       
-      // Step 3: Light up models one by one starting at 4s
+      // Step 3: Light up models one by one starting at 4s - SLOWER timing
       setTimeout(() => {
         models.forEach((model, index) => {
           setTimeout(() => {
             setActiveModels(prev => [...prev, index])
-          }, index * 800) // 0.8s delay between each model
+          }, index * 1200) // Increased from 800ms to 1200ms for gentler pace
         })
       }, 4000)
       
-      // Step 4: Show final message after all models are lit (4s + 7*0.8s + 2s = ~11.6s)
+      // Step 4: Show final message after all models are lit
       setTimeout(() => {
         setShowFinal(true)
-      }, 11600)
+      }, 4000 + (models.length * 1200) + 2000)
     }
 
     sequence()

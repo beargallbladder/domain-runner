@@ -2,6 +2,7 @@ declare class CachePopulationScheduler {
     private isRunning;
     constructor();
     populateCache(): Promise<void>;
+    private computeCompetitiveMemoryScore;
     private generateCacheEntry;
     private upsertCacheEntry;
     private extractBusinessFocus;

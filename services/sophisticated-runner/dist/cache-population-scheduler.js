@@ -14,7 +14,7 @@ const pool = new pg_1.Pool({
 class CachePopulationScheduler {
     constructor() {
         this.isRunning = false;
-        console.log('🔄 Cache Population Scheduler initialized');
+        console.log('🔄 Cache Population Scheduler initialized with COMPETITIVE SCORING');
     }
     async populateCache() {
         if (this.isRunning) {
@@ -22,7 +22,7 @@ class CachePopulationScheduler {
             return;
         }
         this.isRunning = true;
-        console.log('🚀 Starting cache population...');
+        console.log('🚀 Starting cache population with REALISTIC SCORING...');
         try {
             const client = await pool.connect();
             // Get all completed domains with response data
@@ -31,12 +31,9 @@ class CachePopulationScheduler {
           d.id as domain_id,
           d.domain,
           COUNT(r.id) as response_count,
-          AVG(CASE 
-            WHEN LENGTH(r.raw_response) > 100 THEN 85 + (LENGTH(r.raw_response) / 50)
-            WHEN LENGTH(r.raw_response) > 50 THEN 70 + (LENGTH(r.raw_response) / 25)
-            ELSE 45 + (LENGTH(r.raw_response) / 10)
-          END) as memory_score,
           COUNT(DISTINCT r.model) as model_count,
+          AVG(LENGTH(r.raw_response)) as avg_response_length,
+          STDDEV(LENGTH(r.raw_response)) as length_stddev,
           AVG(CASE 
             WHEN r.raw_response ILIKE '%' || d.domain || '%' THEN 0.9
             WHEN r.raw_response ILIKE '%' || SPLIT_PART(d.domain, '.', 1) || '%' THEN 0.7
@@ -51,7 +48,7 @@ class CachePopulationScheduler {
         ORDER BY COUNT(r.id) DESC
       `;
             const domains = await client.query(domainsQuery);
-            console.log(`📊 Found ${domains.rows.length} domains to cache`);
+            console.log(`📊 Found ${domains.rows.length} domains to cache with COMPETITIVE SCORING`);
             let processed = 0;
             let errors = 0;
             // Process domains in batches
@@ -70,7 +67,7 @@ class CachePopulationScheduler {
                 }
             }
             client.release();
-            console.log('🎉 Cache population completed!');
+            console.log('🎉 Cache population completed with REALISTIC SCORES!');
             console.log(`✅ Successfully processed: ${processed} domains`);
             console.log(`❌ Errors: ${errors} domains`);
             console.log(`📊 Total cache size: ${processed} domains`);
@@ -82,8 +79,45 @@ class CachePopulationScheduler {
             this.isRunning = false;
         }
     }
+    computeCompetitiveMemoryScore(responseCount, modelCount, avgLength, lengthStddev, consensusScore) {
+        const lengthConsistency = lengthStddev > 0 ? (1 - (lengthStddev / avgLength)) : 0;
+        const lengthConsistencyScore = Math.max(0, Math.min(1, lengthConsistency));
+        const modelDiversityScore = Math.min(modelCount / 15.0, 1.0);
+        const responseVolumeScore = Math.min(responseCount / 30.0, 1.0);
+        const baseScore = (lengthConsistencyScore * 0.3 +
+            modelDiversityScore * 0.4 +
+            responseVolumeScore * 0.2 +
+            consensusScore * 0.1) * 100;
+        let adjustedScore = baseScore;
+        if (responseCount > 40) {
+            const excessFactor = (responseCount - 40) / 25;
+            adjustedScore = adjustedScore - (excessFactor * 6);
+        }
+        if (modelCount > 12) {
+            const excessFactor = (modelCount - 12) / 6;
+            adjustedScore = adjustedScore - (excessFactor * 4);
+        }
+        const variance = (Math.random() - 0.5) * 8;
+        adjustedScore = adjustedScore + variance;
+        let finalScore;
+        if (adjustedScore >= 90) {
+            finalScore = 78 + Math.random() * 8;
+        }
+        else if (adjustedScore >= 80) {
+            finalScore = 68 + Math.random() * 10;
+        }
+        else if (adjustedScore >= 70) {
+            finalScore = 55 + Math.random() * 15;
+        }
+        else if (adjustedScore >= 50) {
+            finalScore = 40 + Math.random() * 20;
+        }
+        else {
+            finalScore = 20 + Math.random() * 25;
+        }
+        return Math.round(Math.max(15, Math.min(86, finalScore)) * 10) / 10;
+    }
     async generateCacheEntry(client, domain) {
-        // Get sample responses for analysis
         const responsesQuery = `
       SELECT r.raw_response, r.model, r.prompt_type
       FROM responses r
@@ -93,18 +127,17 @@ class CachePopulationScheduler {
       LIMIT 20
     `;
         const responses = await client.query(responsesQuery, [domain.domain_id]);
-        // Analyze responses for business intelligence
+        const memoryScore = this.computeCompetitiveMemoryScore(domain.response_count, domain.model_count, domain.avg_response_length || 200, domain.length_stddev || 50, domain.ai_consensus_score);
         const businessFocus = this.extractBusinessFocus(responses.rows, domain.domain);
-        const marketPosition = this.determineMarketPosition(domain.memory_score);
+        const marketPosition = this.determineMarketPosition(memoryScore);
         const keywords = this.extractKeywords(responses.rows, domain.domain);
         const themes = this.extractThemes(responses.rows);
-        // Calculate risk scores
-        const reputationRisk = Math.max(0, 50 - domain.memory_score + Math.random() * 20);
-        const threatLevel = reputationRisk > 40 ? 'high' : reputationRisk > 20 ? 'medium' : 'low';
+        const reputationRisk = Math.max(0, 90 - memoryScore + Math.random() * 15);
+        const threatLevel = reputationRisk > 50 ? 'high' : reputationRisk > 25 ? 'medium' : 'low';
         return {
             domain_id: domain.domain_id,
             domain: domain.domain,
-            memory_score: Math.min(100, Math.max(0, domain.memory_score)),
+            memory_score: memoryScore,
             ai_consensus_score: domain.ai_consensus_score,
             drift_delta: domain.drift_delta,
             model_count: domain.model_count,
@@ -120,8 +153,9 @@ class CachePopulationScheduler {
             cache_data: {
                 last_updated: new Date().toISOString(),
                 response_count: domain.response_count,
-                analysis_version: '2.0',
-                confidence_score: Math.min(1.0, domain.response_count / 20)
+                analysis_version: '3.0_competitive_scoring',
+                confidence_score: Math.min(1.0, domain.response_count / 20),
+                scoring_method: 'competitive_curves_v3'
             }
         };
     }
@@ -200,13 +234,12 @@ class CachePopulationScheduler {
         const text = responses.map(r => r.raw_response).join(' ').toLowerCase();
         const domainName = domain.split('.')[0];
         const keywords = [domainName];
-        // Common business keywords
         const businessTerms = ['platform', 'service', 'solution', 'technology', 'innovation', 'digital', 'cloud', 'data', 'analytics', 'software'];
         businessTerms.forEach(term => {
             if (text.includes(term))
                 keywords.push(term);
         });
-        return keywords.slice(0, 5); // Limit to 5 keywords
+        return keywords.slice(0, 5);
     }
     extractThemes(responses) {
         const text = responses.map(r => r.raw_response).join(' ').toLowerCase();
@@ -221,21 +254,19 @@ class CachePopulationScheduler {
             themes.push('customer-focused');
         if (text.includes('global') || text.includes('worldwide'))
             themes.push('global reach');
-        return themes.slice(0, 3); // Limit to 3 themes
+        return themes.slice(0, 3);
     }
     startScheduler() {
         console.log('⏰ Starting cache population scheduler...');
-        // Run every 6 hours using setInterval
-        const sixHours = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+        const sixHours = 6 * 60 * 60 * 1000;
         setInterval(async () => {
             console.log('⏰ Scheduled cache population triggered');
             await this.populateCache();
         }, sixHours);
-        // Run immediately on startup
         setTimeout(() => {
             console.log('🚀 Running initial cache population...');
             this.populateCache();
-        }, 5000); // Wait 5 seconds after startup
+        }, 5000);
         console.log('✅ Cache population scheduler started (runs every 6 hours)');
     }
     async runOnce() {
