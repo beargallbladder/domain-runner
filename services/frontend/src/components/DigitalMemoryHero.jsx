@@ -18,13 +18,13 @@ const memoryFade = keyframes`
 
 const mathFadeIn = keyframes`
   0% { opacity: 0; transform: translateY(20px) rotate(-2deg); }
-  50% { opacity: 0.15; transform: translateY(0px) rotate(0deg); }
-  100% { opacity: 0.08; transform: translateY(-10px) rotate(1deg); }
+  50% { opacity: 0.3; transform: translateY(0px) rotate(0deg); }
+  100% { opacity: 0.2; transform: translateY(-10px) rotate(1deg); }
 `
 
 const mathFloat = keyframes`
-  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.08; }
-  50% { transform: translateY(-5px) rotate(0.5deg); opacity: 0.12; }
+  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.2; }
+  50% { transform: translateY(-5px) rotate(0.5deg); opacity: 0.25; }
 `
 
 const HeroContainer = styled.div`
@@ -181,7 +181,7 @@ const MathFormula = styled.div`
   position: absolute;
   font-family: 'Times New Roman', serif;
   font-size: ${props => props.size || '0.9rem'};
-  color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.2);
   pointer-events: none;
   z-index: 0;
   animation: ${mathFadeIn} 3s ease-in-out ${props => props.delay || 0}s forwards,
@@ -261,49 +261,49 @@ const mathFormulas = [
   { 
     formula: 'σ(decay) = e^(-λt) × ω_consensus', 
     position: 'topLeft', 
-    delay: 0.5,
+    delay: 0.1,
     size: '0.8rem'
   },
   { 
     formula: 'cos_sim = Σ(A·B) / (||A|| × ||B||)', 
     position: 'topRight', 
-    delay: 1.2,
+    delay: 0.3,
     size: '0.9rem'
   },
   { 
     formula: '∂S/∂t = -α∇²S + β(I - S)', 
     position: 'midLeft', 
-    delay: 2.1,
+    delay: 0.5,
     size: '0.85rem'
   },
   { 
     formula: 'H(M) = -Σp(m_i)log₂p(m_i)', 
     position: 'midRight', 
-    delay: 1.8,
+    delay: 0.4,
     size: '0.8rem'
   },
   { 
     formula: 'μ_drift = ∫₀ᵗ f(τ)·w(t-τ)dτ', 
     position: 'bottomLeft', 
-    delay: 2.7,
+    delay: 0.7,
     size: '0.85rem'
   },
   { 
     formula: 'CI = x̄ ± z_(α/2) × σ/√n', 
     position: 'bottomRight', 
-    delay: 3.2,
+    delay: 0.8,
     size: '0.8rem'
   },
   { 
     formula: 'R_consensus = Π(r_i^w_i) / Σw_i', 
     position: 'centerLeft', 
-    delay: 2.9,
+    delay: 0.6,
     size: '0.75rem'
   },
   { 
     formula: 'λ_max(C) → semantic_stability', 
     position: 'centerRight', 
-    delay: 3.5,
+    delay: 0.9,
     size: '0.8rem'
   }
 ]
@@ -339,7 +339,7 @@ const DigitalMemoryHero = ({ name = "Your Brand" }) => {
       setShowCTA(true)
       
       // Beautiful Mind: Show mathematical formulas after completion
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise(resolve => setTimeout(resolve, 500))
       setPhase('mathematical')
       setShowMath(true)
     }
