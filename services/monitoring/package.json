@@ -1,0 +1,16 @@
+{
+  "name": "data-sanity-monitor",
+  "version": "1.0.0",
+  "description": "Simple data quality monitoring for LLM PageRank",
+  "main": "data-sanity.js",
+  "scripts": {
+    "start": "node data-sanity.js",
+    "dev": "node data-sanity.js"
+  },
+  "dependencies": {
+    "pg": "^8.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
