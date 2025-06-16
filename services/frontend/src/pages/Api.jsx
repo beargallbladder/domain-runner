@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 
@@ -12,58 +12,59 @@ const Container = styled.div`
 `;
 
 // Real derivative calculations with blurred company names
-const DerivativeAnalysis = styled.div`
+const DerivativeAnalysis = styled.section`
   background: #0a0a0a;
   border: 1px solid #333;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 60px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  border-radius: 12px;
+  padding: 30px;
+  margin: 40px 0;
   
   .header {
     color: #00ff41;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 1.2rem;
     margin-bottom: 20px;
-    opacity: 0.8;
+    text-align: center;
   }
 `;
 
 const DerivativeGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
 `;
 
 const DerivativeCard = styled.div`
-  background: #111;
-  padding: 16px;
-  border-radius: 6px;
-  border: 1px solid #222;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 20px;
   
   .company {
-    filter: blur(4px);
-    color: #666;
-    font-size: 0.8rem;
-    margin-bottom: 8px;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
   }
   
   .calculation {
-    color: #fff;
-    font-size: 0.9rem;
-    line-height: 1.4;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
     
     .derivative {
-      color: #00ff41;
+      color: #007AFF;
+      font-style: italic;
     }
     
     .volatility {
-      color: #ff9500;
+      color: #FF9500;
+      font-style: italic;
     }
     
     .value {
-      color: #007AFF;
+      color: #00ff41;
+      font-weight: 700;
     }
   }
 `;
@@ -161,9 +162,296 @@ const EndpointCard = styled.div`
   }
 `;
 
+// NEW: Live Ticker Animations
+const tickerScroll = keyframes`
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+`;
+
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+`;
+
+const LiveTickerSection = styled.section`
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  margin: 40px 0;
+  overflow: hidden;
+  position: relative;
+`;
+
+const TickerHeader = styled.div`
+  background: #1a1a1a;
+  padding: 15px 30px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const TickerTitle = styled.h3`
+  color: #00ff41;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 1rem;
+  margin: 0;
+`;
+
+const LiveIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  .dot {
+    width: 8px;
+    height: 8px;
+    background: #ff3b30;
+    border-radius: 50%;
+    animation: ${pulse} 1.5s infinite;
+  }
+  
+  .text {
+    color: #ff3b30;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+`;
+
+const TickerContainer = styled.div`
+  height: 120px;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+`;
+
+const TickerTrack = styled.div`
+  display: flex;
+  align-items: center;
+  height: 100%;
+  animation: ${tickerScroll} 45s linear infinite;
+  white-space: nowrap;
+`;
+
+const TickerItem = styled.div`
+  display: inline-flex;
+  align-items: center;
+  margin-right: 60px;
+  padding: 20px;
+  background: rgba(26, 26, 26, 0.8);
+  border-radius: 8px;
+  border-left: 3px solid ${props => props.color || '#007AFF'};
+  min-width: 280px;
+`;
+
+const CompanyName = styled.div`
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+  filter: blur(${props => props.blur ? '3px' : '0px'});
+  font-size: 0.9rem;
+`;
+
+const ScoreChange = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  .score {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-weight: 700;
+    color: ${props => props.positive ? '#34C759' : '#FF3B30'};
+  }
+  
+  .change {
+    font-size: 0.8rem;
+    color: #999;
+  }
+`;
+
+const VolatilityIndicator = styled.div`
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  .volatility {
+    font-size: 0.7rem;
+    color: #999;
+    margin-bottom: 2px;
+  }
+  
+  .bars {
+    display: flex;
+    gap: 1px;
+  }
+  
+  .bar {
+    width: 2px;
+    background: ${props => props.high ? '#FF3B30' : props.medium ? '#FF9500' : '#34C759'};
+    height: ${props => props.height || '10px'};
+  }
+`;
+
+const ProcessingStats = styled.div`
+  background: #1a1a1a;
+  padding: 20px 30px;
+  border-top: 1px solid #333;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  
+  .stat {
+    text-align: center;
+  }
+  
+  .number {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #00ff41;
+    margin-bottom: 4px;
+  }
+  
+  .label {
+    font-size: 0.8rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+`;
+
 const Api = () => {
+  const [tickerData, setTickerData] = useState([]);
+  const [processingStats, setProcessingStats] = useState({
+    domainsProcessed: 847,
+    modelsActive: 17,
+    lastUpdate: '23s ago',
+    joltEvents: 4
+  });
+
+  // Simulate live ticker data
+  useEffect(() => {
+    const generateTickerData = () => {
+      const companies = [
+        { name: 'AI Research Lab Alpha', sector: 'AI/ML', blur: true },
+        { name: 'E-Commerce Giant B', sector: 'E-Commerce', blur: true },
+        { name: 'Social Platform C', sector: 'Social Media', blur: true },
+        { name: 'Streaming Service D', sector: 'Entertainment', blur: true },
+        { name: 'Cloud Provider E', sector: 'Cloud/Infra', blur: true },
+        { name: 'Fintech Unicorn F', sector: 'Financial', blur: true },
+        { name: 'Gaming Platform G', sector: 'Gaming', blur: true },
+        { name: 'Crypto Exchange H', sector: 'Crypto', blur: true },
+      ];
+
+      return companies.map(company => ({
+        ...company,
+        score: (Math.random() * 40 + 50).toFixed(1),
+        change: (Math.random() * 20 - 10).toFixed(1),
+        volatility: Math.random() * 100,
+        models: Math.floor(Math.random() * 17) + 1
+      }));
+    };
+
+    setTickerData(generateTickerData());
+
+    // Update ticker every 5 seconds
+    const interval = setInterval(() => {
+      setTickerData(generateTickerData());
+      setProcessingStats(prev => ({
+        ...prev,
+        domainsProcessed: prev.domainsProcessed + Math.floor(Math.random() * 5),
+        lastUpdate: Math.floor(Math.random() * 60) + 's ago'
+      }));
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <Container>
+      <HeroSection>
+        <Title
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          AI MEMORY INTELLIGENCE API
+        </Title>
+        <Subtitle
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          Programmatic access to brand memory data across 17 AI models. 
+          The infrastructure for memory-driven applications and competitive intelligence.
+        </Subtitle>
+      </HeroSection>
+
+      {/* NEW: Live Ticker Section */}
+      <LiveTickerSection>
+        <TickerHeader>
+          <TickerTitle>🔴 LIVE BRAND MEMORY FEED</TickerTitle>
+          <LiveIndicator>
+            <div className="dot"></div>
+            <div className="text">LIVE</div>
+          </LiveIndicator>
+        </TickerHeader>
+        
+        <TickerContainer>
+          <TickerTrack>
+            {tickerData.map((item, index) => (
+              <TickerItem 
+                key={index}
+                color={parseFloat(item.change) > 0 ? '#34C759' : '#FF3B30'}
+              >
+                <div>
+                  <CompanyName blur={item.blur}>{item.name}</CompanyName>
+                  <ScoreChange positive={parseFloat(item.change) > 0}>
+                    <span className="score">{item.score}%</span>
+                    <span className="change">
+                      {parseFloat(item.change) > 0 ? '+' : ''}{item.change}%
+                    </span>
+                    <span className="change">({item.models} models)</span>
+                  </ScoreChange>
+                </div>
+                <VolatilityIndicator 
+                  high={item.volatility > 70}
+                  medium={item.volatility > 40}
+                >
+                  <div className="volatility">σ²: {item.volatility.toFixed(1)}</div>
+                  <div className="bars">
+                    <div className="bar" style={{height: '8px'}}></div>
+                    <div className="bar" style={{height: '12px'}}></div>
+                    <div className="bar" style={{height: item.volatility > 50 ? '16px' : '6px'}}></div>
+                    <div className="bar" style={{height: item.volatility > 70 ? '20px' : '4px'}}></div>
+                  </div>
+                </VolatilityIndicator>
+              </TickerItem>
+            ))}
+          </TickerTrack>
+        </TickerContainer>
+
+        <ProcessingStats>
+          <div className="stat">
+            <div className="number">{processingStats.domainsProcessed}</div>
+            <div className="label">Domains Processed</div>
+          </div>
+          <div className="stat">
+            <div className="number">{processingStats.modelsActive}</div>
+            <div className="label">Models Active</div>
+          </div>
+          <div className="stat">
+            <div className="number">{processingStats.lastUpdate}</div>
+            <div className="label">Last Update</div>
+          </div>
+          <div className="stat">
+            <div className="number">{processingStats.joltEvents}</div>
+            <div className="label">JOLT Events</div>
+          </div>
+        </ProcessingStats>
+      </LiveTickerSection>
+
       {/* Real derivative calculations */}
       <DerivativeAnalysis>
         <div className="header">Live Temporal Analysis</div>
@@ -208,43 +496,25 @@ const Api = () => {
             <div className="company">netflix.com</div>
             <div className="calculation">
               <span className="derivative">dM/dt</span> = <span className="value">-0.156</span><br/>
-              <span className="volatility">σ²(t)</span> = <span className="value">0.0723</span><br/>
+              <span className="volatility">σ²(t)</span> = <span className="value">0.0789</span><br/>
               τ = 89.4h
             </div>
           </DerivativeCard>
           
           <DerivativeCard>
-            <div className="company">github.com</div>
+            <div className="company">shopify.com</div>
             <div className="calculation">
-              <span className="derivative">dM/dt</span> = <span className="value">+0.078</span><br/>
-              <span className="volatility">σ²(t)</span> = <span className="value">0.0298</span><br/>
-              τ = 203.8h
+              <span className="derivative">dM/dt</span> = <span className="value">+0.089</span><br/>
+              <span className="volatility">σ²(t)</span> = <span className="value">0.0345</span><br/>
+              τ = 198.7h
             </div>
           </DerivativeCard>
         </DerivativeGrid>
       </DerivativeAnalysis>
 
-      <HeroSection>
-        <Title
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          AI MEMORY INTELLIGENCE API
-        </Title>
-        <Subtitle
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          Programmatic access to brand memory data across 21 AI models. 
-          Built on foundational time series analysis, stochastic calculus, and real-time volatility modeling.
-        </Subtitle>
-      </HeroSection>
-
       <StatsGrid>
         <StatCard>
-          <div className="number">50K+</div>
+          <div className="number">70K+</div>
           <div className="label">API Responses</div>
         </StatCard>
         <StatCard>
@@ -266,10 +536,10 @@ const Api = () => {
         
         <EndpointCard>
           <div className="method">GET</div>
-          <div className="endpoint">/api/rankings</div>
+          <div className="endpoint">/api/ticker</div>
           <div className="description">
-            Complete brand memory rankings with time series derivatives and volatility indicators. 
-            Access real-time memory scores with statistical confidence intervals.
+            Real-time brand memory volatility feed with temporal derivatives and consensus metrics. 
+            Live streaming data for financial-grade brand intelligence applications.
           </div>
         </EndpointCard>
 
