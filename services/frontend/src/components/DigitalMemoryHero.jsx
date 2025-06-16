@@ -6,6 +6,60 @@ const fadeIn = keyframes`
   to { opacity: 1; }
 `
 
+const heartbeat = keyframes`
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1); 
+    filter: brightness(1);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1.02); 
+    filter: brightness(1.1);
+  }
+`
+
+const digitalDeath = keyframes`
+  0% { 
+    opacity: 1; 
+    transform: scale(1); 
+    filter: brightness(1) hue-rotate(0deg);
+  }
+  50% { 
+    opacity: 0.3; 
+    transform: scale(0.95); 
+    filter: brightness(0.6) hue-rotate(-20deg);
+  }
+  100% { 
+    opacity: 0.4; 
+    transform: scale(0.97); 
+    filter: brightness(0.7) hue-rotate(-10deg);
+  }
+`
+
+const memorySlipping = keyframes`
+  0% { 
+    opacity: 0.8; 
+    transform: scale(1); 
+  }
+  25% { 
+    opacity: 0.4; 
+    transform: scale(0.98); 
+  }
+  50% { 
+    opacity: 0.6; 
+    transform: scale(0.99); 
+  }
+  75% { 
+    opacity: 0.3; 
+    transform: scale(0.97); 
+  }
+  100% { 
+    opacity: 0.5; 
+    transform: scale(0.98); 
+  }
+`
+
 const pulseGlow = keyframes`
   0%, 100% { opacity: 0.6; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.05); }
@@ -40,16 +94,59 @@ const HeroContainer = styled.div`
   overflow: hidden;
 `
 
-const CenterName = styled.div`
+// The brand in the center - this is the soul that can slip away
+const CenterBrand = styled.div`
   font-size: 2.5rem;
   font-weight: 300;
   margin-bottom: 3rem;
-  animation: ${fadeIn} 2s ease-in;
   text-align: center;
+  position: relative;
+  z-index: 10;
+  
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // Dynamic animation based on memory strength
+  animation: ${props => {
+    if (props.memoryStrength === 'strong') return `${heartbeat} 2s ease-in-out infinite`;
+    if (props.memoryStrength === 'weak') return `${memorySlipping} 3s ease-in-out infinite`;
+    if (props.memoryStrength === 'none') return `${digitalDeath} 4s ease-in-out infinite`;
+    return 'none';
+  }};
+  
+  // Visual state based on current memory response
+  opacity: ${props => {
+    if (props.memoryStrength === 'strong') return 1;
+    if (props.memoryStrength === 'weak') return 0.6;
+    if (props.memoryStrength === 'none') return 0.3;
+    return 0.9;
+  }};
+  
+  filter: ${props => {
+    if (props.memoryStrength === 'strong') return 'brightness(1.1) saturate(1.2)';
+    if (props.memoryStrength === 'weak') return 'brightness(0.8) saturate(0.7)';
+    if (props.memoryStrength === 'none') return 'brightness(0.5) saturate(0.3) hue-rotate(-30deg)';
+    return 'brightness(1)';
+  }};
+  
+  transform: ${props => {
+    if (props.memoryStrength === 'none') return 'scale(0.95)';
+    return 'scale(1)';
+  }};
   
   @media (max-width: 768px) {
     font-size: 1.8rem;
   }
+  
+  // Add subtle glow for strong memory
+  ${props => props.memoryStrength === 'strong' && `
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  `}
+  
+  // Add red danger glow for no memory
+  ${props => props.memoryStrength === 'none' && `
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+    color: #fecaca;
+  `}
 `
 
 const QueryContainer = styled.div`
@@ -152,6 +249,14 @@ const StatusText = styled.div`
   margin: 2rem 0;
   color: #9ca3af;
   animation: ${fadeIn} 1s ease-in;
+  
+  // Change color based on memory state
+  ${props => {
+    if (props.memoryStrength === 'strong') return `color: #10b981;`;
+    if (props.memoryStrength === 'weak') return `color: #f59e0b;`;
+    if (props.memoryStrength === 'none') return `color: #ef4444;`;
+    return `color: #9ca3af;`;
+  }}
 `
 
 const CTA = styled.button`
@@ -236,76 +341,37 @@ const MathFormula = styled.div`
   `}
 `
 
+// Fixed model list - technically accurate
 const models = [
   { name: 'GPT-4', position: 'top' },
   { name: 'Claude', position: 'topRight' },
   { name: 'Gemini', position: 'right' },
-  { name: 'ChatGPT', position: 'bottomRight' },
+  { name: 'Perplexity', position: 'bottomRight' },
   { name: 'Copilot', position: 'bottom' },
-  { name: 'Perplexity', position: 'bottomLeft' },
-  { name: 'Bard', position: 'left' }
+  { name: 'Mistral', position: 'bottomLeft' },
+  { name: 'Llama', position: 'left' }
 ]
 
 const memories = [
   { model: 'GPT-4', text: 'Founder of AI Brand Memory Intelligence platform, focuses on semantic analysis...', strength: 'strong' },
   { model: 'Claude', text: 'Developer working on memory tracking systems for brands...', strength: 'weak' },
   { model: 'Gemini', text: '', strength: 'none' },
-  { model: 'ChatGPT', text: 'Tech entrepreneur, recent work involves AI model analysis...', strength: 'strong' },
+  { model: 'Perplexity', text: 'Tech entrepreneur, recent work involves AI model analysis...', strength: 'strong' },
   { model: 'Copilot', text: 'Limited information available about this individual...', strength: 'weak' },
-  { model: 'Perplexity', text: '', strength: 'none' },
-  { model: 'Bard', text: 'No relevant information found in training data.', strength: 'none' }
+  { model: 'Mistral', text: '', strength: 'none' },
+  { model: 'Llama', text: 'No relevant information found in training data.', strength: 'none' }
 ]
 
 // Beautiful Mind: The Mathematical Formulas
 const mathFormulas = [
-  { 
-    formula: 'σ(decay) = e^(-λt) × ω_consensus', 
-    position: 'topLeft', 
-    delay: 0.1,
-    size: '0.8rem'
-  },
-  { 
-    formula: 'cos_sim = Σ(A·B) / (||A|| × ||B||)', 
-    position: 'topRight', 
-    delay: 0.3,
-    size: '0.9rem'
-  },
-  { 
-    formula: '∂S/∂t = -α∇²S + β(I - S)', 
-    position: 'midLeft', 
-    delay: 0.5,
-    size: '0.85rem'
-  },
-  { 
-    formula: 'H(M) = -Σp(m_i)log₂p(m_i)', 
-    position: 'midRight', 
-    delay: 0.4,
-    size: '0.8rem'
-  },
-  { 
-    formula: 'μ_drift = ∫₀ᵗ f(τ)·w(t-τ)dτ', 
-    position: 'bottomLeft', 
-    delay: 0.7,
-    size: '0.85rem'
-  },
-  { 
-    formula: 'CI = x̄ ± z_(α/2) × σ/√n', 
-    position: 'bottomRight', 
-    delay: 0.8,
-    size: '0.8rem'
-  },
-  { 
-    formula: 'R_consensus = Π(r_i^w_i) / Σw_i', 
-    position: 'centerLeft', 
-    delay: 0.6,
-    size: '0.75rem'
-  },
-  { 
-    formula: 'λ_max(C) → semantic_stability', 
-    position: 'centerRight', 
-    delay: 0.9,
-    size: '0.8rem'
-  }
+  { formula: 'M(t) = M₀e^(-λt)', position: 'topLeft', delay: 0.1, size: '0.8rem' },
+  { formula: '∂M/∂t = -λM + η(t)', position: 'topRight', delay: 0.5, size: '0.9rem' },
+  { formula: 'σ²(t) = ∫ ψ(s)ds', position: 'midLeft', delay: 0.3, size: '0.7rem' },
+  { formula: 'H = -Σp(i)log₂p(i)', position: 'midRight', delay: 0.7, size: '0.8rem' },
+  { formula: 'C(τ) = E[X(t)X(t+τ)]', position: 'bottomLeft', delay: 0.2, size: '0.7rem' },
+  { formula: '∇ₘS = ∂S/∂M', position: 'bottomRight', delay: 0.9, size: '0.8rem' },
+  { formula: 'Ψ(x,t) = Ae^(ikx-iωt)', position: 'centerLeft', delay: 0.4, size: '0.6rem' },
+  { formula: 'ρ(r₁,r₂) = |Ψ(r₁,r₂)|²', position: 'centerRight', delay: 0.6, size: '0.7rem' }
 ]
 
 const DigitalMemoryHero = ({ name = "Your Brand" }) => {
@@ -314,6 +380,7 @@ const DigitalMemoryHero = ({ name = "Your Brand" }) => {
   const [currentMemory, setCurrentMemory] = useState(null)
   const [showCTA, setShowCTA] = useState(false)
   const [showMath, setShowMath] = useState(false)
+  const [brandMemoryState, setBrandMemoryState] = useState('normal') // normal, strong, weak, none
 
   useEffect(() => {
     const sequence = async () => {
@@ -326,16 +393,20 @@ const DigitalMemoryHero = ({ name = "Your Brand" }) => {
         setActiveModel(i)
         await new Promise(resolve => setTimeout(resolve, 800))
         
-        // Show this model's memory
-        setCurrentMemory(memories[i])
+        // Show this model's memory and update brand state
+        const memory = memories[i]
+        setCurrentMemory(memory)
+        setBrandMemoryState(memory.strength)
         setPhase('revealing')
         await new Promise(resolve => setTimeout(resolve, 2000))
         
         setPhase('querying')
+        setBrandMemoryState('normal')
         await new Promise(resolve => setTimeout(resolve, 500))
       }
       
       setPhase('complete')
+      setBrandMemoryState('weak') // Final state shows overall vulnerability
       setShowCTA(true)
       
       // Beautiful Mind: Show mathematical formulas after completion
@@ -349,9 +420,11 @@ const DigitalMemoryHero = ({ name = "Your Brand" }) => {
 
   return (
     <HeroContainer>
-      <CenterName>{name}</CenterName>
+      <CenterBrand memoryStrength={brandMemoryState}>
+        {name}
+      </CenterBrand>
       
-      <StatusText>
+      <StatusText memoryStrength={brandMemoryState}>
         {phase === 'intro' && "What do AI models remember about you?"}
         {phase === 'querying' && `Asking ${models[activeModel]?.name}...`}
         {phase === 'revealing' && currentMemory && (
