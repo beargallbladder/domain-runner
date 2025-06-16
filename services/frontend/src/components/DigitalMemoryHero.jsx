@@ -44,8 +44,8 @@ const CenterName = styled.div`
 const QueryContainer = styled.div`
   position: relative;
   width: 100%;
-  max-width: 900px;
-  height: 400px;
+  max-width: 1100px;
+  height: 450px;
   margin: 2rem 0;
 `
 
@@ -57,43 +57,44 @@ const AIModel = styled.div`
   font-size: 0.9rem;
   transition: all 0.3s ease;
   animation: ${props => props.querying ? pulseGlow : 'none'} 2s infinite;
+  z-index: 1;
   
   ${props => props.position === 'top' && `
-    top: 10%;
+    top: 5%;
     left: 50%;
     transform: translateX(-50%);
   `}
   
   ${props => props.position === 'topRight' && `
-    top: 20%;
-    right: 10%;
+    top: 15%;
+    right: 5%;
   `}
   
   ${props => props.position === 'right' && `
     top: 50%;
-    right: 5%;
+    right: 2%;
     transform: translateY(-50%);
   `}
   
   ${props => props.position === 'bottomRight' && `
-    bottom: 20%;
-    right: 15%;
+    bottom: 15%;
+    right: 8%;
   `}
   
   ${props => props.position === 'bottom' && `
-    bottom: 10%;
+    bottom: 5%;
     left: 50%;
     transform: translateX(-50%);
   `}
   
   ${props => props.position === 'bottomLeft' && `
-    bottom: 20%;
-    left: 15%;
+    bottom: 15%;
+    left: 8%;
   `}
   
   ${props => props.position === 'left' && `
     top: 50%;
-    left: 5%;
+    left: 2%;
     transform: translateY(-50%);
   `}
 `
@@ -107,11 +108,13 @@ const MemoryResponse = styled.div`
   border: 1px solid rgba(75, 85, 99, 0.3);
   border-radius: 8px;
   padding: 1.5rem;
-  max-width: 400px;
+  max-width: 500px;
+  width: 90%;
   min-height: 120px;
   opacity: ${props => props.visible ? 1 : 0};
   transition: opacity 0.5s ease;
   animation: ${props => props.fading ? memoryFade : 'none'} 3s ease-in;
+  z-index: 2;
   
   .model-name {
     color: #60a5fa;
@@ -164,20 +167,20 @@ const models = [
   { name: 'GPT-4', position: 'top' },
   { name: 'Claude', position: 'topRight' },
   { name: 'Gemini', position: 'right' },
-  { name: 'Llama', position: 'bottomRight' },
-  { name: 'Perplexity', position: 'bottom' },
-  { name: 'Anthropic', position: 'bottomLeft' },
-  { name: 'Mistral', position: 'left' }
+  { name: 'ChatGPT', position: 'bottomRight' },
+  { name: 'Copilot', position: 'bottom' },
+  { name: 'Perplexity', position: 'bottomLeft' },
+  { name: 'Bard', position: 'left' }
 ]
 
 const memories = [
   { model: 'GPT-4', text: 'Founder of AI Brand Memory Intelligence platform, focuses on semantic analysis...', strength: 'strong' },
   { model: 'Claude', text: 'Developer working on memory tracking systems for brands...', strength: 'weak' },
   { model: 'Gemini', text: '', strength: 'none' },
-  { model: 'Llama', text: 'Tech entrepreneur, recent work involves AI model analysis...', strength: 'strong' },
-  { model: 'Perplexity', text: 'Limited information available about this individual...', strength: 'weak' },
-  { model: 'Anthropic', text: '', strength: 'none' },
-  { model: 'Mistral', text: 'No relevant information found in training data.', strength: 'none' }
+  { model: 'ChatGPT', text: 'Tech entrepreneur, recent work involves AI model analysis...', strength: 'strong' },
+  { model: 'Copilot', text: 'Limited information available about this individual...', strength: 'weak' },
+  { model: 'Perplexity', text: '', strength: 'none' },
+  { model: 'Bard', text: 'No relevant information found in training data.', strength: 'none' }
 ]
 
 const DigitalMemoryHero = ({ name = "Your Name" }) => {
@@ -225,7 +228,7 @@ const DigitalMemoryHero = ({ name = "Your Name" }) => {
             `${currentMemory.model} has no memory of you` :
             `${currentMemory.model} remembers:`
         )}
-        {phase === 'complete' && "Some remember. Some forget. Some never knew you at all."}
+        {phase === 'complete' && "Your shadow in AI memory is measured. Now you can see your light."}
       </StatusText>
 
       <QueryContainer>
