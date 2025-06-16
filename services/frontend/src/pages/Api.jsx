@@ -6,9 +6,8 @@ const Container = styled.div`
   min-height: 100vh;
   background: #000000;
   color: #ffffff;
-  padding: 80px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 80px 0;
+  width: 100%;
 `;
 
 // Real derivative calculations with blurred company names
@@ -17,7 +16,14 @@ const DerivativeAnalysis = styled.section`
   border: 1px solid #333;
   border-radius: 12px;
   padding: 30px;
-  margin: 40px 0;
+  margin: 40px auto;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  
+  @media (max-width: 768px) {
+    margin: 40px 20px;
+  }
   
   .header {
     color: #00ff41;
@@ -72,6 +78,10 @@ const DerivativeCard = styled.div`
 const HeroSection = styled.section`
   text-align: center;
   margin-bottom: 80px;
+  padding: 0 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
 const Title = styled(motion.h1)`
@@ -94,7 +104,9 @@ const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 40px;
-  margin: 80px 0;
+  margin: 80px auto;
+  padding: 0 20px;
+  max-width: 1200px;
 `;
 
 const StatCard = styled.div`
@@ -121,7 +133,9 @@ const StatCard = styled.div`
 `;
 
 const EndpointsSection = styled.section`
-  margin: 80px 0;
+  margin: 80px auto;
+  padding: 0 20px;
+  max-width: 1200px;
 `;
 
 const SectionTitle = styled.h2`
