@@ -605,7 +605,7 @@ async def get_memory_shadows():
 async def get_full_rankings(
     page: int = Query(1, ge=1),
     limit: int = Query(50, le=100),
-    sort: str = Query("score", regex="^(score|consensus|trend|alphabetical)$"),
+    sort: str = Query("score", regex="^(score|consensus|trend|alphabetical|domain)$"),
     search: str = Query(None, max_length=100)
 ):
     """
@@ -627,6 +627,8 @@ async def get_full_rankings(
             order_clause = "ORDER BY ai_consensus_score DESC"
         elif sort == "trend":
             order_clause = "ORDER BY drift_delta DESC"
+        elif sort == "domain":
+            order_clause = "ORDER BY domain ASC"
         else:  # alphabetical
             order_clause = "ORDER BY domain ASC"
         
@@ -640,17 +642,21 @@ async def get_full_rankings(
             
             # Get domains for current page - FIX DUPLICATES WITH DISTINCT
             domains = await conn.fetch(f"""
-                SELECT DISTINCT ON (domain)
-                    domain, memory_score, ai_consensus_score, drift_delta,
-                    model_count, reputation_risk_score, updated_at,
-                    CASE 
-                        WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 'fresh'
-                        WHEN updated_at > NOW() - INTERVAL '7 days' THEN 'recent'
-                        ELSE 'stale'
-                    END as data_freshness
-                FROM public_domain_cache 
-                {where_clause}
-                ORDER BY domain, updated_at DESC, {order_clause.replace('ORDER BY ', '')}
+                WITH latest_domains AS (
+                    SELECT DISTINCT ON (domain)
+                        domain, memory_score, ai_consensus_score, drift_delta,
+                        model_count, reputation_risk_score, updated_at,
+                        CASE 
+                            WHEN updated_at > NOW() - INTERVAL '24 hours' THEN 'fresh'
+                            WHEN updated_at > NOW() - INTERVAL '7 days' THEN 'recent'
+                            ELSE 'stale'
+                        END as data_freshness
+                    FROM public_domain_cache 
+                    {where_clause}
+                    ORDER BY domain, updated_at DESC
+                )
+                SELECT * FROM latest_domains
+                {order_clause}
                 LIMIT $1 OFFSET $2
             """, limit, offset)
         
