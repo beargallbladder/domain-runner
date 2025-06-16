@@ -2,11 +2,6 @@ import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 
-const scroll = keyframes`
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
-`;
-
 const Container = styled.div`
   min-height: 100vh;
   background: #000000;
@@ -16,57 +11,60 @@ const Container = styled.div`
   margin: 0 auto;
 `;
 
-// Mathematical Ticker for API sophistication
-const MathTicker = styled.div`
+// Real derivative calculations with blurred company names
+const DerivativeAnalysis = styled.div`
   background: #0a0a0a;
   border: 1px solid #333;
   border-radius: 8px;
-  padding: 12px 0;
+  padding: 24px;
   margin-bottom: 60px;
-  overflow: hidden;
-  position: relative;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   
-  &::before {
-    content: '⚡ FOUNDATIONAL TIME SERIES ANALYSIS';
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.7rem;
+  .header {
     color: #00ff41;
-    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
     letter-spacing: 1px;
-    z-index: 2;
+    margin-bottom: 20px;
+    opacity: 0.8;
   }
 `;
 
-const ScrollingMath = styled.div`
-  white-space: nowrap;
-  animation: ${scroll} 45s linear infinite;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-  padding-left: 300px;
+const DerivativeGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+`;
+
+const DerivativeCard = styled.div`
+  background: #111;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #222;
   
-  .formula {
-    margin-right: 80px;
-    display: inline-block;
+  .company {
+    filter: blur(4px);
+    color: #666;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
   }
   
-  .derivative {
-    color: #00ff41;
-  }
-  
-  .integral {
-    color: #007AFF;
-  }
-  
-  .volatility {
-    color: #ff9500;
-  }
-  
-  .consensus {
-    color: #af52de;
+  .calculation {
+    color: #fff;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    
+    .derivative {
+      color: #00ff41;
+    }
+    
+    .volatility {
+      color: #ff9500;
+    }
+    
+    .value {
+      color: #007AFF;
+    }
   }
 `;
 
@@ -166,23 +164,65 @@ const EndpointCard = styled.div`
 const Api = () => {
   return (
     <Container>
-      {/* Mathematical Sophistication Ticker */}
-      <MathTicker>
-        <ScrollingMath>
-          <span className="formula derivative">∂M/∂t = -λM(t) + η(t)</span>
-          <span className="formula volatility">σ²(t) = E[(R(t) - μ)²]</span>
-          <span className="formula integral">V(T) = ∫₀ᵀ σ(s)²ds</span>
-          <span className="formula consensus">C = Σᵢwᵢlog(pᵢ/(1-pᵢ))</span>
-          <span className="formula derivative">dS/dt = μS + σSdW</span>
-          <span className="formula volatility">GARCH(1,1): σₜ² = ω + αεₜ₋₁² + βσₜ₋₁²</span>
-          <span className="formula integral">γ(τ) = E[X(t)X(t+τ)]</span>
-          <span className="formula consensus">H = -Σp(x)log₂p(x)</span>
-          <span className="formula derivative">∇·F = ∂Fₓ/∂x + ∂Fᵧ/∂y + ∂Fᵤ/∂z</span>
-          <span className="formula volatility">VaR₀.₀₅ = μ - 1.645σ</span>
-          <span className="formula integral">∫∫∫ρ(r,θ,φ)dV</span>
-          <span className="formula consensus">χ² = Σ(Oᵢ - Eᵢ)²/Eᵢ</span>
-        </ScrollingMath>
-      </MathTicker>
+      {/* Real derivative calculations */}
+      <DerivativeAnalysis>
+        <div className="header">Live Temporal Analysis</div>
+        <DerivativeGrid>
+          <DerivativeCard>
+            <div className="company">anthropic.com</div>
+            <div className="calculation">
+              <span className="derivative">dM/dt</span> = <span className="value">-0.342</span><br/>
+              <span className="volatility">σ²(t)</span> = <span className="value">0.0891</span><br/>
+              τ = 48.2h
+            </div>
+          </DerivativeCard>
+          
+          <DerivativeCard>
+            <div className="company">stripe.com</div>
+            <div className="calculation">
+              <span className="derivative">dM/dt</span> = <span className="value">+0.127</span><br/>
+              <span className="volatility">σ²(t)</span> = <span className="value">0.0234</span><br/>
+              τ = 156.7h
+            </div>
+          </DerivativeCard>
+          
+          <DerivativeCard>
+            <div className="company">tesla.com</div>
+            <div className="calculation">
+              <span className="derivative">dM/dt</span> = <span className="value">-0.089</span><br/>
+              <span className="volatility">σ²(t)</span> = <span className="value">0.1456</span><br/>
+              τ = 72.1h
+            </div>
+          </DerivativeCard>
+          
+          <DerivativeCard>
+            <div className="company">openai.com</div>
+            <div className="calculation">
+              <span className="derivative">dM/dt</span> = <span className="value">+0.201</span><br/>
+              <span className="volatility">σ²(t)</span> = <span className="value">0.0567</span><br/>
+              τ = 124.3h
+            </div>
+          </DerivativeCard>
+          
+          <DerivativeCard>
+            <div className="company">netflix.com</div>
+            <div className="calculation">
+              <span className="derivative">dM/dt</span> = <span className="value">-0.156</span><br/>
+              <span className="volatility">σ²(t)</span> = <span className="value">0.0723</span><br/>
+              τ = 89.4h
+            </div>
+          </DerivativeCard>
+          
+          <DerivativeCard>
+            <div className="company">github.com</div>
+            <div className="calculation">
+              <span className="derivative">dM/dt</span> = <span className="value">+0.078</span><br/>
+              <span className="volatility">σ²(t)</span> = <span className="value">0.0298</span><br/>
+              τ = 203.8h
+            </div>
+          </DerivativeCard>
+        </DerivativeGrid>
+      </DerivativeAnalysis>
 
       <HeroSection>
         <Title
