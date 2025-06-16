@@ -183,10 +183,14 @@ class SEODatabase {
   }
 }
 
-class SEORunner {
-  public collector = new SEOCollector();
+export class SEORunner {
+  public collector: SEOCollector;
   private database = new SEODatabase();
   private processing = false;
+  
+  constructor() {
+    this.collector = new SEOCollector();
+  }
   
   async initialize(): Promise<void> {
     try {
