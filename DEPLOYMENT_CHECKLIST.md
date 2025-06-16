@@ -179,4 +179,85 @@ Frontend (Vercel) ─── https://www.llmpagerank.com
 
 ---
 
-**🎉 DEPLOYMENT STATUS: FULLY OPERATIONAL AI BRAND INTELLIGENCE SAAS** 
+**🎉 DEPLOYMENT STATUS: FULLY OPERATIONAL AI BRAND INTELLIGENCE SAAS**
+
+# 🚨 EMERGENCY DEPLOYMENT CHECKLIST - 100% SCORES FIX
+
+## 📋 **ISSUE**: All domains showing 100% AI recall scores
+
+## 🔍 **ROOT CAUSE ANALYSIS**
+- [x] **Identified**: Multiple scoring systems overwriting each other
+- [x] **Python scripts**: Disabled (renamed to .DISABLED)
+- [x] **TypeScript source**: ✅ Has correct competitive scoring (caps at 86%)
+- [x] **Compiled JavaScript**: ✅ Has correct algorithm
+- [x] **Render deployment**: ❌ FAILING - missing start:graceful script
+
+## 🎯 **DEPLOYMENT CHECKLIST**
+
+### Phase 1: Fix Deployment Infrastructure
+- [x] ✅ Add missing `start:graceful` script to package.json
+- [x] ✅ Add `postinstall` build step to ensure TypeScript compilation
+- [x] ✅ Verify Render deployment succeeds
+- [x] ✅ Confirm service health endpoint responds
+- [ ] 🔄 Check service logs for errors
+
+### Phase 2: Verify Scoring Algorithm
+- [x] ✅ Confirm cache population scheduler is using competitive scoring (in source code)
+- [ ] ❌ Manual cache regeneration endpoint not available in deployed version
+- [ ] 🔄 Test Microsoft domain shows realistic score (72-84%)
+- [ ] 🔄 Spot check 5 other domains for realistic ranges
+
+### Phase 3: Production Validation
+- [ ] 🔄 Force cache regeneration via endpoint
+- [ ] 🔄 Monitor live site for score changes
+- [ ] 🔄 Confirm all domains show competitive ranges
+- [ ] 🔄 Document final scores for major domains
+
+## 🚨 **CURRENT STATUS**: Phase 2 - Verification Issues Found
+
+### ❌ **ISSUE DISCOVERED**: 
+- Cache regeneration endpoint `/trigger-cache-regen` not available in deployed version
+- Service is running old compiled JavaScript without the endpoint
+- Need to wait for automatic cache regeneration (every 6 hours) OR find alternative
+
+### **IMMEDIATE OPTIONS**:
+1. **Wait for automatic regeneration** (next cycle in ~6 hours)
+2. **Check if cache is already using corrected algorithm** 
+3. **Monitor live site for score changes**
+
+### Phase 2: Verify Scoring Algorithm
+- [x] ✅ Confirm cache population scheduler is using competitive scoring (in source code)
+- [ ] ❌ Manual cache regeneration endpoint not available in deployed version
+- [ ] 🔄 Test Microsoft domain shows realistic score (72-84%)
+- [ ] 🔄 Spot check 5 other domains for realistic ranges
+
+## 📊 **NEXT STEPS**:
+1. Check current Microsoft score on live site
+2. Monitor for automatic score changes
+3. Document current state for comparison
+
+## 🚨 **CURRENT STATUS**: Phase 1 - Fixing deployment
+
+### Next Steps:
+1. Monitor Render deployment logs
+2. Test service health endpoint
+3. Trigger cache regeneration
+4. Validate scoring results
+
+## 📊 **SUCCESS CRITERIA**
+- ✅ Render deployment succeeds
+- ✅ Service starts without errors
+- ✅ Microsoft shows 72-84% (not 100%)
+- ✅ All domains show realistic competitive ranges
+- ✅ No automatic 100% scores generated
+
+## 🔧 **ROLLBACK PLAN**
+If deployment fails:
+1. Revert to last working commit
+2. Identify specific deployment issue
+3. Fix incrementally with testing
+4. Redeploy with verification
+
+---
+**Last Updated**: 2025-06-16 17:40 UTC
+**Status**: 🔄 IN PROGRESS - Fixing deployment infrastructure 
