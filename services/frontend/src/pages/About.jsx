@@ -14,31 +14,13 @@ const Container = styled.div`
   }
 `
 
-const PageTitle = styled.h1`
-  font-size: 48px;
-  font-weight: 700;
-  color: #000000;
-  text-align: center;
-  margin-bottom: 60px;
-  letter-spacing: -1px;
-`
-
 const ManifestoTitle = styled.h2`
   font-size: 36px;
   font-weight: 800;
   color: #000000;
   text-align: center;
-  margin-bottom: 16px;
-  line-height: 1.2;
-`
-
-const ManifestoSubtitle = styled.h3`
-  font-size: 18px;
-  font-weight: 500;
-  color: #333333;
-  text-align: center;
   margin-bottom: 48px;
-  font-style: italic;
+  line-height: 1.2;
 `
 
 const ManifestoText = styled.div`
@@ -73,13 +55,6 @@ const Signature = styled.div`
   text-align: center;
   margin-top: 48px;
   
-  .version {
-    font-size: 14px;
-    color: #666666;
-    font-style: italic;
-    margin-bottom: 16px;
-  }
-  
   .author {
     font-size: 18px;
     font-weight: 600;
@@ -104,23 +79,13 @@ const Contact = styled.div`
   p {
     font-size: 16px;
     color: #333333;
-    margin-bottom: 16px;
-  }
-  
-  .email {
-    font-size: 18px;
-    color: #007AFF;
-    font-weight: 500;
   }
 `
 
 function About() {
   return (
     <Container>
-      <PageTitle>About Us</PageTitle>
-      
       <ManifestoTitle>There Is No Truth, Only Memory</ManifestoTitle>
-      <ManifestoSubtitle>A Manifesto on Machine Recall, Decay, and Influence</ManifestoSubtitle>
       
       <ManifestoText>
         <p>
@@ -191,17 +156,12 @@ function About() {
       </ManifestoText>
       
       <Signature>
-        <div className="version">(Sentinel Manifesto, v1)</div>
-        <div className="author">-Sam Kim</div>
+        <div className="author">-Sam</div>
       </Signature>
       
       <Contact>
-        <h3>Contact</h3>
-        <p>
-          Exploring the intersection of artificial intelligence, digital permanence, 
-          and the future of memory itself.
-        </p>
-        <div className="email">samkim@samkim.com</div>
+        <h3>Contact Us</h3>
+        <p>Coming soon. Contact email.</p>
       </Contact>
     </Container>
   )
