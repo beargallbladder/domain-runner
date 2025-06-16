@@ -6,17 +6,17 @@ const fadeIn = keyframes`
   to { opacity: 1; }
 `
 
-// Much slower, gentler memory fade animation
-const memoryGlow = keyframes`
+// ULTRA slow, gentle memory breath - no more vomit
+const memoryBreath = keyframes`
   0%, 100% { 
-    opacity: 0.7; 
+    opacity: 0.8; 
     transform: scale(1); 
     filter: brightness(1);
   }
   50% { 
     opacity: 1; 
-    transform: scale(1.01); 
-    filter: brightness(1.05);
+    transform: scale(1.005); 
+    filter: brightness(1.02);
   }
 `
 
@@ -99,9 +99,9 @@ const ModelBubble = styled.div`
   border: 2px solid ${props => props.active ? props.color : '#333'};
   border-radius: 20px;
   padding: 20px;
-  transition: all 0.8s ease;
+  transition: all 1.2s ease;
   opacity: ${props => props.active ? 1 : 0.3};
-  animation: ${props => props.active ? memoryGlow : 'none'} 4s ease-in-out infinite;
+  animation: ${props => props.active ? memoryBreath : 'none'} 6s ease-in-out infinite;
   
   @media (max-width: 768px) {
     padding: 16px;
@@ -184,22 +184,22 @@ export default function DigitalMemoryHero() {
     const sequence = async () => {
       // Step 1: Show brand name (immediate)
       
-      // Step 2: Show question after 2s
-      setTimeout(() => setCurrentStep(1), 2000)
+      // Step 2: Show question after 3s (slower)
+      setTimeout(() => setCurrentStep(1), 3000)
       
-      // Step 3: Light up models one by one starting at 4s - SLOWER timing
+      // Step 3: Light up models MUCH slower - no nausea
       setTimeout(() => {
         models.forEach((model, index) => {
           setTimeout(() => {
             setActiveModels(prev => [...prev, index])
-          }, index * 1200) // Increased from 800ms to 1200ms for gentler pace
+          }, index * 1800) // Much slower: 1.8s between each model
         })
-      }, 4000)
+      }, 5000)
       
       // Step 4: Show final message after all models are lit
       setTimeout(() => {
         setShowFinal(true)
-      }, 4000 + (models.length * 1200) + 2000)
+      }, 5000 + (models.length * 1800) + 3000)
     }
 
     sequence()
