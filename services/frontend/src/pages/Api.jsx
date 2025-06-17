@@ -466,66 +466,6 @@ const Api = () => {
         </ProcessingStats>
       </LiveTickerSection>
 
-      {/* Real derivative calculations */}
-      <DerivativeAnalysis>
-        <div className="header">Live Temporal Analysis</div>
-        <DerivativeGrid>
-          <DerivativeCard>
-            <div className="company">anthropic.com</div>
-            <div className="calculation">
-              <span className="derivative">dM/dt</span> = <span className="value">-0.342</span><br/>
-              <span className="volatility">σ²(t)</span> = <span className="value">0.0891</span><br/>
-              τ = 48.2h
-            </div>
-          </DerivativeCard>
-          
-          <DerivativeCard>
-            <div className="company">stripe.com</div>
-            <div className="calculation">
-              <span className="derivative">dM/dt</span> = <span className="value">+0.127</span><br/>
-              <span className="volatility">σ²(t)</span> = <span className="value">0.0234</span><br/>
-              τ = 156.7h
-            </div>
-          </DerivativeCard>
-          
-          <DerivativeCard>
-            <div className="company">tesla.com</div>
-            <div className="calculation">
-              <span className="derivative">dM/dt</span> = <span className="value">-0.089</span><br/>
-              <span className="volatility">σ²(t)</span> = <span className="value">0.1456</span><br/>
-              τ = 72.1h
-            </div>
-          </DerivativeCard>
-          
-          <DerivativeCard>
-            <div className="company">openai.com</div>
-            <div className="calculation">
-              <span className="derivative">dM/dt</span> = <span className="value">+0.201</span><br/>
-              <span className="volatility">σ²(t)</span> = <span className="value">0.0567</span><br/>
-              τ = 124.3h
-            </div>
-          </DerivativeCard>
-          
-          <DerivativeCard>
-            <div className="company">netflix.com</div>
-            <div className="calculation">
-              <span className="derivative">dM/dt</span> = <span className="value">-0.156</span><br/>
-              <span className="volatility">σ²(t)</span> = <span className="value">0.0789</span><br/>
-              τ = 89.4h
-            </div>
-          </DerivativeCard>
-          
-          <DerivativeCard>
-            <div className="company">shopify.com</div>
-            <div className="calculation">
-              <span className="derivative">dM/dt</span> = <span className="value">+0.089</span><br/>
-              <span className="volatility">σ²(t)</span> = <span className="value">0.0345</span><br/>
-              τ = 198.7h
-            </div>
-          </DerivativeCard>
-        </DerivativeGrid>
-      </DerivativeAnalysis>
-
       <StatsGrid>
         <StatCard>
           <div className="number">70K+</div>
