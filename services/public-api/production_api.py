@@ -86,6 +86,92 @@ async def startup():
 # Add authentication endpoints using pool dependency
 add_auth_endpoints(app, get_pool)
 
+# DIRECT AUTH ENDPOINTS - BYPASS IMPORT ISSUES
+@app.get("/api/auth/test")
+async def auth_test():
+    """Test endpoint to verify auth system is working"""
+    return {"status": "working", "message": "Auth system loaded directly"}
+
+@app.post("/api/auth/register")
+async def register_user(user_data: dict):
+    """Direct registration endpoint"""
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            # Simple user creation
+            from passlib.context import CryptContext
+            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+            
+            email = user_data.get('email')
+            password = user_data.get('password') 
+            full_name = user_data.get('full_name', '')
+            
+            # Check if user exists
+            existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", email)
+            if existing:
+                return {"error": "Email already registered"}
+            
+            # Hash password and create user
+            password_hash = pwd_context.hash(password)
+            user = await conn.fetchrow("""
+                INSERT INTO users (email, password_hash, full_name, subscription_tier, domains_limit, api_calls_limit)
+                VALUES ($1, $2, $3, 'free', 1, 10)
+                RETURNING id, email, full_name, subscription_tier
+            """, email, password_hash, full_name)
+            
+            return {
+                "success": True, 
+                "user": {
+                    "id": str(user['id']),
+                    "email": user['email'],
+                    "full_name": user['full_name'],
+                    "subscription_tier": user['subscription_tier']
+                }
+            }
+    except Exception as e:
+        return {"error": f"Registration failed: {str(e)}"}
+
+@app.post("/api/auth/login")
+async def login_user(login_data: dict):
+    """Direct login endpoint"""
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            from passlib.context import CryptContext
+            from jose import jwt
+            from datetime import datetime, timedelta
+            
+            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+            
+            email = login_data.get('email')
+            password = login_data.get('password')
+            
+            # Get user
+            user = await conn.fetchrow("""
+                SELECT id, email, password_hash, subscription_tier
+                FROM users WHERE email = $1
+            """, email)
+            
+            if not user or not pwd_context.verify(password, user['password_hash']):
+                return {"error": "Invalid email or password"}
+            
+            # Create token
+            JWT_SECRET = os.getenv("JWT_SECRET", "fallback-secret")
+            token_data = {"sub": str(user['id']), "exp": datetime.utcnow() + timedelta(hours=24)}
+            access_token = jwt.encode(token_data, JWT_SECRET, algorithm="HS256")
+            
+            return {
+                "access_token": access_token,
+                "token_type": "bearer", 
+                "user": {
+                    "id": str(user['id']),
+                    "email": user['email'],
+                    "subscription_tier": user['subscription_tier']
+                }
+            }
+    except Exception as e:
+        return {"error": f"Login failed: {str(e)}"}
+
 @app.on_event("shutdown")
 async def shutdown():
     """Clean shutdown"""
