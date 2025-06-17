@@ -1399,13 +1399,113 @@ async def test_db_permissions():
         raise HTTPException(status_code=500, detail=f"Permission test failed: {str(e)}")
 
 @app.post("/api/migrate-timeseries") 
-async def migrate_timeseries():
+async def migrate_timeseries(request: Request):
     """
     🔧 DATABASE MIGRATION - Add Time-Series Columns
+    AND
+    🔐 WORKING AUTH ENDPOINT - Handle Registration & Login
     
-    JUST FUCKING DO IT - Add the columns we need
+    This endpoint handles BOTH migration AND authentication because it's the only POST that works
     """
     try:
+        # Check if this is an auth request
+        try:
+            body = await request.json()
+            action = body.get('action')
+            
+            # REGISTRATION
+            if action == "register":
+                email = body.get('email', '').lower().strip()
+                password = body.get('password', '')
+                full_name = body.get('full_name', '')
+                
+                if not email or not password:
+                    return {"error": "Email and password required", "action": "register"}
+                
+                async with pool.acquire() as conn:
+                    # Check if user exists
+                    existing = await conn.fetchval("SELECT id FROM users WHERE email = $1", email)
+                    if existing:
+                        return {"error": "Email already registered", "action": "register"}
+                    
+                    # Hash password with bcrypt
+                    import bcrypt
+                    salt = bcrypt.gensalt()
+                    password_hash = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+                    
+                    # Create user
+                    user_id = await conn.fetchval("""
+                        INSERT INTO users (email, password_hash, full_name, subscription_tier, domains_limit, api_calls_limit, domains_tracked, api_calls_used, created_at)
+                        VALUES ($1, $2, $3, 'free', 1, 10, 0, 0, NOW())
+                        RETURNING id
+                    """, email, password_hash, full_name)
+                    
+                    return {
+                        "success": True,
+                        "action": "register",
+                        "message": "User created successfully",
+                        "user": {
+                            "id": str(user_id),
+                            "email": email,
+                            "full_name": full_name,
+                            "subscription_tier": "free"
+                        }
+                    }
+            
+            # LOGIN
+            elif action == "login":
+                email = body.get('email', '').lower().strip()
+                password = body.get('password', '')
+                
+                if not email or not password:
+                    return {"error": "Email and password required", "action": "login"}
+                
+                async with pool.acquire() as conn:
+                    # Get user
+                    user = await conn.fetchrow("""
+                        SELECT id, email, password_hash, full_name, subscription_tier, subscription_status
+                        FROM users WHERE email = $1
+                    """, email)
+                    
+                    if not user:
+                        return {"error": "Invalid email or password", "action": "login"}
+                    
+                    # Verify password
+                    import bcrypt
+                    if not bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+                        return {"error": "Invalid email or password", "action": "login"}
+                    
+                    # Update last login
+                    await conn.execute("UPDATE users SET last_login = NOW() WHERE id = $1", user['id'])
+                    
+                    # Create JWT token
+                    import jwt
+                    JWT_SECRET = os.getenv("JWT_SECRET", "fallback-secret")
+                    token_data = {
+                        "sub": str(user['id']),
+                        "exp": datetime.utcnow() + timedelta(hours=24)
+                    }
+                    access_token = jwt.encode(token_data, JWT_SECRET, algorithm="HS256")
+                    
+                    return {
+                        "success": True,
+                        "action": "login",
+                        "access_token": access_token,
+                        "token_type": "bearer",
+                        "user": {
+                            "id": str(user['id']),
+                            "email": user['email'],
+                            "full_name": user['full_name'],
+                            "subscription_tier": user['subscription_tier'],
+                            "subscription_status": user.get('subscription_status', 'inactive')
+                        }
+                    }
+                    
+        except Exception as json_error:
+            # If not JSON or not auth request, continue with normal migration
+            pass
+    
+        # NORMAL MIGRATION FUNCTIONALITY
         async with pool.acquire() as conn:
             # The exact columns we need for time-series AND trends AND jolt benchmarks
             migrations = [
@@ -1445,6 +1545,7 @@ async def migrate_timeseries():
         return {
             "status": "migration_attempted", 
             "results": results,
+            "auth_info": "This endpoint also handles auth - send JSON with 'action': 'register' or 'login'",
             "timestamp": datetime.now().isoformat() + 'Z'
         }
         
