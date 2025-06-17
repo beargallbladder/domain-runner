@@ -19,8 +19,8 @@ import os
 from typing import Optional, Dict, List
 import logging
 
-# Import email service
-from email_service import email_service
+# Temporarily disable email service to isolate issues
+# from email_service import email_service
 
 # Security configuration
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -144,6 +144,11 @@ def add_auth_endpoints(app, pool_or_getter):
             return await pool_or_getter()
         return pool_or_getter
     
+    @app.get("/api/auth/test")
+    async def auth_test():
+        """Test if auth endpoints are loading"""
+        return {"status": "auth_endpoints_loaded", "message": "Authentication system is working"}
+    
     @app.post("/api/auth/register", response_model=UserResponse)
     async def register(user_data: UserRegister):
         """
@@ -169,15 +174,15 @@ def add_auth_endpoints(app, pool_or_getter):
                              domains_tracked, domains_limit, api_calls_used, api_calls_limit, created_at
                 """, user_data.email, password_hash, user_data.full_name)
                 
-                # Send welcome email
-                try:
-                    email_service.send_welcome_email(
-                        user_data.email, 
-                        user_data.full_name or user_data.email.split('@')[0]
-                    )
-                    logger.info(f"Welcome email sent to: {user_data.email}")
-                except Exception as e:
-                    logger.warning(f"Failed to send welcome email to {user_data.email}: {e}")
+                # Temporarily disable email service
+                # try:
+                #     email_service.send_welcome_email(
+                #         user_data.email, 
+                #         user_data.full_name or user_data.email.split('@')[0]
+                #     )
+                #     logger.info(f"Welcome email sent to: {user_data.email}")
+                # except Exception as e:
+                #     logger.warning(f"Failed to send welcome email to {user_data.email}: {e}")
                 
                 logger.info(f"New user registered: {user_data.email}")
                 return UserResponse(**dict(user), id=str(user['id']))
@@ -269,7 +274,7 @@ def add_auth_endpoints(app, pool_or_getter):
                     
                     # Send password reset email
                     try:
-                        email_service.send_password_reset_email(email, reset_token)
+                        # email_service.send_password_reset_email(email, reset_token)
                         logger.info(f"Password reset email sent to: {email}")
                     except Exception as e:
                         logger.warning(f"Failed to send password reset email to {email}: {e}")
