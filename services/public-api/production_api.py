@@ -1780,6 +1780,25 @@ async def simple_login(email: str, password: str):
     except Exception as e:
         return {"error": f"Login failed: {str(e)}"}
 
+@app.post("/api/debug-json")
+async def debug_json(request: Request):
+    """Debug endpoint to test JSON parsing"""
+    try:
+        body = await request.json()
+        return {
+            "success": True,
+            "received_body": body,
+            "action": body.get('action'),
+            "email": body.get('email'),
+            "body_type": str(type(body))
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": str(type(e))
+        }
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get('PORT', 8000))
