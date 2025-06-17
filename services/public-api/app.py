@@ -49,6 +49,9 @@ async def startup():
     # 🔐 INITIALIZE AUTHENTICATION SYSTEM
     add_auth_endpoints(app, pool)
     
+    # 🗄️ RUN DATABASE MIGRATIONS
+    await run_migrations()
+    
     logger.info("🚀 Production API initialized with authentication")
 
 @app.on_event("shutdown") 
@@ -981,6 +984,36 @@ async def get_api_key(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"API key generation failed: {e}")
         raise HTTPException(status_code=500, detail="API key generation failed")
+
+async def run_migrations():
+    """Run database migrations if needed"""
+    try:
+        async with pool.acquire() as conn:
+            # Check if users table exists
+            users_exists = await conn.fetchval("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name = 'users'
+                )
+            """)
+            
+            if not users_exists:
+                logger.info("📊 Running database migrations...")
+                
+                # Read and execute migration SQL
+                import os
+                migration_path = os.path.join(os.path.dirname(__file__), 'database_migration.sql')
+                with open(migration_path, 'r') as f:
+                    migration_sql = f.read()
+                
+                await conn.execute(migration_sql)
+                logger.info("✅ Database migrations completed successfully")
+            else:
+                logger.info("📊 Database schema up to date")
+                
+    except Exception as e:
+        logger.error(f"❌ Migration failed: {e}")
+        # Continue anyway - don't crash the API
 
 if __name__ == "__main__":
     import uvicorn
