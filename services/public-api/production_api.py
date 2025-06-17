@@ -20,6 +20,7 @@ from typing import Dict, List, Optional
 import logging
 from dataclasses import dataclass
 import time
+import bcrypt
 
 # Import auth extensions
 from auth_extensions import add_auth_endpoints
@@ -1324,6 +1325,65 @@ async def get_jolt_benchmark_analysis(domain_identifier: str):
     except Exception as e:
         logger.error(f"JOLT benchmark analysis failed for {domain_identifier}: {e}")
         raise HTTPException(status_code=500, detail=f"JOLT benchmark analysis failed: {e}")
+
+@app.get("/api/simple-register")
+async def simple_register(email: str, password: str, full_name: str = ""):
+    """Ultra simple registration endpoint"""
+    try:
+        async with pool.acquire() as conn:
+            # Check if user exists
+            existing = await conn.fetchval("SELECT id FROM users WHERE email = $1", email)
+            if existing:
+                return {"error": "Email already registered"}
+            
+            # Hash password
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            
+            # Create user
+            user_id = await conn.fetchval("""
+                INSERT INTO users (email, password_hash, full_name, subscription_tier, domains_limit, api_calls_limit)
+                VALUES ($1, $2, $3, 'free', 1, 10)
+                RETURNING id
+            """, email, password_hash, full_name)
+            
+            return {
+                "success": True,
+                "message": "User created successfully", 
+                "user_id": str(user_id),
+                "email": email
+            }
+    except Exception as e:
+        return {"error": f"Registration failed: {str(e)}"}
+
+@app.get("/api/simple-login")
+async def simple_login(email: str, password: str):
+    """Ultra simple login endpoint"""
+    try:
+        async with pool.acquire() as conn:
+            # Get user
+            user = await conn.fetchrow("""
+                SELECT id, email, password_hash, subscription_tier
+                FROM users WHERE email = $1
+            """, email)
+            
+            if not user:
+                return {"error": "User not found"}
+            
+            # Check password
+            if not bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+                return {"error": "Invalid password"}
+            
+            return {
+                "success": True,
+                "message": "Login successful",
+                "user": {
+                    "id": str(user['id']),
+                    "email": user['email'],
+                    "subscription_tier": user['subscription_tier']
+                }
+            }
+    except Exception as e:
+        return {"error": f"Login failed: {str(e)}"}
 
 if __name__ == "__main__":
     import uvicorn
