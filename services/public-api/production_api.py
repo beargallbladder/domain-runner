@@ -21,6 +21,9 @@ import logging
 from dataclasses import dataclass
 import time
 
+# Import auth extensions
+from auth_extensions import add_auth_endpoints
+
 # Production Configuration
 @dataclass
 class APIConfig:
@@ -70,7 +73,11 @@ async def startup():
         max_size=config.max_connections,
         command_timeout=10
     )
-    logger.info("🚀 Production API initialized with connection pooling")
+    
+    # Add authentication endpoints
+    add_auth_endpoints(app, pool)
+    
+    logger.info("🚀 Production API initialized with connection pooling and authentication")
 
 @app.on_event("shutdown")
 async def shutdown():
