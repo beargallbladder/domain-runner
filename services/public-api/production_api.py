@@ -179,6 +179,12 @@ async def shutdown():
     if pool:
         await pool.close()
 
+# SIMPLE TEST ENDPOINT
+@app.get("/test-working")
+async def test_working():
+    """Simple test to see if new endpoints work"""
+    return {"status": "new_endpoint_working", "timestamp": "now"}
+
 @app.get("/", response_class=HTMLResponse)
 def emergency_frontend():
     """

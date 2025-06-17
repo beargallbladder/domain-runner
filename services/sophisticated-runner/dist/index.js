@@ -131,4 +131,5 @@ app.listen(port, () => {
     console.log(`🔧 Manual cache regen: /trigger-cache-regen`);
     console.log(`🏥 Health check: /health`);
 }); // Force rebuild Mon Jun 16 10:22:22 PDT 2025
+// Force redeploy Mon Jun 16 10:41:55 PDT 2025
 //# sourceMappingURL=index.js.map
