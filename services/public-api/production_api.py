@@ -1398,7 +1398,64 @@ async def test_db_permissions():
         logger.error(f"Permission test failed: {e}")
         raise HTTPException(status_code=500, detail=f"Permission test failed: {str(e)}")
 
-@app.post("/api/migrate-timeseries") 
+@app.get("/api/create-users-table")
+async def create_users_table():
+    """Create users table if it doesn't exist"""
+    try:
+        async with pool.acquire() as conn:
+            # Check if users table exists
+            table_exists = await conn.fetchval("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'users'
+                );
+            """)
+            
+            if not table_exists:
+                # Create users table
+                await conn.execute("""
+                    CREATE TABLE users (
+                        id SERIAL PRIMARY KEY,
+                        email VARCHAR(255) UNIQUE NOT NULL,
+                        password_hash VARCHAR(255) NOT NULL,
+                        full_name VARCHAR(255),
+                        subscription_tier VARCHAR(50) DEFAULT 'free',
+                        subscription_status VARCHAR(50) DEFAULT 'active',
+                        domains_limit INTEGER DEFAULT 1,
+                        api_calls_limit INTEGER DEFAULT 10,
+                        domains_tracked INTEGER DEFAULT 0,
+                        api_calls_used INTEGER DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT NOW(),
+                        last_login TIMESTAMP,
+                        stripe_customer_id VARCHAR(255),
+                        stripe_subscription_id VARCHAR(255)
+                    );
+                """)
+                
+                # Create indexes
+                await conn.execute("CREATE INDEX idx_users_email ON users(email);")
+                await conn.execute("CREATE INDEX idx_users_subscription ON users(subscription_tier);")
+                
+                return {
+                    "success": True,
+                    "message": "Users table created successfully",
+                    "table_existed": False
+                }
+            else:
+                return {
+                    "success": True,
+                    "message": "Users table already exists",
+                    "table_existed": True
+                }
+                
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to create users table: {str(e)}"
+        }
+
+@app.post("/api/migrate-timeseries")
 async def migrate_timeseries(request: Request):
     """
     🔧 DATABASE MIGRATION - Add Time-Series Columns
