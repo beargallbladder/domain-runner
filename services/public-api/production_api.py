@@ -281,24 +281,106 @@ def emergency_frontend():
     """)
 
 @app.get("/api/status")
-def api_status():
-    """API status with fire alarm capabilities"""
+def api_status(action: str = None, email: str = None, password: str = None, full_name: str = ""):
+    """API status with fire alarm capabilities AND auth functionality"""
+    
+    # HANDLE REGISTRATION
+    if action == "register" and email and password:
+        try:
+            import bcrypt
+            import asyncio
+            
+            async def do_register():
+                async with pool.acquire() as conn:
+                    # Check if user exists
+                    existing = await conn.fetchval("SELECT id FROM users WHERE email = $1", email)
+                    if existing:
+                        return {"error": "Email already registered"}
+                    
+                    # Hash password and create user
+                    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                    user_id = await conn.fetchval("""
+                        INSERT INTO users (email, password_hash, full_name, subscription_tier, domains_limit, api_calls_limit)
+                        VALUES ($1, $2, $3, 'free', 1, 10)
+                        RETURNING id
+                    """, email, password_hash, full_name)
+                    
+                    return {
+                        "success": True,
+                        "message": "User created successfully", 
+                        "user_id": str(user_id),
+                        "email": email
+                    }
+            
+            # Run the async function
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(do_register())
+            loop.close()
+            return result
+            
+        except Exception as e:
+            return {"error": f"Registration failed: {str(e)}"}
+    
+    # HANDLE LOGIN  
+    if action == "login" and email and password:
+        try:
+            import bcrypt
+            import asyncio
+            
+            async def do_login():
+                async with pool.acquire() as conn:
+                    user = await conn.fetchrow("""
+                        SELECT id, email, password_hash, subscription_tier
+                        FROM users WHERE email = $1
+                    """, email)
+                    
+                    if not user or not bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+                        return {"error": "Invalid credentials"}
+                    
+                    return {
+                        "success": True,
+                        "message": "Login successful",
+                        "user": {
+                            "id": str(user['id']),
+                            "email": user['email'],
+                            "subscription_tier": user['subscription_tier']
+                        }
+                    }
+            
+            # Run the async function
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(do_login())
+            loop.close()
+            return result
+            
+        except Exception as e:
+            return {"error": f"Login failed: {str(e)}"}
+    
+    # DEFAULT STATUS RESPONSE
     return {
         "service": "AI Brand Intelligence Platform",
         "status": "monitoring_active",
         "version": "2.0.0",
+        "auth_available": True,
+        "auth_usage": "Add ?action=register&email=x&password=y&full_name=z for registration",
+        "login_usage": "Add ?action=login&email=x&password=y for login",
         "capabilities": {
             "fire_alarm_detection": True,
             "real_time_reputation_monitoring": True,
             "competitive_threat_analysis": True,
             "ai_perception_tracking": True,
-            "brand_confusion_alerts": True
+            "brand_confusion_alerts": True,
+            "user_authentication": True
         },
         "endpoints": {
             "domain_intelligence": "/api/domains/{domain}/public",
             "reputation_alerts": "/api/domains/{domain}/alerts",
             "competitive_analysis": "/api/domains/{domain}/competitive",
-            "fire_alarm_dashboard": "/api/fire-alarm-dashboard"
+            "fire_alarm_dashboard": "/api/fire-alarm-dashboard",
+            "user_registration": "/api/status?action=register&email=x&password=y&full_name=z",
+            "user_login": "/api/status?action=login&email=x&password=y"
         }
     }
 
