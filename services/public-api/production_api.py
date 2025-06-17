@@ -9,7 +9,7 @@ Creates stunning, urgent insights that make brands realize they NEED monitoring
 - Stunning data presentation that creates urgency
 """
 
-from fastapi import FastAPI, HTTPException, Response, Query, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Response, Query, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 import asyncpg
@@ -21,9 +21,6 @@ import logging
 from dataclasses import dataclass
 import time
 import bcrypt
-
-# Import auth extensions
-from auth_extensions import add_auth_endpoints
 
 # Production Configuration
 @dataclass
@@ -84,93 +81,113 @@ async def startup():
     
     logger.info("🚀 Production API initialized with connection pooling and authentication")
 
-# Add authentication endpoints using pool dependency
-add_auth_endpoints(app, get_pool)
-
-# DIRECT AUTH ENDPOINTS - BYPASS IMPORT ISSUES
-@app.get("/api/auth/test")
-async def auth_test():
-    """Test endpoint to verify auth system is working"""
-    return {"status": "working", "message": "Auth system loaded directly"}
+# Clean up all previous auth attempts and add working auth
+@app.get("/api/auth-working")
+async def auth_working():
+    """Test endpoint to verify auth system loads"""
+    return {"status": "auth_system_loaded", "timestamp": datetime.now().isoformat()}
 
 @app.post("/api/auth/register")
-async def register_user(user_data: dict):
-    """Direct registration endpoint"""
+async def register_user_clean(request):
+    """Clean registration endpoint"""
     try:
+        # Get request data
+        body = await request.json()
+        email = body.get('email', '').lower().strip()
+        password = body.get('password', '')
+        full_name = body.get('full_name', '')
+        
+        if not email or not password:
+            return {"error": "Email and password required"}
+        
         pool = await get_pool()
         async with pool.acquire() as conn:
-            # Simple user creation
-            from passlib.context import CryptContext
-            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-            
-            email = user_data.get('email')
-            password = user_data.get('password') 
-            full_name = user_data.get('full_name', '')
-            
             # Check if user exists
-            existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", email)
+            existing = await conn.fetchval("SELECT id FROM users WHERE email = $1", email)
             if existing:
                 return {"error": "Email already registered"}
             
-            # Hash password and create user
-            password_hash = pwd_context.hash(password)
-            user = await conn.fetchrow("""
-                INSERT INTO users (email, password_hash, full_name, subscription_tier, domains_limit, api_calls_limit)
-                VALUES ($1, $2, $3, 'free', 1, 10)
-                RETURNING id, email, full_name, subscription_tier
+            # Hash password with bcrypt
+            import bcrypt
+            salt = bcrypt.gensalt()
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+            
+            # Create user
+            user_id = await conn.fetchval("""
+                INSERT INTO users (email, password_hash, full_name, subscription_tier, domains_limit, api_calls_limit, domains_tracked, api_calls_used, created_at)
+                VALUES ($1, $2, $3, 'free', 1, 10, 0, 0, NOW())
+                RETURNING id
             """, email, password_hash, full_name)
             
             return {
-                "success": True, 
+                "success": True,
+                "message": "User created successfully",
                 "user": {
-                    "id": str(user['id']),
-                    "email": user['email'],
-                    "full_name": user['full_name'],
-                    "subscription_tier": user['subscription_tier']
+                    "id": str(user_id),
+                    "email": email,
+                    "full_name": full_name,
+                    "subscription_tier": "free"
                 }
             }
+            
     except Exception as e:
+        logger.error(f"Registration failed: {e}")
         return {"error": f"Registration failed: {str(e)}"}
 
-@app.post("/api/auth/login")
-async def login_user(login_data: dict):
-    """Direct login endpoint"""
+@app.post("/api/auth/login") 
+async def login_user_clean(request):
+    """Clean login endpoint"""
     try:
+        # Get request data
+        body = await request.json()
+        email = body.get('email', '').lower().strip()
+        password = body.get('password', '')
+        
+        if not email or not password:
+            return {"error": "Email and password required"}
+        
         pool = await get_pool()
         async with pool.acquire() as conn:
-            from passlib.context import CryptContext
-            from jose import jwt
-            from datetime import datetime, timedelta
-            
-            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-            
-            email = login_data.get('email')
-            password = login_data.get('password')
-            
             # Get user
             user = await conn.fetchrow("""
-                SELECT id, email, password_hash, subscription_tier
+                SELECT id, email, password_hash, full_name, subscription_tier, subscription_status
                 FROM users WHERE email = $1
             """, email)
             
-            if not user or not pwd_context.verify(password, user['password_hash']):
+            if not user:
                 return {"error": "Invalid email or password"}
             
-            # Create token
+            # Verify password
+            import bcrypt
+            if not bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+                return {"error": "Invalid email or password"}
+            
+            # Update last login
+            await conn.execute("UPDATE users SET last_login = NOW() WHERE id = $1", user['id'])
+            
+            # Create JWT token
+            import jwt
             JWT_SECRET = os.getenv("JWT_SECRET", "fallback-secret")
-            token_data = {"sub": str(user['id']), "exp": datetime.utcnow() + timedelta(hours=24)}
+            token_data = {
+                "sub": str(user['id']),
+                "exp": datetime.utcnow() + timedelta(hours=24)
+            }
             access_token = jwt.encode(token_data, JWT_SECRET, algorithm="HS256")
             
             return {
                 "access_token": access_token,
-                "token_type": "bearer", 
+                "token_type": "bearer",
                 "user": {
                     "id": str(user['id']),
                     "email": user['email'],
-                    "subscription_tier": user['subscription_tier']
+                    "full_name": user['full_name'],
+                    "subscription_tier": user['subscription_tier'],
+                    "subscription_status": user.get('subscription_status', 'inactive')
                 }
             }
+            
     except Exception as e:
+        logger.error(f"Login failed: {e}")
         return {"error": f"Login failed: {str(e)}"}
 
 @app.on_event("shutdown")
