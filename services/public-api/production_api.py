@@ -1480,6 +1480,24 @@ async def migrate_timeseries(request: Request):
                     return {"error": "Email and password required", "action": "register"}
                 
                 async with pool.acquire() as conn:
+                    # Auto-create users table if it doesn't exist
+                    await conn.execute("""
+                        CREATE TABLE IF NOT EXISTS users (
+                            id SERIAL PRIMARY KEY,
+                            email VARCHAR(255) UNIQUE NOT NULL,
+                            password_hash VARCHAR(255) NOT NULL,
+                            full_name VARCHAR(255),
+                            subscription_tier VARCHAR(50) DEFAULT 'free',
+                            subscription_status VARCHAR(50) DEFAULT 'active',
+                            domains_limit INTEGER DEFAULT 1,
+                            api_calls_limit INTEGER DEFAULT 10,
+                            domains_tracked INTEGER DEFAULT 0,
+                            api_calls_used INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT NOW(),
+                            last_login TIMESTAMP
+                        );
+                    """)
+                    
                     # Check if user exists
                     existing = await conn.fetchval("SELECT id FROM users WHERE email = $1", email)
                     if existing:
@@ -1518,6 +1536,24 @@ async def migrate_timeseries(request: Request):
                     return {"error": "Email and password required", "action": "login"}
                 
                 async with pool.acquire() as conn:
+                    # Auto-create users table if it doesn't exist
+                    await conn.execute("""
+                        CREATE TABLE IF NOT EXISTS users (
+                            id SERIAL PRIMARY KEY,
+                            email VARCHAR(255) UNIQUE NOT NULL,
+                            password_hash VARCHAR(255) NOT NULL,
+                            full_name VARCHAR(255),
+                            subscription_tier VARCHAR(50) DEFAULT 'free',
+                            subscription_status VARCHAR(50) DEFAULT 'active',
+                            domains_limit INTEGER DEFAULT 1,
+                            api_calls_limit INTEGER DEFAULT 10,
+                            domains_tracked INTEGER DEFAULT 0,
+                            api_calls_used INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT NOW(),
+                            last_login TIMESTAMP
+                        );
+                    """)
+                    
                     # Get user
                     user = await conn.fetchrow("""
                         SELECT id, email, password_hash, full_name, subscription_tier, subscription_status
