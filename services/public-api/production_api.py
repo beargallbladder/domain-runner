@@ -1470,6 +1470,10 @@ async def migrate_timeseries(request: Request):
             body = await request.json()
             action = body.get('action')
             
+            # Debug logging
+            logger.info(f"AUTH DEBUG: Received JSON body: {body}")
+            logger.info(f"AUTH DEBUG: Action detected: {action}")
+            
             # REGISTRATION
             if action == "register":
                 email = body.get('email', '').lower().strip()
@@ -1593,9 +1597,13 @@ async def migrate_timeseries(request: Request):
                             "subscription_status": user.get('subscription_status', 'inactive')
                         }
                     }
+            
+            # If we got here, it wasn't a valid auth request, continue to migration
+            logger.info(f"AUTH DEBUG: No valid auth action found, continuing to migration")
                     
         except Exception as json_error:
             # If not JSON or not auth request, continue with normal migration
+            logger.info(f"AUTH DEBUG: Exception in auth parsing: {json_error}")
             pass
     
         # NORMAL MIGRATION FUNCTIONALITY
