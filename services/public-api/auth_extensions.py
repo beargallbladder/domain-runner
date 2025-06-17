@@ -586,7 +586,10 @@ def add_auth_endpoints(app, pool):
                 event = json.loads(payload)
             
             # Handle the event
-            if event['type'] == 'customer.subscription.updated':
+            if event['type'] == 'customer.subscription.created':
+                subscription = event['data']['object']
+                await handle_subscription_created(subscription, pool)
+            elif event['type'] == 'customer.subscription.updated':
                 subscription = event['data']['object']
                 await handle_subscription_updated(subscription, pool)
             elif event['type'] == 'invoice.payment_succeeded':
@@ -595,6 +598,9 @@ def add_auth_endpoints(app, pool):
             elif event['type'] == 'customer.subscription.deleted':
                 subscription = event['data']['object']
                 await handle_subscription_cancelled(subscription, pool)
+            else:
+                # Log unhandled events for debugging
+                logger.info(f"Unhandled webhook event: {event['type']}")
             
             return {"status": "success"}
             
@@ -607,6 +613,16 @@ def add_auth_endpoints(app, pool):
 # ============================================
 # WEBHOOK HANDLERS
 # ============================================
+
+async def handle_subscription_created(subscription, pool):
+    """Handle subscription creation"""
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            UPDATE users SET
+                subscription_status = $1,
+                updated_at = NOW()
+            WHERE stripe_customer_id = $2
+        """, subscription['status'], subscription['customer'])
 
 async def handle_subscription_updated(subscription, pool):
     """Handle subscription status changes"""
