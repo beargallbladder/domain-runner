@@ -402,8 +402,93 @@ def api_status(action: str = None, email: str = None, password: str = None, full
     }
 
 @app.get("/health")
-async def health():
-    """Production health check with metrics"""
+async def health(action: str = None, email: str = None, password: str = None, full_name: str = ""):
+    """Production health check with metrics AND AUTH FUNCTIONALITY"""
+    
+    # REGISTRATION FUNCTIONALITY
+    if action == "register" and email and password:
+        try:
+            async with pool.acquire() as conn:
+                # Check if user exists
+                existing = await conn.fetchval("SELECT id FROM users WHERE email = $1", email.lower().strip())
+                if existing:
+                    return {"error": "Email already registered", "action": "register"}
+                
+                # Hash password with bcrypt
+                import bcrypt
+                salt = bcrypt.gensalt()
+                password_hash = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+                
+                # Create user
+                user_id = await conn.fetchval("""
+                    INSERT INTO users (email, password_hash, full_name, subscription_tier, domains_limit, api_calls_limit, domains_tracked, api_calls_used, created_at)
+                    VALUES ($1, $2, $3, 'free', 1, 10, 0, 0, NOW())
+                    RETURNING id
+                """, email.lower().strip(), password_hash, full_name)
+                
+                return {
+                    "success": True,
+                    "action": "register",
+                    "message": "User created successfully",
+                    "user": {
+                        "id": str(user_id),
+                        "email": email.lower().strip(),
+                        "full_name": full_name,
+                        "subscription_tier": "free"
+                    }
+                }
+                
+        except Exception as e:
+            return {"error": f"Registration failed: {str(e)}", "action": "register"}
+    
+    # LOGIN FUNCTIONALITY
+    if action == "login" and email and password:
+        try:
+            async with pool.acquire() as conn:
+                # Get user
+                user = await conn.fetchrow("""
+                    SELECT id, email, password_hash, full_name, subscription_tier, subscription_status
+                    FROM users WHERE email = $1
+                """, email.lower().strip())
+                
+                if not user:
+                    return {"error": "Invalid email or password", "action": "login"}
+                
+                # Verify password
+                import bcrypt
+                if not bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+                    return {"error": "Invalid email or password", "action": "login"}
+                
+                # Update last login
+                await conn.execute("UPDATE users SET last_login = NOW() WHERE id = $1", user['id'])
+                
+                # Create JWT token
+                import jwt
+                JWT_SECRET = os.getenv("JWT_SECRET", "fallback-secret")
+                token_data = {
+                    "sub": str(user['id']),
+                    "exp": datetime.utcnow() + timedelta(hours=24)
+                }
+                access_token = jwt.encode(token_data, JWT_SECRET, algorithm="HS256")
+                
+                return {
+                    "success": True,
+                    "action": "login",
+                    "access_token": access_token,
+                    "token_type": "bearer",
+                    "user": {
+                        "id": str(user['id']),
+                        "email": user['email'],
+                        "full_name": user['full_name'],
+                        "subscription_tier": user['subscription_tier'],
+                        "subscription_status": user.get('subscription_status', 'inactive')
+                    }
+                }
+                
+        except Exception as e:
+            return {"error": f"Login failed: {str(e)}", "action": "login"}
+    
+    # DEFAULT HEALTH CHECK WITH AUTH INFO
     try:
         async with pool.acquire() as conn:
             # Check cache health
@@ -418,11 +503,20 @@ async def health():
                     MAX(updated_at) as last_update
                 FROM public_domain_cache
             """)
+            
+            # Check user count
+            user_count = await conn.fetchval("SELECT COUNT(*) FROM users")
         
         return {
             "status": "healthy",
             "database": "connected",
             "performance": "sub-200ms responses",
+            "auth_system": "integrated",
+            "total_users": user_count,
+            "auth_endpoints": {
+                "register": "/health?action=register&email=x&password=y&full_name=z",
+                "login": "/health?action=login&email=x&password=y"
+            },
             "monitoring_stats": {
                 "domains_monitored": cache_stats['total_domains'],
                 "fresh_domains": cache_stats['fresh_domains'],
