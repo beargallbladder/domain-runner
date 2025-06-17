@@ -258,6 +258,8 @@ const Dashboard = () => {
       setDomains(response.data.domains || []);
     } catch (error) {
       console.error('Failed to fetch domains:', error);
+      // Handle missing endpoint gracefully - just show empty state
+      setDomains([]);
     } finally {
       setLoading(false);
     }

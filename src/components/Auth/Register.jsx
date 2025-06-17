@@ -225,12 +225,21 @@ const Register = () => {
       return;
     }
 
-    const result = await register(formData.email, formData.password, formData.fullName);
-    
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error);
+    try {
+      console.log('🚀 Starting registration...', formData.email);
+      const result = await register(formData.email, formData.password, formData.fullName);
+      console.log('📝 Registration result:', result);
+      
+      if (result.success) {
+        console.log('✅ Registration successful, navigating to dashboard...');
+        navigate('/dashboard');
+      } else {
+        console.log('❌ Registration failed:', result.error);
+        setError(result.error);
+      }
+    } catch (error) {
+      console.error('💥 Registration crashed:', error);
+      setError('Registration failed. Please try again.');
     }
     
     setLoading(false);

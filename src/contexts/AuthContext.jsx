@@ -58,22 +58,22 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/migrate-timeseries`, {
-        action: 'login',
-        email,
-        password
+      const response = await axios.get(`${API_BASE}/api/simple-login`, {
+        params: { email, password }
       });
 
       if (response.data.success) {
-        const { access_token, user: userData } = response.data;
+        const userData = {
+          ...response.data.user,
+          // Add default values for fields the Dashboard expects
+          domains_tracked: response.data.user.domains_tracked || 0,
+          domains_limit: response.data.user.domains_limit || 1,
+          api_calls_used: response.data.user.api_calls_used || 0,
+          api_calls_limit: response.data.user.api_calls_limit || 10,
+          full_name: response.data.user.full_name || response.data.user.email?.split('@')[0] || ''
+        };
         
-        // Store token and user data
-        if (access_token) {
-          localStorage.setItem('token', access_token);
-          setToken(access_token);
-        }
-        
-        // Store user data
+        // Store user data (no JWT token from simple endpoints)
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
 
@@ -89,11 +89,12 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password, fullName) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/migrate-timeseries`, {
-        action: 'register',
-        email,
-        password,
-        full_name: fullName
+      const response = await axios.get(`${API_BASE}/api/simple-register`, {
+        params: {
+          email,
+          password,
+          full_name: fullName
+        }
       });
 
       if (response.data.success) {
@@ -142,12 +143,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const canTrackMoreDomains = () => {
-    return user && user.domains_tracked < user.domains_limit;
+    if (!user) return false;
+    const tracked = user.domains_tracked || 0;
+    const limit = user.domains_limit || 1;
+    return tracked < limit;
   };
 
   const getRemainingApiCalls = () => {
     if (!user) return 0;
-    return user.api_calls_limit - user.api_calls_used;
+    const limit = user.api_calls_limit || 10;
+    const used = user.api_calls_used || 0;
+    return limit - used;
   };
 
   const getSubscriptionDisplayName = () => {
@@ -159,7 +165,7 @@ export const AuthProvider = ({ children }) => {
       'enterprise': 'Enterprise Plan'
     };
     
-    return tierNames[user.subscription_tier] || user.subscription_tier;
+    return tierNames[user.subscription_tier] || user.subscription_tier || 'Unknown';
   };
 
   const value = {
