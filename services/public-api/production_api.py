@@ -61,9 +61,16 @@ app.add_middleware(
 # Global connection pool
 pool: Optional[asyncpg.Pool] = None
 
+async def get_pool():
+    """Get the global database pool"""
+    global pool
+    if not pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+    return pool
+
 @app.on_event("startup")
 async def startup():
-    """Initialize production database pool"""
+    """Initialize production database pool and auth endpoints"""
     global pool
     config = APIConfig(database_url=os.environ.get('DATABASE_URL'))
     
@@ -74,10 +81,10 @@ async def startup():
         command_timeout=10
     )
     
-    # Add authentication endpoints
-    add_auth_endpoints(app, pool)
-    
     logger.info("🚀 Production API initialized with connection pooling and authentication")
+
+# Add authentication endpoints using pool dependency
+add_auth_endpoints(app, get_pool)
 
 @app.on_event("shutdown")
 async def shutdown():

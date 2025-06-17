@@ -106,7 +106,7 @@ def generate_api_key() -> tuple:
     prefix = api_key[:8]
     return api_key, prefix
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), pool=None):
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), pool_or_getter=None):
     """Get current user from JWT token"""
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -116,14 +116,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     
+    # Get pool
+    async def get_pool():
+        if callable(pool_or_getter):
+            return await pool_or_getter()
+        return pool_or_getter
+    
     # Get user from database
+    pool = await get_pool()
     async with pool.acquire() as conn:
         user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
         if user is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-        
-        # Set user context for RLS
-        await conn.execute("SET app.current_user_id = $1", user_id)
         
         return dict(user)
 
@@ -131,8 +135,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 # AUTHENTICATION ENDPOINTS
 # ============================================
 
-def add_auth_endpoints(app, pool):
+def add_auth_endpoints(app, pool_or_getter):
     """Add authentication endpoints to existing FastAPI app"""
+    
+    async def get_pool():
+        """Get pool from either direct object or getter function"""
+        if callable(pool_or_getter):
+            return await pool_or_getter()
+        return pool_or_getter
     
     @app.post("/api/auth/register", response_model=UserResponse)
     async def register(user_data: UserRegister):
@@ -141,6 +151,7 @@ def add_auth_endpoints(app, pool):
         Create new user account with free tier access
         """
         try:
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 # Check if user already exists
                 existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", user_data.email)
@@ -184,6 +195,7 @@ def add_auth_endpoints(app, pool):
         Authenticate user and return JWT token
         """
         try:
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 # Get user by email
                 user = await conn.fetchrow("""
@@ -218,7 +230,7 @@ def add_auth_endpoints(app, pool):
             raise HTTPException(status_code=500, detail="Login failed")
 
     @app.get("/api/auth/me", response_model=UserResponse)
-    async def get_current_user_info(current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool))):
+    async def get_current_user_info(current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool_or_getter))):
         """
         👤 GET CURRENT USER
         Get current user profile and subscription info
@@ -236,6 +248,7 @@ def add_auth_endpoints(app, pool):
             raise HTTPException(status_code=400, detail="Email required")
         
         try:
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 # Check if user exists
                 user = await conn.fetchrow("SELECT id, email FROM users WHERE email = $1", email)
@@ -273,12 +286,13 @@ def add_auth_endpoints(app, pool):
     # ============================================
 
     @app.get("/api/user/domains")
-    async def get_user_domains(current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool))):
+    async def get_user_domains(current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool_or_getter))):
         """
         📊 GET USER DOMAINS
         Get all domains tracked by current user with latest memory scores
         """
         try:
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 # Get user domains with memory scores
                 domains = await conn.fetch("""
@@ -305,13 +319,14 @@ def add_auth_endpoints(app, pool):
     @app.post("/api/user/domains")
     async def add_user_domain(
         domain_data: DomainAdd,
-        current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool))
+        current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool_or_getter))
     ):
         """
         ➕ ADD DOMAIN TO TRACK
         Add domain to user's tracking list with tier limit enforcement
         """
         try:
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 # Check domain limit
                 if current_user['domains_tracked'] >= current_user['domains_limit']:
@@ -359,13 +374,14 @@ def add_auth_endpoints(app, pool):
     @app.delete("/api/user/domains/{domain}")
     async def remove_user_domain(
         domain: str,
-        current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool))
+        current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool_or_getter))
     ):
         """
         ➖ REMOVE DOMAIN FROM TRACKING
         Remove domain from user's tracking list
         """
         try:
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 # Remove domain
                 result = await conn.execute("""
@@ -398,12 +414,13 @@ def add_auth_endpoints(app, pool):
     # ============================================
 
     @app.get("/api/user/api-keys")
-    async def get_api_keys(current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool))):
+    async def get_api_keys(current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool_or_getter))):
         """
         🔑 GET API KEYS
         Get all API keys for current user
         """
         try:
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 keys = await conn.fetch("""
                     SELECT id, key_name, key_prefix, tier, is_active, 
@@ -422,7 +439,7 @@ def add_auth_endpoints(app, pool):
     @app.post("/api/user/api-keys")
     async def create_api_key(
         key_data: APIKeyCreate,
-        current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool))
+        current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool_or_getter))
     ):
         """
         🔑 CREATE API KEY
@@ -436,6 +453,7 @@ def add_auth_endpoints(app, pool):
                     detail="API keys are only available for Pro and Enterprise users. Please upgrade your subscription."
                 )
             
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 # Generate API key
                 api_key, prefix = generate_api_key()
@@ -481,7 +499,7 @@ def add_auth_endpoints(app, pool):
     @app.post("/api/billing/create-subscription")
     async def create_subscription(
         subscription_data: SubscriptionCreate,
-        current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool))
+        current_user: dict = Depends(lambda creds=Depends(security): get_current_user(creds, pool_or_getter))
     ):
         """
         💳 CREATE SUBSCRIPTION
@@ -491,6 +509,7 @@ def add_auth_endpoints(app, pool):
             if not stripe.api_key:
                 raise HTTPException(status_code=503, detail="Billing not configured")
             
+            pool = await get_pool()
             async with pool.acquire() as conn:
                 # Get pricing info
                 tier_info = await conn.fetchrow("""
@@ -588,16 +607,16 @@ def add_auth_endpoints(app, pool):
             # Handle the event
             if event['type'] == 'customer.subscription.created':
                 subscription = event['data']['object']
-                await handle_subscription_created(subscription, pool)
+                await handle_subscription_created(subscription, pool_or_getter)
             elif event['type'] == 'customer.subscription.updated':
                 subscription = event['data']['object']
-                await handle_subscription_updated(subscription, pool)
+                await handle_subscription_updated(subscription, pool_or_getter)
             elif event['type'] == 'invoice.payment_succeeded':
                 invoice = event['data']['object']
-                await handle_payment_succeeded(invoice, pool)
+                await handle_payment_succeeded(invoice, pool_or_getter)
             elif event['type'] == 'customer.subscription.deleted':
                 subscription = event['data']['object']
-                await handle_subscription_cancelled(subscription, pool)
+                await handle_subscription_cancelled(subscription, pool_or_getter)
             else:
                 # Log unhandled events for debugging
                 logger.info(f"Unhandled webhook event: {event['type']}")
@@ -614,8 +633,14 @@ def add_auth_endpoints(app, pool):
 # WEBHOOK HANDLERS
 # ============================================
 
-async def handle_subscription_created(subscription, pool):
+async def handle_subscription_created(subscription, pool_or_getter):
     """Handle subscription creation"""
+    async def get_pool():
+        if callable(pool_or_getter):
+            return await pool_or_getter()
+        return pool_or_getter
+    
+    pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("""
             UPDATE users SET
@@ -624,8 +649,14 @@ async def handle_subscription_created(subscription, pool):
             WHERE stripe_customer_id = $2
         """, subscription['status'], subscription['customer'])
 
-async def handle_subscription_updated(subscription, pool):
+async def handle_subscription_updated(subscription, pool_or_getter):
     """Handle subscription status changes"""
+    async def get_pool():
+        if callable(pool_or_getter):
+            return await pool_or_getter()
+        return pool_or_getter
+    
+    pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("""
             UPDATE users SET
@@ -634,26 +665,38 @@ async def handle_subscription_updated(subscription, pool):
             WHERE stripe_customer_id = $2
         """, subscription['status'], subscription['customer'])
 
-async def handle_payment_succeeded(invoice, pool):
+async def handle_payment_succeeded(invoice, pool_or_getter):
     """Handle successful payments"""
+    async def get_pool():
+        if callable(pool_or_getter):
+            return await pool_or_getter()
+        return pool_or_getter
+    
+    pool = await get_pool()
     async with pool.acquire() as conn:
         # Reset API usage for new billing cycle
         await conn.execute("""
             UPDATE users SET
                 api_calls_used = 0,
-                billing_cycle_start = NOW(),
-                billing_cycle_end = NOW() + INTERVAL '1 month'
+                updated_at = NOW()
             WHERE stripe_customer_id = $1
         """, invoice['customer'])
 
-async def handle_subscription_cancelled(subscription, pool):
+async def handle_subscription_cancelled(subscription, pool_or_getter):
     """Handle subscription cancellations"""
+    async def get_pool():
+        if callable(pool_or_getter):
+            return await pool_or_getter()
+        return pool_or_getter
+    
+    pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("""
             UPDATE users SET
                 subscription_tier = 'free',
                 subscription_status = 'cancelled',
                 domains_limit = 1,
-                api_calls_limit = 10
+                api_calls_limit = 10,
+                updated_at = NOW()
             WHERE stripe_customer_id = $1
         """, subscription['customer']) 
