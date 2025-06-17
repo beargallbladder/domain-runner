@@ -28,6 +28,9 @@ import TestDomain from './pages/TestDomain'
 import AdLanding from './pages/AdLanding'
 import CompetitiveBattles from './pages/CompetitiveBattles'
 import Api from './pages/Api'
+import Login from './components/Auth/Login'
+import Register from './components/Auth/Register'
+import { AuthProvider } from './contexts/AuthContext'
 
 // Subtle drift animation for text
 const textDrift = keyframes`
@@ -132,28 +135,45 @@ const Main = styled.main`
 
 function App() {
   return (
-    <AppContainer>
-      <GlobalStyle />
-      <PlausibleScript />
-      <Navigation />
-      <Main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/rankings" element={<Rankings />} />
-          <Route path="/leaderboard" element={<Rankings />} />
-          <Route path="/cohorts" element={<CompetitiveCohorts />} />
-          <Route path="/battles" element={<CompetitiveBattles />} />
-          <Route path="/cohort-intelligence" element={<CohortIntelligence />} />
-          <Route path="/competitive-analysis" element={<CompetitorAnalysis />} />
-          <Route path="/domain/:domain" element={<Domain />} />
-          <Route path="/test-domains" element={<TestDomain />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/api" element={<Api />} />
-          <Route path="/ad/:company" element={<AdLanding />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Main>
-    </AppContainer>
+    <AuthProvider>
+      <AppContainer>
+        <GlobalStyle />
+        <PlausibleScript />
+        <Navigation />
+        <Main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/rankings" element={<Rankings />} />
+            <Route path="/leaderboard" element={<Rankings />} />
+            <Route path="/cohorts" element={<CompetitiveCohorts />} />
+            <Route path="/battles" element={<CompetitiveBattles />} />
+            <Route path="/cohort-intelligence" element={<CohortIntelligence />} />
+            <Route path="/competitive-analysis" element={<CompetitorAnalysis />} />
+            <Route path="/domain/:domain" element={<Domain />} />
+            <Route path="/test-domains" element={<TestDomain />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/api" element={<Api />} />
+            <Route path="/ad/:company" element={<AdLanding />} />
+            
+            {/* Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Dashboard Routes */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/analysis" element={<Analysis />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/alerts" element={<Alerts />} />
+            <Route path="/integrations" element={<Integrations />} />
+            <Route path="/help" element={<Help />} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Main>
+      </AppContainer>
+    </AuthProvider>
   )
 }
 

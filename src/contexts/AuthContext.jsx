@@ -40,8 +40,14 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const response = await axios.get(`${API_BASE}/api/auth/me`);
-      setUser(response.data);
+      // For now, just validate the token exists
+      // TODO: Implement proper token validation endpoint
+      const userData = JSON.parse(localStorage.getItem('user') || 'null');
+      if (userData) {
+        setUser(userData);
+      } else {
+        logout();
+      }
     } catch (error) {
       console.log('Auth check failed:', error);
       logout(); // Clear invalid token
@@ -52,45 +58,60 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/auth/login`, {
+      const response = await axios.post(`${API_BASE}/api/migrate-timeseries`, {
+        action: 'login',
         email,
         password
       });
 
-      const { access_token, user: userData } = response.data;
-      
-      // Store token
-      localStorage.setItem('token', access_token);
-      setToken(access_token);
-      setUser(userData);
+      if (response.data.success) {
+        const { access_token, user: userData } = response.data;
+        
+        // Store token and user data
+        if (access_token) {
+          localStorage.setItem('token', access_token);
+          setToken(access_token);
+        }
+        
+        // Store user data
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
 
-      return { success: true, user: userData };
+        return { success: true, user: userData };
+      } else {
+        return { success: false, error: response.data.error || 'Login failed' };
+      }
     } catch (error) {
-      const message = error.response?.data?.detail || 'Login failed';
+      const message = error.response?.data?.error || error.response?.data?.detail || 'Login failed';
       return { success: false, error: message };
     }
   };
 
   const register = async (email, password, fullName) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/auth/register`, {
+      const response = await axios.post(`${API_BASE}/api/migrate-timeseries`, {
+        action: 'register',
         email,
         password,
         full_name: fullName
       });
 
-      // Auto-login after registration
-      const loginResult = await login(email, password);
-      
-      return loginResult;
+      if (response.data.success) {
+        // Auto-login after registration
+        const loginResult = await login(email, password);
+        return loginResult;
+      } else {
+        return { success: false, error: response.data.error || 'Registration failed' };
+      }
     } catch (error) {
-      const message = error.response?.data?.detail || 'Registration failed';
+      const message = error.response?.data?.error || error.response?.data?.detail || 'Registration failed';
       return { success: false, error: message };
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
     delete axios.defaults.headers.common['Authorization'];
@@ -100,8 +121,12 @@ export const AuthProvider = ({ children }) => {
     if (!token) return;
     
     try {
-      const response = await axios.get(`${API_BASE}/api/auth/me`);
-      setUser(response.data);
+      // For now, just get from localStorage
+      // TODO: Implement proper user data refresh endpoint
+      const userData = JSON.parse(localStorage.getItem('user') || 'null');
+      if (userData) {
+        setUser(userData);
+      }
     } catch (error) {
       console.log('Failed to refresh user data:', error);
     }
