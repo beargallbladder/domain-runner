@@ -145,7 +145,7 @@ class UserCreate(BaseModel):
     password: str
     full_name: str = ""
 
-@app.post("/api/auth/register")
+@app.post("/api/auth/register-fixed")
 async def register_user_clean(user_data: UserCreate):
     """Clean registration endpoint"""
     try:
