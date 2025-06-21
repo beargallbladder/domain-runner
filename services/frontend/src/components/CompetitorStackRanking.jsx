@@ -354,7 +354,7 @@ const CompetitorStackRanking = ({ domain, category = null, limit = 5 }) => {
 
         // FALLBACK: Legacy category-based approach
         if (category) {
-          const categoryResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/categories`);
+          const categoryResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'}/api/categories`);
           const categories = categoryResponse.data.categories || [];
           
           const targetCategory = categories.find(cat => 
@@ -375,7 +375,7 @@ const CompetitorStackRanking = ({ domain, category = null, limit = 5 }) => {
         }
         
         // FINAL FALLBACK: Get top domains from rankings
-        const rankingsResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/rankings?limit=${limit * 2}`);
+                  const rankingsResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'}/api/rankings?limit=${limit * 2}`);
         const allDomains = rankingsResponse.data.domains || [];
         
         // Include the target domain if not in top results
@@ -385,7 +385,7 @@ const CompetitorStackRanking = ({ domain, category = null, limit = 5 }) => {
         if (!domainInList) {
           // Try to get the specific domain data
           try {
-            const domainResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/domains/${domain}/public`);
+            const domainResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'}/api/domains/${domain}/public`);
             const domainData = domainResponse.data;
             
             competitorList.push({

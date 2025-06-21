@@ -60,7 +60,9 @@
 - **Deploy Process**: Git push → Vercel auto-builds from `frontend/` directory
 
 ### API ENDPOINTS:
-- **Auth**: `POST /api/migrate-timeseries` with action: "register"|"login"
+- **Auth Register**: `GET /api/simple-register?email=&password=&full_name=`
+- **Auth Login**: `GET /api/simple-login?email=&password=`
+- **Health Check**: `GET /health` (returns monitoring stats for homepage)
 - **Main API**: `https://llm-pagerank-public-api.onrender.com`
 - **Frontend**: `https://www.llmpagerank.com`
 
@@ -72,10 +74,29 @@
 3. ❌ **RESULT**: All frontend changes were ignored, black screen persisted
 4. ❌ **COST**: Hours of debugging, hundreds of dollars in tool calls
 
+### THE VERCEL REPOSITORY NIGHTMARE:
+1. ❌ **VERCEL CONNECTED TO WRONG REPO**: `beargallbladder/domain-runner` (backend)
+2. ✅ **SHOULD BE CONNECTED TO**: `beargallbladder/llmpagerankfrontend` (frontend)
+3. ❌ **RESULT**: 48 hours of frontend fixes never deployed (deployed wrong code)
+4. ❌ **SYMPTOM**: JavaScript bundle still had old `/api/auth/register` instead of `/api/simple-register`
+5. ✅ **FIX**: Created new Vercel project with correct repository + root directory
+
+### THE API ENDPOINT CONFUSION:
+1. ❌ **OLD ENDPOINTS**: `/api/auth/register`, `/api/migrate-timeseries` (don't exist)
+2. ✅ **CORRECT ENDPOINTS**: `/api/simple-register`, `/api/simple-login` (working)
+3. ❌ **RESULT**: 422 errors, registration failed, black screen on submit
+4. ✅ **FIX**: Updated SignupPage.tsx and LoginPage.tsx to use correct endpoints
+
+### THE TYPESCRIPT BUILD BLOCKER:
+1. ❌ **BUILD FAILING**: TypeScript errors in BrandDetailPage, LeaderboardPage, StatusPage
+2. ❌ **RESULT**: Even with correct repo, deployment blocked by compilation errors
+3. ✅ **FIX**: Added null safety checks (`brand.score || 0`, `brand.brandName || brand.domain`)
+
 ### OTHER MISTAKES:
 1. ❌ Removed `cors` dependency from sophisticated-runner (FIXED)
 2. ❌ Used wrong environment variable (`REACT_APP_API_URL` vs `VITE_API_BASE_URL`)
 3. ❌ Confused multiple package.json files
+4. ❌ Homepage calling non-existent API endpoints (caused crashes after login)
 
 ## 🛡️ NEVER AGAIN PROTOCOL:
 
@@ -92,12 +113,21 @@ ls -la src/            # Should show .jsx files (WRONG - don't edit these)
 # 3. For FRONTEND changes, work in frontend/ directory:
 cd frontend/
 npm run build          # Test build before pushing
+
+# 4. VERIFY DEPLOYMENT (after pushing):
+curl -s "https://www.llmpagerank.com/register" | grep -o "index-[a-z0-9]*.js"
+curl -s "https://www.llmpagerank.com/assets/[FILENAME].js" | grep -o "simple-register\|auth/register"
+# Should show "simple-register" NOT "auth/register"
 ```
 
 ### CHECKLIST:
 - ✅ Always check `pwd` before making changes
 - ✅ Always verify which repo you're in with `git remote -v`
 - ✅ For frontend: Confirm you're editing `.tsx` files in `frontend/src/` NOT `.jsx` files in `src/`
+- ✅ **VERCEL CHECK**: Verify Vercel project connected to `llmpagerankfrontend` NOT `domain-runner`
+- ✅ **VERCEL CHECK**: Verify Root Directory set to `frontend` NOT `.`
+- ✅ **DEPLOYMENT CHECK**: Verify JavaScript bundle has `/api/simple-register` NOT `/api/auth/register`
+- ✅ **TYPESCRIPT CHECK**: Run `npm run build` locally before pushing to catch compilation errors
 - ✅ Always test builds before committing
 - ✅ Keep this document updated
 - ✅ Use correct environment variables (`VITE_API_BASE_URL` for Vite projects) 

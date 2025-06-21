@@ -223,7 +223,7 @@ const DomainSEO = () => {
   useEffect(() => {
     const fetchDomainData = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/domains/${domainName}/public`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'}/api/domains/${domainName}/public`);
         const realData = response.data;
         
         const processedData = {
@@ -241,7 +241,7 @@ const DomainSEO = () => {
         };
 
         // Fetch competitor data
-        const categoriesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'}/api/categories`);
+        const categoriesResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'}/api/categories`);
         const categories = categoriesResponse.data.categories || [];
         
         let competitors = [];

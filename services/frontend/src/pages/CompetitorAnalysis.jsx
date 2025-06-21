@@ -206,7 +206,7 @@ const CompetitorAnalysis = () => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get('https://llm-pagerank-public-api.onrender.com/api/rankings?limit=20');
+              const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'}/api/rankings?limit=20`);
       
       if (response.data && response.data.domains) {
         const domains = response.data.domains;

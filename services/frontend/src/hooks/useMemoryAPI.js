@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 // Use the DESIGNED infrastructure - Public API first, embedding engine as fallback
-const PUBLIC_API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://llm-pagerank-public-api.onrender.com'
+const PUBLIC_API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'
 const EMBEDDING_ENGINE_BASE = 'https://embedding-engine.onrender.com'
 
 export function useMemoryAPI() {

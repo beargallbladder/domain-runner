@@ -15,7 +15,7 @@ function TestDomain() {
       try {
         // Step 1: Get ticker data (same as homepage)
         console.log('📊 Fetching ticker data...');
-        const response = await axios.get('https://llm-pagerank-public-api.onrender.com/api/ticker?limit=5');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'}/api/ticker?limit=5`);
         const data = response.data;
         setTickerData(data.topDomains);
         console.log('✅ Ticker data:', data.topDomains);
@@ -27,7 +27,7 @@ function TestDomain() {
           
           try {
             // Test rankings API call
-            const rankingsResponse = await axios.get(`https://llm-pagerank-public-api.onrender.com/api/rankings?search=${encodeURIComponent(domain.domain)}&limit=1`);
+            const rankingsResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'https://llmrank.io'}/api/rankings?search=${encodeURIComponent(domain.domain)}&limit=1`);
             const rankingsData = rankingsResponse.data;
             
             const testResult = {

@@ -4,7 +4,7 @@ import axios from 'axios';
 const AuthContext = createContext();
 
 // API base URL - use environment variable or default to production
-const API_BASE = process.env.REACT_APP_API_URL || 'https://llm-pagerank-public-api.onrender.com';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://llmrank.io';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
