@@ -43,22 +43,12 @@ app = FastAPI(
     docs_url="/docs" if os.getenv("ENV") != "production" else None
 )
 
-# DEFINITIVE CORS FIX - Allow frontend origins
+# EMERGENCY CORS FIX - ALLOW ALL ORIGINS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Frontend development
-        "https://www.llmpagerank.com",
-        "https://llmpagerank.com", 
-        "https://llmrank.io",
-        "https://www.llmrank.io",
-        "https://app.llmrank.io",
-        "https://app.llmpagerank.com", 
-        "https://domain-runner.vercel.app",
-        "*"  # Allow all origins temporarily
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods including OPTIONS
+    allow_origins=["*"],  # EMERGENCY: Allow ALL origins
+    allow_credentials=False,  # Must be False when using "*"
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -319,6 +309,11 @@ async def create_partner_key(request: Request):
 async def options_handler(path: str):
     """Handle CORS preflight requests"""
     return {"message": "OK"}
+
+@app.get("/api/cors-test")
+async def cors_test():
+    """Simple CORS test endpoint"""
+    return {"message": "CORS is working!", "timestamp": datetime.now().isoformat()}
 
 @app.get("/", response_class=HTMLResponse)
 def emergency_frontend():
