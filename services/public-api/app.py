@@ -22,17 +22,18 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# DEFINITIVE CORS FIX - This MUST work
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://www.llmpagerank.com",
+        "https://www.llmpagerank.com", 
         "https://llmpagerank.com",
         "https://llmrank.io",
-        "*"  # Allow all for now, can restrict later
+        "*"  # Allow all origins for now
     ],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods including OPTIONS
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 

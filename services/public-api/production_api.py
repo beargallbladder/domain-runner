@@ -43,21 +43,23 @@ app = FastAPI(
     docs_url="/docs" if os.getenv("ENV") != "production" else None
 )
 
-# CORS for production - Allow partner domains
+# DEFINITIVE CORS FIX - Allow frontend origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://localhost:3000",  # Frontend development
+        "https://www.llmpagerank.com",
+        "https://llmpagerank.com", 
         "https://llmrank.io",
         "https://www.llmrank.io",
         "https://app.llmrank.io",
-        "https://llmpagerank.com", 
-        "https://www.llmpagerank.com",
         "https://app.llmpagerank.com", 
-        "https://domain-runner.vercel.app"
+        "https://domain-runner.vercel.app",
+        "*"  # Allow all origins temporarily
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*", "X-API-Key", "Authorization"],
+    allow_methods=["*"],  # Allow all methods including OPTIONS
+    allow_headers=["*"],
 )
 
 # Global connection pool
@@ -312,6 +314,11 @@ async def create_partner_key(request: Request):
         
     except Exception as e:
         return {"error": f"Failed to create API key: {str(e)}"}
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    """Handle CORS preflight requests"""
+    return {"message": "OK"}
 
 @app.get("/", response_class=HTMLResponse)
 def emergency_frontend():
