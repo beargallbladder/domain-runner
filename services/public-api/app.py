@@ -24,9 +24,15 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://www.llmpagerank.com",
+        "https://llmpagerank.com",
+        "https://llmrank.io",
+        "*"  # Allow all for now, can restrict later
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["*"],  # Allow all HTTP methods including OPTIONS
     allow_headers=["*"],
 )
 
@@ -60,6 +66,11 @@ async def shutdown():
     global pool
     if pool:
         await pool.close()
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    """Handle CORS preflight requests"""
+    return {"message": "OK"}
 
 @app.get("/")
 def root():
