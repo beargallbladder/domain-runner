@@ -9,7 +9,7 @@ Creates stunning, urgent insights that make brands realize they NEED monitoring
 - Stunning data presentation that creates urgency
 """
 
-from fastapi import FastAPI, HTTPException, Response, Query, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, Response, Query, BackgroundTasks, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 import asyncpg
@@ -21,6 +21,7 @@ import logging
 from dataclasses import dataclass
 import time
 import bcrypt
+import hashlib
 
 # Production Configuration
 @dataclass
@@ -42,18 +43,21 @@ app = FastAPI(
     docs_url="/docs" if os.getenv("ENV") != "production" else None
 )
 
-# CORS for production
+# CORS for production - Allow partner domains
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://llmrank.io",
+        "https://www.llmrank.io",
+        "https://app.llmrank.io",
         "https://llmpagerank.com", 
         "https://www.llmpagerank.com",
         "https://app.llmpagerank.com", 
         "https://domain-runner.vercel.app"
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*", "X-API-Key", "Authorization"],
 )
 
 # Global connection pool
@@ -65,6 +69,40 @@ async def get_pool():
     if not pool:
         raise HTTPException(status_code=503, detail="Database not available")
     return pool
+
+async def validate_api_key(api_key: str) -> Optional[Dict]:
+    """Validate API key and return partner info"""
+    if not api_key:
+        return None
+    
+    # Hash the API key
+    api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+    
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        # Check if API key exists and is valid
+        key_info = await conn.fetchrow("""
+            SELECT id, partner_email, partner_domain, tier, rate_limit_per_hour,
+                   is_active, expires_at, usage_count
+            FROM partner_api_keys 
+            WHERE api_key_hash = $1 AND is_active = true AND expires_at > NOW()
+        """, api_key_hash)
+        
+        if not key_info:
+            return None
+        
+        # Update usage tracking
+        await conn.execute("""
+            UPDATE partner_api_keys 
+            SET last_used_at = NOW(), usage_count = usage_count + 1
+            WHERE id = $1
+        """, key_info['id'])
+        
+        return dict(key_info)
+
+def get_api_key_from_request(x_api_key: Optional[str] = Header(None)) -> Optional[str]:
+    """Extract API key from request headers"""
+    return x_api_key
 
 @app.on_event("startup")
 async def startup():
@@ -79,7 +117,28 @@ async def startup():
         command_timeout=10
     )
     
-    logger.info("🚀 Production API initialized with connection pooling and authentication")
+    # Setup API key tables
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS partner_api_keys (
+                id SERIAL PRIMARY KEY,
+                api_key_hash VARCHAR(64) UNIQUE NOT NULL,
+                partner_email VARCHAR(255) NOT NULL,
+                partner_domain VARCHAR(255),
+                tier VARCHAR(50) DEFAULT 'free' CHECK (tier IN ('free', 'pro', 'enterprise')),
+                rate_limit_per_hour INTEGER DEFAULT 1000,
+                description TEXT,
+                is_active BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT NOW(),
+                expires_at TIMESTAMP,
+                last_used_at TIMESTAMP,
+                usage_count INTEGER DEFAULT 0
+            );
+        """)
+        
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_partner_api_keys_hash ON partner_api_keys(api_key_hash);")
+    
+    logger.info("🚀 Production API initialized with connection pooling, authentication, and API key management")
 
 # Clean up all previous auth attempts and add working auth
 @app.get("/api/auth-working")
@@ -202,6 +261,57 @@ async def shutdown():
 async def test_working():
     """Simple test to see if new endpoints work"""
     return {"status": "new_endpoint_working", "timestamp": "now"}
+
+@app.post("/api/create-partner-key")
+async def create_partner_key(request: Request):
+    """Create a partner API key for llmpagerank.com"""
+    try:
+        body = await request.json()
+        partner_email = body.get('partner_email', 'partner@llmpagerank.com')
+        partner_domain = body.get('partner_domain', 'llmpagerank.com')
+        
+        # Generate API key
+        import secrets
+        api_key = f"llmpr_{secrets.token_hex(32)}"
+        api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+        
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            # Create API key record
+            key_id = await conn.fetchval("""
+                INSERT INTO partner_api_keys (
+                    api_key_hash, partner_email, partner_domain, 
+                    tier, rate_limit_per_hour, description,
+                    created_at, expires_at, is_active
+                ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW() + INTERVAL '1 year', true)
+                RETURNING id
+            """, api_key_hash, partner_email, partner_domain, 
+                'enterprise', 50000, 'Partner API key for llmpagerank.com')
+        
+        return {
+            "success": True,
+            "api_key": api_key,
+            "partner_email": partner_email,
+            "partner_domain": partner_domain,
+            "tier": "enterprise",
+            "rate_limit_per_hour": 50000,
+            "expires_at": (datetime.now() + timedelta(days=365)).isoformat(),
+            "usage_instructions": {
+                "header": "X-API-Key",
+                "example": f"curl -H 'X-API-Key: {api_key}' https://llm-pagerank-public-api.onrender.com/api/domains/apple.com/public"
+            },
+            "available_endpoints": [
+                "/api/domains/{domain}/public",
+                "/api/ticker",
+                "/api/rankings", 
+                "/api/fire-alarm-dashboard",
+                "/api/categories",
+                "/health"
+            ]
+        }
+        
+    except Exception as e:
+        return {"error": f"Failed to create API key: {str(e)}"}
 
 @app.get("/", response_class=HTMLResponse)
 def emergency_frontend():
@@ -534,7 +644,8 @@ async def health(action: str = None, email: str = None, password: str = None, fu
 async def get_domain_intelligence(
     domain_identifier: str, 
     response: Response,
-    include_alerts: bool = Query(True, description="Include fire alarm alerts")
+    include_alerts: bool = Query(True, description="Include fire alarm alerts"),
+    x_api_key: Optional[str] = Header(None)
 ):
     """
     🚨 FIRE ALARM DOMAIN INTELLIGENCE 🚨
