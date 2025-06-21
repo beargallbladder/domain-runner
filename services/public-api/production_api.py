@@ -138,15 +138,21 @@ async def auth_working():
     """Test endpoint to verify auth system loads"""
     return {"status": "auth_system_loaded", "timestamp": datetime.now().isoformat()}
 
+from pydantic import BaseModel, EmailStr
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    full_name: str = ""
+
 @app.post("/api/auth/register")
-async def register_user_clean(request):
+async def register_user_clean(user_data: UserCreate):
     """Clean registration endpoint"""
     try:
-        # Get request data
-        body = await request.json()
-        email = body.get('email', '').lower().strip()
-        password = body.get('password', '')
-        full_name = body.get('full_name', '')
+        # Get request data from Pydantic model
+        email = user_data.email.lower().strip()
+        password = user_data.password
+        full_name = user_data.full_name
         
         if not email or not password:
             return {"error": "Email and password required"}
@@ -185,14 +191,17 @@ async def register_user_clean(request):
         logger.error(f"Registration failed: {e}")
         return {"error": f"Registration failed: {str(e)}"}
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
 @app.post("/api/auth/login") 
-async def login_user_clean(request):
+async def login_user_clean(user_data: UserLogin):
     """Clean login endpoint"""
     try:
-        # Get request data
-        body = await request.json()
-        email = body.get('email', '').lower().strip()
-        password = body.get('password', '')
+        # Get request data from Pydantic model
+        email = user_data.email.lower().strip()
+        password = user_data.password
         
         if not email or not password:
             return {"error": "Email and password required"}
