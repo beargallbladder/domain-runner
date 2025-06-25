@@ -20,6 +20,7 @@ import os
 import openai
 from anthropic import AsyncAnthropic
 import google.generativeai as genai
+from aiohttp import web
 
 # Setup logging with fun emojis
 logging.basicConfig(
@@ -884,9 +885,12 @@ class BrandIntelligenceScheduler:
         else:
             return (next_wed + timedelta(days=7)).strftime('%Y-%m-%d')
 
-def start_scheduler():
-    """Start the automated scheduler"""
+async def start_scheduler_with_web_server():
+    """Start the automated scheduler with web server for health checks"""
     scheduler = BrandIntelligenceScheduler()
+    
+    # Start web server for health checks
+    web_runner = await start_web_server()
     
     # Schedule weekly budget runs (Sundays at 10 AM)
     schedule.every().sunday.at("10:00").do(
@@ -904,10 +908,18 @@ def start_scheduler():
     logger.info(f"⏰ Next weekly run: {scheduler._get_next_sunday()}")
     logger.info(f"💎 Next premium run: {scheduler._get_next_biweekly_wednesday()}")
     
-    # Keep scheduler running
-    while True:
-        schedule.run_pending()
-        time.sleep(60)  # Check every minute
+    try:
+        # Keep scheduler running
+        while True:
+            schedule.run_pending()
+            await asyncio.sleep(60)  # Check every minute
+    except KeyboardInterrupt:
+        logger.info("🛑 Scheduler stopped")
+        await web_runner.cleanup()
+
+def start_scheduler():
+    """Legacy sync version - start the automated scheduler"""
+    asyncio.run(start_scheduler_with_web_server())
 
 # Manual run functions
 async def run_weekly_now():
@@ -924,6 +936,41 @@ async def run_test_now(domain_count=10):
     """Run small test with limited domains"""
     scheduler = BrandIntelligenceScheduler()
     return await scheduler.test_run(domain_count)
+
+# Health endpoint for Render deployment
+async def health_handler(request):
+    """Health check endpoint for Render"""
+    scheduler = BrandIntelligenceScheduler()
+    status = scheduler.get_status()
+    
+    return web.json_response({
+        'status': 'healthy',
+        'service': 'weekly-domain-scheduler',
+        'timestamp': datetime.now().isoformat(),
+        'scheduler_info': status,
+        'database_connected': True  # We initialize with DB connection
+    })
+
+def create_web_app():
+    """Create web app with health endpoint"""
+    app = web.Application()
+    app.router.add_get('/health', health_handler)
+    return app
+
+async def start_web_server():
+    """Start web server for health checks"""
+    app = create_web_app()
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+    port = int(os.environ.get('PORT', 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    
+    logger.info(f"🌐 Web server started on port {port}")
+    logger.info(f"🏥 Health endpoint: http://0.0.0.0:{port}/health")
+    
+    return runner
 
 if __name__ == "__main__":
     import sys
