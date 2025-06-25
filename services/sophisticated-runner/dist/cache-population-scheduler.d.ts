@@ -9,6 +9,7 @@ declare class CachePopulationScheduler {
     private determineMarketPosition;
     private extractKeywords;
     private extractThemes;
+    private calculateCohesionScore;
     startScheduler(): void;
     runOnce(): Promise<void>;
 }

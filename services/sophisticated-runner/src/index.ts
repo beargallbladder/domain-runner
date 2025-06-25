@@ -46,7 +46,7 @@ app.get('/emergency-fix-scores', async (req, res) => {
     // Get all domains with 95%+ scores
     const highScoreQuery = `
       SELECT domain, memory_score, model_count 
-      FROM domain_cache 
+      FROM public_domain_cache 
       WHERE memory_score >= 95
       ORDER BY domain
     `;
@@ -74,7 +74,7 @@ app.get('/emergency-fix-scores', async (req, res) => {
       
       // Update the score
       const updateQuery = `
-        UPDATE domain_cache 
+        UPDATE public_domain_cache 
         SET memory_score = $1,
             cache_data = jsonb_set(
               COALESCE(cache_data, '{}'),
@@ -144,3 +144,4 @@ app.listen(port, () => {
   console.log(`🏥 Health check: /health`);
 });// Force rebuild Mon Jun 16 10:22:22 PDT 2025
 // Force redeploy Mon Jun 16 10:41:55 PDT 2025
+// ULTRA DEEP FIX: cohesion_score schema mismatch resolved - Wed Jun 25 04:20:00 UTC 2025

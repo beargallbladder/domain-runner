@@ -42,7 +42,7 @@ app.get('/emergency-fix-scores', async (req, res) => {
         // Get all domains with 95%+ scores
         const highScoreQuery = `
       SELECT domain, memory_score, model_count 
-      FROM domain_cache 
+      FROM public_domain_cache 
       WHERE memory_score >= 95
       ORDER BY domain
     `;
@@ -69,7 +69,7 @@ app.get('/emergency-fix-scores', async (req, res) => {
             }
             // Update the score
             const updateQuery = `
-        UPDATE domain_cache 
+        UPDATE public_domain_cache 
         SET memory_score = $1,
             cache_data = jsonb_set(
               COALESCE(cache_data, '{}'),
