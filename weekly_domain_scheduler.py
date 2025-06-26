@@ -951,10 +951,48 @@ async def health_handler(request):
         'database_connected': True  # We initialize with DB connection
     })
 
+async def run_weekly_handler(request):
+    """Trigger weekly budget run via HTTP"""
+    logger.info("🚀 Manual weekly run triggered via HTTP")
+    try:
+        scheduler = BrandIntelligenceScheduler()
+        result = await scheduler.weekly_budget_run()
+        return web.json_response({
+            'status': 'success',
+            'message': 'Weekly budget run completed',
+            'result': result
+        })
+    except Exception as e:
+        logger.error(f"❌ Weekly run failed: {e}")
+        return web.json_response({
+            'status': 'error',
+            'message': f'Weekly run failed: {str(e)}'
+        }, status=500)
+
+async def run_premium_handler(request):
+    """Trigger premium run via HTTP"""
+    logger.info("🔥 Manual premium run triggered via HTTP")
+    try:
+        scheduler = BrandIntelligenceScheduler()
+        result = await scheduler.biweekly_premium_run()
+        return web.json_response({
+            'status': 'success',
+            'message': 'Premium run completed',
+            'result': result
+        })
+    except Exception as e:
+        logger.error(f"❌ Premium run failed: {e}")
+        return web.json_response({
+            'status': 'error',
+            'message': f'Premium run failed: {str(e)}'
+        }, status=500)
+
 def create_web_app():
-    """Create web app with health endpoint"""
+    """Create web app with health and trigger endpoints"""
     app = web.Application()
     app.router.add_get('/health', health_handler)
+    app.router.add_post('/run/weekly', run_weekly_handler)
+    app.router.add_post('/run/premium', run_premium_handler)
     return app
 
 async def start_web_server():
