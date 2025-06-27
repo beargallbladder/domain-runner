@@ -57,8 +57,15 @@
 ## 🎯 CURRENT WORKING STATE
 - All 2,102 domains processed
 - sophisticated-runner connected to correct database
-- No pending work in production
+- **DATA COLLECTION**: Use `node trigger_weekly_premium_runs.js` to trigger runs
 - System is stable and complete
 
-**Last Updated**: June 2025
-**Status**: Production Stable 
+## 🚀 HOW TO TRIGGER DATA COLLECTION
+**CRITICAL**: To run weekly/premium data collection:
+```bash
+node trigger_weekly_premium_runs.js
+```
+This adds domains with `status = 'pending'` and sophisticated-runner processes them automatically.
+
+**Last Updated**: June 27, 2025
+**Status**: Production Stable + Data Collection Active 

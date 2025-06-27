@@ -34,3 +34,465 @@
 2025-06-14 08:18:44,604 - 🚀 Brand Intelligence Scheduler initialized!
 2025-06-14 08:18:44,604 - 📅 Weekly budget runs: Sundays
 2025-06-14 08:18:44,604 - 💎 Premium depth runs: Bi-weekly Wednesdays
+2025-06-24 21:30:00,477 - 🔑 Available APIs: None
+2025-06-24 21:30:00,477 - 🔑 Missing API keys: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, MISTRAL_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY, TOGETHER_API_KEY
+2025-06-24 21:30:00,477 - 💡 Set environment variables or the scheduler will skip those models
+2025-06-24 21:30:00,477 - 🚀 Brand Intelligence Scheduler initialized!
+2025-06-24 21:30:00,477 - 📅 Weekly budget runs: Sundays
+2025-06-24 21:30:00,477 - 💎 Premium depth runs: Bi-weekly Wednesdays
+2025-06-24 21:36:04,265 - 🔑 Available APIs: None
+2025-06-24 21:36:04,266 - 🔑 Missing API keys: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, MISTRAL_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY, TOGETHER_API_KEY
+2025-06-24 21:36:04,266 - 💡 Set environment variables or the scheduler will skip those models
+2025-06-24 21:36:04,266 - 🚀 Brand Intelligence Scheduler initialized!
+2025-06-24 21:36:04,266 - 📅 Weekly budget runs: Sundays
+2025-06-24 21:36:04,266 - 💎 Premium depth runs: Bi-weekly Wednesdays
+2025-06-24 21:36:04,266 - 🧪 STARTING TEST RUN
+2025-06-24 21:36:04,266 - ==================================================
+2025-06-24 21:36:04,266 - 🗓️ Date: 2025-06-24 21:36
+2025-06-24 21:36:04,266 - 🧪 Test mode: 10 domains only
+2025-06-24 21:36:04,276 - 💰 Models: 7 budget models
+2025-06-24 21:36:04,277 - 📝 Prompts: 3 core prompt types
+2025-06-24 21:36:04,437 - 🧪 Found 10 domains (test mode - limited to 10)
+2025-06-24 21:36:04,437 - 🧪 TEST MODE: Limited to 10 domains
+2025-06-24 21:36:04,437 - 🎯 Scope: 10 domains
+2025-06-24 21:36:04,437 - 🔢 Total API calls: 210
+2025-06-24 21:36:04,437 - 💵 Estimated cost: $0.35
+2025-06-24 21:36:04,437 - 🧪 Processing Batch 1/1
+2025-06-24 21:36:04,437 - 📦 Domains: ['000webhost.com', '10xgenomics.com', '163.com']...
+2025-06-24 21:36:07,521 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 1800petmeds.com
+2025-06-24 21:36:07,521 - ❌ API error for 1800petmeds.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:07,760 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 23andme.com
+2025-06-24 21:36:07,760 - ❌ API error for 23andme.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,380 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 20minutos.es
+2025-06-24 21:36:08,380 - ❌ API error for 20minutos.es with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,484 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 350.org
+2025-06-24 21:36:08,484 - ❌ API error for 350.org with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,504 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 350.org
+2025-06-24 21:36:08,504 - ❌ API error for 350.org with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,512 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 1800petmeds.com
+2025-06-24 21:36:08,512 - ❌ API error for 1800petmeds.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:08,622 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 3m.com
+2025-06-24 21:36:08,622 - ❌ API error for 3m.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,653 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 17zhuang.com
+2025-06-24 21:36:08,654 - ❌ API error for 17zhuang.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,687 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 20minutos.es
+2025-06-24 21:36:08,688 - ❌ API error for 20minutos.es with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,704 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 360.cn
+2025-06-24 21:36:08,704 - ❌ API error for 360.cn with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,855 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 000webhost.com
+2025-06-24 21:36:08,855 - ❌ API error for 000webhost.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:08,926 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 360.cn
+2025-06-24 21:36:08,926 - ❌ API error for 360.cn with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,042 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 17zhuang.com
+2025-06-24 21:36:09,042 - ❌ API error for 17zhuang.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,105 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 163.com
+2025-06-24 21:36:09,105 - ❌ API error for 163.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,138 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 17zhuang.com
+2025-06-24 21:36:09,139 - ❌ API error for 17zhuang.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,167 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 000webhost.com
+2025-06-24 21:36:09,167 - ❌ API error for 000webhost.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,170 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 163.com
+2025-06-24 21:36:09,170 - ❌ API error for 163.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,178 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 20minutos.es
+2025-06-24 21:36:09,178 - ❌ API error for 20minutos.es with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,181 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 360.cn
+2025-06-24 21:36:09,181 - ❌ API error for 360.cn with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,249 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 10xgenomics.com
+2025-06-24 21:36:09,249 - ❌ API error for 10xgenomics.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,311 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 1800petmeds.com
+2025-06-24 21:36:09,311 - ❌ API error for 1800petmeds.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,342 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 10xgenomics.com
+2025-06-24 21:36:09,342 - ❌ API error for 10xgenomics.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,473 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 1800petmeds.com
+2025-06-24 21:36:09,474 - ❌ API error for 1800petmeds.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,526 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 1800petmeds.com
+2025-06-24 21:36:09,526 - ❌ API error for 1800petmeds.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,534 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 3m.com
+2025-06-24 21:36:09,534 - ❌ API error for 3m.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,554 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 163.com
+2025-06-24 21:36:09,555 - ❌ API error for 163.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,563 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 10xgenomics.com
+2025-06-24 21:36:09,563 - ❌ API error for 10xgenomics.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,563 - 📡 API call: gpt-4o-mini → business_analysis → 23andme.com
+2025-06-24 21:36:09,563 - ❌ API error for 23andme.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:09,590 - 📡 API call: gpt-4o-mini → technical_assessment → 20minutos.es
+2025-06-24 21:36:09,590 - ❌ API error for 20minutos.es with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:09,632 - 📡 API call: gpt-4o-mini → technical_assessment → 10xgenomics.com
+2025-06-24 21:36:09,632 - ❌ API error for 10xgenomics.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:09,679 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 23andme.com
+2025-06-24 21:36:09,680 - ❌ API error for 23andme.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,684 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 17zhuang.com
+2025-06-24 21:36:09,684 - ❌ API error for 17zhuang.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,712 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 23andme.com
+2025-06-24 21:36:09,712 - ❌ API error for 23andme.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,717 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 350.org
+2025-06-24 21:36:09,717 - ❌ API error for 350.org with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,720 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 3m.com
+2025-06-24 21:36:09,721 - ❌ API error for 3m.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,745 - 📡 API call: gpt-4o-mini → content_strategy → 360.cn
+2025-06-24 21:36:09,745 - ❌ API error for 360.cn with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:09,759 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 360.cn
+2025-06-24 21:36:09,759 - ❌ API error for 360.cn with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,803 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 10xgenomics.com
+2025-06-24 21:36:09,803 - ❌ API error for 10xgenomics.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,806 - 📡 API call: gpt-4o-mini → technical_assessment → 17zhuang.com
+2025-06-24 21:36:09,806 - ❌ API error for 17zhuang.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:09,810 - 📡 API call: gpt-4o-mini → business_analysis → 1800petmeds.com
+2025-06-24 21:36:09,810 - ❌ API error for 1800petmeds.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:09,817 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 360.cn
+2025-06-24 21:36:09,817 - ❌ API error for 360.cn with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,820 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 23andme.com
+2025-06-24 21:36:09,820 - ❌ API error for 23andme.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,863 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 163.com
+2025-06-24 21:36:09,863 - ❌ API error for 163.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,878 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 3m.com
+2025-06-24 21:36:09,878 - ❌ API error for 3m.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,892 - 📡 API call: gpt-4o-mini → content_strategy → 163.com
+2025-06-24 21:36:09,893 - ❌ API error for 163.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:09,915 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 360.cn
+2025-06-24 21:36:09,915 - ❌ API error for 360.cn with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,935 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 350.org
+2025-06-24 21:36:09,935 - ❌ API error for 350.org with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:09,938 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 350.org
+2025-06-24 21:36:09,939 - ❌ API error for 350.org with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:09,976 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → business_analysis → 20minutos.es
+2025-06-24 21:36:09,976 - ❌ API error for 20minutos.es with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:10,047 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 20minutos.es
+2025-06-24 21:36:10,048 - ❌ API error for 20minutos.es with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:10,090 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 17zhuang.com
+2025-06-24 21:36:10,090 - ❌ API error for 17zhuang.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:10,108 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 3m.com
+2025-06-24 21:36:10,108 - ❌ API error for 3m.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:10,111 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → content_strategy → 163.com
+2025-06-24 21:36:10,111 - ❌ API error for 163.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:10,258 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 000webhost.com
+2025-06-24 21:36:10,259 - ❌ API error for 000webhost.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:10,266 - 📡 API call: meta-llama/Llama-2-7b-chat-hf → technical_assessment → 163.com
+2025-06-24 21:36:10,267 - ❌ API error for 163.com with meta-llama/Llama-2-7b-chat-hf: Together AI API key not configured
+2025-06-24 21:36:10,309 - 📡 API call: gpt-4o-mini → content_strategy → 1800petmeds.com
+2025-06-24 21:36:10,309 - ❌ API error for 1800petmeds.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:10,352 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 1800petmeds.com
+2025-06-24 21:36:10,352 - ❌ API error for 1800petmeds.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:10,399 - 📡 API call: gpt-4o-mini → business_analysis → 350.org
+2025-06-24 21:36:10,400 - ❌ API error for 350.org with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:10,438 - 📡 API call: gpt-4o-mini → content_strategy → 000webhost.com
+2025-06-24 21:36:10,438 - ❌ API error for 000webhost.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:10,532 - 📡 API call: gpt-4o-mini → content_strategy → 3m.com
+2025-06-24 21:36:10,532 - ❌ API error for 3m.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:10,568 - 📡 API call: gpt-4o-mini → content_strategy → 20minutos.es
+2025-06-24 21:36:10,568 - ❌ API error for 20minutos.es with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:10,581 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 000webhost.com
+2025-06-24 21:36:10,581 - ❌ API error for 000webhost.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:10,603 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 3m.com
+2025-06-24 21:36:10,603 - ❌ API error for 3m.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:10,653 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 10xgenomics.com
+2025-06-24 21:36:10,653 - ❌ API error for 10xgenomics.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:10,724 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 000webhost.com
+2025-06-24 21:36:10,724 - ❌ API error for 000webhost.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:10,746 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 20minutos.es
+2025-06-24 21:36:10,746 - ❌ API error for 20minutos.es with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:10,775 - 📡 API call: gpt-4o-mini → content_strategy → 10xgenomics.com
+2025-06-24 21:36:10,776 - ❌ API error for 10xgenomics.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:10,879 - 📡 API call: gpt-4o-mini → content_strategy → 23andme.com
+2025-06-24 21:36:10,879 - ❌ API error for 23andme.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:10,956 - 📡 API call: gpt-4o-mini → content_strategy → 350.org
+2025-06-24 21:36:10,956 - ❌ API error for 350.org with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:10,995 - 📡 API call: gpt-4o-mini → technical_assessment → 000webhost.com
+2025-06-24 21:36:10,995 - ❌ API error for 000webhost.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,024 - 📡 API call: gpt-4o-mini → business_analysis → 000webhost.com
+2025-06-24 21:36:11,024 - ❌ API error for 000webhost.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,051 - 📡 API call: gpt-4o-mini → business_analysis → 163.com
+2025-06-24 21:36:11,051 - ❌ API error for 163.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,112 - 📡 API call: gpt-4o-mini → business_analysis → 360.cn
+2025-06-24 21:36:11,112 - ❌ API error for 360.cn with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,183 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 23andme.com
+2025-06-24 21:36:11,183 - ❌ API error for 23andme.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:11,265 - 📡 API call: llama-3.1-sonar-small-128k-online → technical_assessment → 000webhost.com
+2025-06-24 21:36:11,265 - ❌ API error for 000webhost.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:11,276 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 350.org
+2025-06-24 21:36:11,277 - ❌ API error for 350.org with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:11,289 - 📡 API call: gpt-4o-mini → technical_assessment → 3m.com
+2025-06-24 21:36:11,289 - ❌ API error for 3m.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,292 - 📡 API call: llama-3.1-sonar-small-128k-online → content_strategy → 17zhuang.com
+2025-06-24 21:36:11,292 - ❌ API error for 17zhuang.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:11,293 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 10xgenomics.com
+2025-06-24 21:36:11,294 - ❌ API error for 10xgenomics.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:11,343 - 📡 API call: gpt-4o-mini → technical_assessment → 163.com
+2025-06-24 21:36:11,343 - ❌ API error for 163.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,350 - 📡 API call: llama-3.1-sonar-small-128k-online → business_analysis → 23andme.com
+2025-06-24 21:36:11,350 - ❌ API error for 23andme.com with llama-3.1-sonar-small-128k-online: Perplexity API key not configured
+2025-06-24 21:36:11,406 - 📡 API call: gpt-4o-mini → technical_assessment → 350.org
+2025-06-24 21:36:11,406 - ❌ API error for 350.org with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,410 - 📡 API call: gpt-4o-mini → technical_assessment → 360.cn
+2025-06-24 21:36:11,410 - ❌ API error for 360.cn with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,551 - 📡 API call: mistral-small-2402 → technical_assessment → 360.cn
+2025-06-24 21:36:11,551 - ❌ API error for 360.cn with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:11,566 - 📡 API call: gpt-4o-mini → business_analysis → 3m.com
+2025-06-24 21:36:11,566 - ❌ API error for 3m.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,602 - 📡 API call: gpt-4o-mini → technical_assessment → 1800petmeds.com
+2025-06-24 21:36:11,602 - ❌ API error for 1800petmeds.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:11,626 - 📡 API call: gemini-1.5-flash → business_analysis → 163.com
+2025-06-24 21:36:11,626 - ❌ API error for 163.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:11,654 - 📡 API call: mistral-small-2402 → technical_assessment → 20minutos.es
+2025-06-24 21:36:11,655 - ❌ API error for 20minutos.es with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:11,705 - 📡 API call: mistral-small-2402 → business_analysis → 10xgenomics.com
+2025-06-24 21:36:11,705 - ❌ API error for 10xgenomics.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:11,869 - 📡 API call: gemini-1.5-flash → business_analysis → 000webhost.com
+2025-06-24 21:36:11,870 - ❌ API error for 000webhost.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:11,899 - 📡 API call: gemini-1.5-flash → technical_assessment → 3m.com
+2025-06-24 21:36:11,899 - ❌ API error for 3m.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:11,984 - 📡 API call: gemini-1.5-flash → content_strategy → 3m.com
+2025-06-24 21:36:11,984 - ❌ API error for 3m.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,010 - 📡 API call: gemini-1.5-flash → content_strategy → 10xgenomics.com
+2025-06-24 21:36:12,010 - ❌ API error for 10xgenomics.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,013 - 📡 API call: gemini-1.5-flash → technical_assessment → 10xgenomics.com
+2025-06-24 21:36:12,013 - ❌ API error for 10xgenomics.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,036 - 📡 API call: mistral-small-2402 → technical_assessment → 17zhuang.com
+2025-06-24 21:36:12,036 - ❌ API error for 17zhuang.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,063 - 📡 API call: gemini-1.5-flash → content_strategy → 360.cn
+2025-06-24 21:36:12,063 - ❌ API error for 360.cn with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,093 - 📡 API call: gpt-4o-mini → content_strategy → 17zhuang.com
+2025-06-24 21:36:12,094 - ❌ API error for 17zhuang.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:12,095 - 📡 API call: gemini-1.5-flash → content_strategy → 350.org
+2025-06-24 21:36:12,095 - ❌ API error for 350.org with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,095 - 📡 API call: mistral-small-2402 → content_strategy → 163.com
+2025-06-24 21:36:12,095 - ❌ API error for 163.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,108 - 📡 API call: mistral-small-2402 → business_analysis → 1800petmeds.com
+2025-06-24 21:36:12,108 - ❌ API error for 1800petmeds.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,110 - 📡 API call: gemini-1.5-flash → business_analysis → 3m.com
+2025-06-24 21:36:12,111 - ❌ API error for 3m.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,185 - 📡 API call: mistral-small-2402 → technical_assessment → 350.org
+2025-06-24 21:36:12,186 - ❌ API error for 350.org with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,208 - 📡 API call: mistral-small-2402 → business_analysis → 360.cn
+2025-06-24 21:36:12,208 - ❌ API error for 360.cn with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,225 - 📡 API call: mistral-small-2402 → content_strategy → 360.cn
+2025-06-24 21:36:12,225 - ❌ API error for 360.cn with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,237 - 📡 API call: gpt-4o-mini → business_analysis → 20minutos.es
+2025-06-24 21:36:12,237 - ❌ API error for 20minutos.es with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:12,358 - 📡 API call: gpt-4o-mini → business_analysis → 17zhuang.com
+2025-06-24 21:36:12,358 - ❌ API error for 17zhuang.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:12,372 - 📡 API call: mistral-small-2402 → business_analysis → 20minutos.es
+2025-06-24 21:36:12,372 - ❌ API error for 20minutos.es with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,386 - 📡 API call: gpt-4o-mini → business_analysis → 10xgenomics.com
+2025-06-24 21:36:12,386 - ❌ API error for 10xgenomics.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:12,439 - 📡 API call: gpt-4o-mini → technical_assessment → 23andme.com
+2025-06-24 21:36:12,439 - ❌ API error for 23andme.com with gpt-4o-mini: OpenAI API key not configured
+2025-06-24 21:36:12,553 - 📡 API call: mistral-small-2402 → technical_assessment → 23andme.com
+2025-06-24 21:36:12,553 - ❌ API error for 23andme.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,571 - 📡 API call: mistral-small-2402 → content_strategy → 20minutos.es
+2025-06-24 21:36:12,571 - ❌ API error for 20minutos.es with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,599 - 📡 API call: gemini-1.5-flash → business_analysis → 10xgenomics.com
+2025-06-24 21:36:12,599 - ❌ API error for 10xgenomics.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,619 - 📡 API call: gemini-1.5-flash → business_analysis → 20minutos.es
+2025-06-24 21:36:12,619 - ❌ API error for 20minutos.es with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,621 - 📡 API call: mistral-small-2402 → content_strategy → 1800petmeds.com
+2025-06-24 21:36:12,621 - ❌ API error for 1800petmeds.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,654 - 📡 API call: gemini-1.5-flash → content_strategy → 20minutos.es
+2025-06-24 21:36:12,654 - ❌ API error for 20minutos.es with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,665 - 📡 API call: gemini-1.5-flash → technical_assessment → 23andme.com
+2025-06-24 21:36:12,666 - ❌ API error for 23andme.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,833 - 📡 API call: gemini-1.5-flash → technical_assessment → 20minutos.es
+2025-06-24 21:36:12,833 - ❌ API error for 20minutos.es with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,855 - 📡 API call: gemini-1.5-flash → technical_assessment → 1800petmeds.com
+2025-06-24 21:36:12,855 - ❌ API error for 1800petmeds.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:12,935 - 📡 API call: mistral-small-2402 → business_analysis → 163.com
+2025-06-24 21:36:12,935 - ❌ API error for 163.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,941 - 📡 API call: mistral-small-2402 → business_analysis → 3m.com
+2025-06-24 21:36:12,941 - ❌ API error for 3m.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:12,969 - 📡 API call: gemini-1.5-flash → content_strategy → 163.com
+2025-06-24 21:36:12,969 - ❌ API error for 163.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,075 - 📡 API call: gemini-1.5-flash → technical_assessment → 163.com
+2025-06-24 21:36:13,075 - ❌ API error for 163.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,201 - 📡 API call: gemini-1.5-flash → content_strategy → 17zhuang.com
+2025-06-24 21:36:13,201 - ❌ API error for 17zhuang.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,233 - 📡 API call: gemini-1.5-flash → technical_assessment → 000webhost.com
+2025-06-24 21:36:13,233 - ❌ API error for 000webhost.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,235 - 📡 API call: gemini-1.5-flash → business_analysis → 17zhuang.com
+2025-06-24 21:36:13,235 - ❌ API error for 17zhuang.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,268 - 📡 API call: gemini-1.5-flash → business_analysis → 23andme.com
+2025-06-24 21:36:13,268 - ❌ API error for 23andme.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,316 - 📡 API call: gemini-1.5-flash → technical_assessment → 17zhuang.com
+2025-06-24 21:36:13,316 - ❌ API error for 17zhuang.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,331 - 📡 API call: mistral-small-2402 → business_analysis → 23andme.com
+2025-06-24 21:36:13,331 - ❌ API error for 23andme.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,340 - 📡 API call: mistral-small-2402 → content_strategy → 17zhuang.com
+2025-06-24 21:36:13,340 - ❌ API error for 17zhuang.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,376 - 📡 API call: mistral-small-2402 → business_analysis → 350.org
+2025-06-24 21:36:13,377 - ❌ API error for 350.org with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,457 - 📡 API call: grok-beta → technical_assessment → 10xgenomics.com
+2025-06-24 21:36:13,458 - ❌ API error for 10xgenomics.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:13,465 - 📡 API call: mistral-small-2402 → content_strategy → 3m.com
+2025-06-24 21:36:13,466 - ❌ API error for 3m.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,546 - 📡 API call: grok-beta → technical_assessment → 360.cn
+2025-06-24 21:36:13,547 - ❌ API error for 360.cn with grok-beta: xAI API key not configured
+2025-06-24 21:36:13,608 - 📡 API call: mistral-small-2402 → technical_assessment → 000webhost.com
+2025-06-24 21:36:13,609 - ❌ API error for 000webhost.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,611 - 📡 API call: grok-beta → business_analysis → 163.com
+2025-06-24 21:36:13,611 - ❌ API error for 163.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:13,637 - 📡 API call: grok-beta → technical_assessment → 1800petmeds.com
+2025-06-24 21:36:13,637 - ❌ API error for 1800petmeds.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:13,670 - 📡 API call: grok-beta → technical_assessment → 17zhuang.com
+2025-06-24 21:36:13,670 - ❌ API error for 17zhuang.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:13,679 - 📡 API call: gemini-1.5-flash → business_analysis → 350.org
+2025-06-24 21:36:13,679 - ❌ API error for 350.org with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,711 - 📡 API call: mistral-small-2402 → technical_assessment → 10xgenomics.com
+2025-06-24 21:36:13,711 - ❌ API error for 10xgenomics.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,726 - 📡 API call: gemini-1.5-flash → content_strategy → 23andme.com
+2025-06-24 21:36:13,727 - ❌ API error for 23andme.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,732 - 📡 API call: gemini-1.5-flash → content_strategy → 1800petmeds.com
+2025-06-24 21:36:13,732 - ❌ API error for 1800petmeds.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,776 - 📡 API call: gemini-1.5-flash → content_strategy → 000webhost.com
+2025-06-24 21:36:13,776 - ❌ API error for 000webhost.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,799 - 📡 API call: mistral-small-2402 → technical_assessment → 163.com
+2025-06-24 21:36:13,799 - ❌ API error for 163.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,894 - 📡 API call: gemini-1.5-flash → technical_assessment → 360.cn
+2025-06-24 21:36:13,894 - ❌ API error for 360.cn with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:13,913 - 📡 API call: grok-beta → business_analysis → 23andme.com
+2025-06-24 21:36:13,913 - ❌ API error for 23andme.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:13,953 - 📡 API call: mistral-small-2402 → technical_assessment → 3m.com
+2025-06-24 21:36:13,953 - ❌ API error for 3m.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,963 - 📡 API call: grok-beta → business_analysis → 360.cn
+2025-06-24 21:36:13,963 - ❌ API error for 360.cn with grok-beta: xAI API key not configured
+2025-06-24 21:36:13,979 - 📡 API call: mistral-small-2402 → content_strategy → 000webhost.com
+2025-06-24 21:36:13,979 - ❌ API error for 000webhost.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:13,984 - 📡 API call: mistral-small-2402 → content_strategy → 10xgenomics.com
+2025-06-24 21:36:13,984 - ❌ API error for 10xgenomics.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:14,023 - 📡 API call: mistral-small-2402 → business_analysis → 17zhuang.com
+2025-06-24 21:36:14,023 - ❌ API error for 17zhuang.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:14,026 - 📡 API call: mistral-small-2402 → content_strategy → 350.org
+2025-06-24 21:36:14,026 - ❌ API error for 350.org with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:14,046 - 📡 API call: gemini-1.5-flash → technical_assessment → 350.org
+2025-06-24 21:36:14,046 - ❌ API error for 350.org with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:14,215 - 📡 API call: mistral-small-2402 → business_analysis → 000webhost.com
+2025-06-24 21:36:14,215 - ❌ API error for 000webhost.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:14,222 - 📡 API call: mistral-small-2402 → technical_assessment → 1800petmeds.com
+2025-06-24 21:36:14,222 - ❌ API error for 1800petmeds.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:14,241 - 📡 API call: mistral-small-2402 → content_strategy → 23andme.com
+2025-06-24 21:36:14,241 - ❌ API error for 23andme.com with mistral-small-2402: Mistral API key not configured
+2025-06-24 21:36:14,300 - 📡 API call: gemini-1.5-flash → business_analysis → 360.cn
+2025-06-24 21:36:14,300 - ❌ API error for 360.cn with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:14,322 - 📡 API call: grok-beta → technical_assessment → 23andme.com
+2025-06-24 21:36:14,322 - ❌ API error for 23andme.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:14,363 - 📡 API call: gemini-1.5-flash → business_analysis → 1800petmeds.com
+2025-06-24 21:36:14,363 - ❌ API error for 1800petmeds.com with gemini-1.5-flash: Google API key not configured
+2025-06-24 21:36:14,649 - 📡 API call: grok-beta → technical_assessment → 350.org
+2025-06-24 21:36:14,649 - ❌ API error for 350.org with grok-beta: xAI API key not configured
+2025-06-24 21:36:14,783 - 📡 API call: grok-beta → content_strategy → 000webhost.com
+2025-06-24 21:36:14,783 - ❌ API error for 000webhost.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:14,803 - 📡 API call: grok-beta → business_analysis → 3m.com
+2025-06-24 21:36:14,803 - ❌ API error for 3m.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,041 - 📡 API call: grok-beta → technical_assessment → 3m.com
+2025-06-24 21:36:15,041 - ❌ API error for 3m.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,042 - 📡 API call: grok-beta → content_strategy → 23andme.com
+2025-06-24 21:36:15,042 - ❌ API error for 23andme.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,060 - 📡 API call: grok-beta → business_analysis → 1800petmeds.com
+2025-06-24 21:36:15,060 - ❌ API error for 1800petmeds.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,110 - 📡 API call: grok-beta → business_analysis → 10xgenomics.com
+2025-06-24 21:36:15,110 - ❌ API error for 10xgenomics.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,118 - 📡 API call: grok-beta → content_strategy → 1800petmeds.com
+2025-06-24 21:36:15,118 - ❌ API error for 1800petmeds.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,161 - 📡 API call: grok-beta → technical_assessment → 000webhost.com
+2025-06-24 21:36:15,161 - ❌ API error for 000webhost.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,315 - 📡 API call: grok-beta → content_strategy → 360.cn
+2025-06-24 21:36:15,315 - ❌ API error for 360.cn with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,368 - 📡 API call: grok-beta → business_analysis → 20minutos.es
+2025-06-24 21:36:15,368 - ❌ API error for 20minutos.es with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,502 - 📡 API call: grok-beta → content_strategy → 17zhuang.com
+2025-06-24 21:36:15,502 - ❌ API error for 17zhuang.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,511 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 350.org
+2025-06-24 21:36:15,511 - ❌ API error for 350.org with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:15,561 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 350.org
+2025-06-24 21:36:15,561 - ❌ API error for 350.org with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:15,570 - 📡 API call: grok-beta → business_analysis → 17zhuang.com
+2025-06-24 21:36:15,571 - ❌ API error for 17zhuang.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,579 - 📡 API call: grok-beta → content_strategy → 10xgenomics.com
+2025-06-24 21:36:15,579 - ❌ API error for 10xgenomics.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,581 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 3m.com
+2025-06-24 21:36:15,581 - ❌ API error for 3m.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:15,614 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 000webhost.com
+2025-06-24 21:36:15,615 - ❌ API error for 000webhost.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:15,692 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 17zhuang.com
+2025-06-24 21:36:15,692 - ❌ API error for 17zhuang.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:15,789 - 📡 API call: grok-beta → content_strategy → 350.org
+2025-06-24 21:36:15,789 - ❌ API error for 350.org with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,849 - 📡 API call: grok-beta → content_strategy → 20minutos.es
+2025-06-24 21:36:15,849 - ❌ API error for 20minutos.es with grok-beta: xAI API key not configured
+2025-06-24 21:36:15,921 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 23andme.com
+2025-06-24 21:36:15,921 - ❌ API error for 23andme.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:15,967 - 📡 API call: grok-beta → business_analysis → 000webhost.com
+2025-06-24 21:36:15,967 - ❌ API error for 000webhost.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:16,034 - 📡 API call: grok-beta → technical_assessment → 163.com
+2025-06-24 21:36:16,034 - ❌ API error for 163.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:16,043 - 📡 API call: grok-beta → content_strategy → 163.com
+2025-06-24 21:36:16,043 - ❌ API error for 163.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:16,046 - 📡 API call: grok-beta → business_analysis → 350.org
+2025-06-24 21:36:16,047 - ❌ API error for 350.org with grok-beta: xAI API key not configured
+2025-06-24 21:36:16,109 - 📡 API call: grok-beta → technical_assessment → 20minutos.es
+2025-06-24 21:36:16,109 - ❌ API error for 20minutos.es with grok-beta: xAI API key not configured
+2025-06-24 21:36:16,246 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 20minutos.es
+2025-06-24 21:36:16,246 - ❌ API error for 20minutos.es with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:16,338 - 📡 API call: grok-beta → content_strategy → 3m.com
+2025-06-24 21:36:16,338 - ❌ API error for 3m.com with grok-beta: xAI API key not configured
+2025-06-24 21:36:16,433 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 23andme.com
+2025-06-24 21:36:16,433 - ❌ API error for 23andme.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:16,467 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 360.cn
+2025-06-24 21:36:16,467 - ❌ API error for 360.cn with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:16,508 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 000webhost.com
+2025-06-24 21:36:16,508 - ❌ API error for 000webhost.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:16,655 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 10xgenomics.com
+2025-06-24 21:36:16,655 - ❌ API error for 10xgenomics.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:16,828 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 17zhuang.com
+2025-06-24 21:36:16,828 - ❌ API error for 17zhuang.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:16,846 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 163.com
+2025-06-24 21:36:16,846 - ❌ API error for 163.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:16,864 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 360.cn
+2025-06-24 21:36:16,864 - ❌ API error for 360.cn with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:16,886 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 1800petmeds.com
+2025-06-24 21:36:16,886 - ❌ API error for 1800petmeds.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,030 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 23andme.com
+2025-06-24 21:36:17,030 - ❌ API error for 23andme.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,048 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 163.com
+2025-06-24 21:36:17,048 - ❌ API error for 163.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,112 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 350.org
+2025-06-24 21:36:17,112 - ❌ API error for 350.org with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,116 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 17zhuang.com
+2025-06-24 21:36:17,116 - ❌ API error for 17zhuang.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,163 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 3m.com
+2025-06-24 21:36:17,164 - ❌ API error for 3m.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,324 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 360.cn
+2025-06-24 21:36:17,324 - ❌ API error for 360.cn with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,416 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 000webhost.com
+2025-06-24 21:36:17,416 - ❌ API error for 000webhost.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,435 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 1800petmeds.com
+2025-06-24 21:36:17,435 - ❌ API error for 1800petmeds.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,540 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 10xgenomics.com
+2025-06-24 21:36:17,540 - ❌ API error for 10xgenomics.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,829 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 10xgenomics.com
+2025-06-24 21:36:17,829 - ❌ API error for 10xgenomics.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,829 - 📡 API call: claude-3-haiku-20240307 → business_analysis → 20minutos.es
+2025-06-24 21:36:17,829 - ❌ API error for 20minutos.es with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,830 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 3m.com
+2025-06-24 21:36:17,830 - ❌ API error for 3m.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:17,868 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 1800petmeds.com
+2025-06-24 21:36:17,868 - ❌ API error for 1800petmeds.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:18,193 - 📡 API call: claude-3-haiku-20240307 → technical_assessment → 163.com
+2025-06-24 21:36:18,193 - ❌ API error for 163.com with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:18,343 - 📡 API call: claude-3-haiku-20240307 → content_strategy → 20minutos.es
+2025-06-24 21:36:18,343 - ❌ API error for 20minutos.es with claude-3-haiku-20240307: Anthropic API key not configured
+2025-06-24 21:36:18,343 - ✅ Batch 1 complete in 13.9s
+2025-06-24 21:36:18,343 - 📊 Progress: 10/10 domains
+2025-06-24 21:36:18,344 - 
+🧪 TEST RUN COMPLETE!
+2025-06-24 21:36:18,344 - ==================================================
+2025-06-24 21:36:18,344 - ✅ Successful calls: 0
+2025-06-24 21:36:18,344 - ❌ Failed calls: 210
+2025-06-24 21:36:18,345 - ⏱️ Total time: 0.2 minutes
+2025-06-24 21:36:18,345 - 💰 Success rate: 0.0%
+2025-06-24 21:36:18,345 - 🔄 Triggering cache population...
+2025-06-24 21:36:18,345 - 📊 Cache update triggered - new data will be available within 6 hours
+2025-06-26 11:33:19,458 - 🔑 Available APIs: None
+2025-06-26 11:33:19,459 - 🔑 Missing API keys: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, MISTRAL_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY, TOGETHER_API_KEY
+2025-06-26 11:33:19,459 - 💡 Set environment variables or the scheduler will skip those models
+2025-06-26 11:33:19,459 - 🚀 Brand Intelligence Scheduler initialized!
+2025-06-26 11:33:19,459 - 📅 Weekly budget runs: Sundays
+2025-06-26 11:33:19,459 - 💎 Premium depth runs: Bi-weekly Wednesdays

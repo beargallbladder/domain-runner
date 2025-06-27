@@ -86,4 +86,51 @@ Connects to live embedding engine at:
 
 **Will your domain be remembered in an AI future?**
 
-Visit **Memory Oracle** and confront your digital mortality. 
+Visit **Memory Oracle** and confront your digital mortality.
+
+# Domain Runner - AI Brand Intelligence System
+
+## 🚀 QUICK START - TRIGGER DATA COLLECTION
+
+**To run weekly and premium data collection:**
+```bash
+node trigger_weekly_premium_runs.js
+```
+
+This triggers the sophisticated-runner to process 39 domains with 15 AI models each, generating fresh brand intelligence data.
+
+## 🏗️ Architecture
+
+- **sophisticated-runner**: Main processing service (Node.js)
+- **llm-pagerank-public-api**: Public API (Python)
+- **Frontend**: React app deployed on Vercel
+
+## 📊 Data Collection
+
+The system processes domains through 15 AI models:
+- Claude Haiku, DeepSeek Chat, GPT-4o-mini, Mistral Small
+- Grok Beta, Llama models, Together AI models, etc.
+
+Each domain gets 3 prompt types:
+- business_analysis
+- content_strategy  
+- technical_assessment
+
+## 🔧 Services
+
+### Active Render Services
+- `sophisticated-runner.onrender.com` - Main processor
+- `llm-pagerank-public-api.onrender.com` - Public API
+
+### Monitoring
+- Health: `https://sophisticated-runner.onrender.com/health`
+- Data: `https://llm-pagerank-public-api.onrender.com/health`
+
+## 📝 Documentation
+
+- **Data Collection**: See `HOW_TO_TRIGGER_DATA_COLLECTION.md`
+- **Architecture**: See `DEPLOYMENT_ARCHITECTURE.md`
+- **API**: See `services/public-api/`
+
+## 🎯 Last Updated
+June 27, 2025 - Data collection trigger method verified and documented 
