@@ -178,6 +178,71 @@ app.post('/run/premium', async (req, res) => {
   }
 });
 
+// Add real domain processing endpoint
+app.post('/process-pending-domains', async (req, res) => {
+  try {
+    const pendingResult = await pool.query(
+      'SELECT id, domain FROM domains WHERE status = $1 ORDER BY updated_at ASC LIMIT 5',
+      ['pending']
+    );
+    
+    if (pendingResult.rows.length === 0) {
+      return res.json({ message: 'No pending domains found', processed: 0 });
+    }
+    
+    let processed = 0;
+    
+    for (const domainRow of pendingResult.rows) {
+      await processRealDomain(domainRow.id, domainRow.domain);
+      processed++;
+    }
+    
+    res.json({ processed });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+async function processRealDomain(domainId: number, domain: string) {
+  const models = ['gpt-4o-mini', 'gpt-3.5-turbo'];
+  const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
+  
+  for (const promptType of prompts) {
+    for (const model of models) {
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: `Analyze ${domain} for ${promptType}` }],
+            max_tokens: 500
+          })
+        });
+        
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+        
+        await pool.query(
+          'INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())',
+          [domainId, model, promptType, content]
+        );
+        
+      } catch (error) {
+        console.error(`Failed ${model} for ${domain}:`, error);
+      }
+    }
+  }
+  
+  await pool.query(
+    'UPDATE domains SET status = $1, updated_at = NOW() WHERE id = $2',
+    ['completed', domainId]
+  );
+}
+
 // Start the cache population scheduler
 scheduler.startScheduler();
 
