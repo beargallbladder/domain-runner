@@ -203,14 +203,14 @@ async function processRealDomain(domainId, domain) {
                 });
                 const data = await response.json();
                 const content = data.choices[0].message.content;
-                await pool.query('INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())', [parseInt(domainId.toString()), model, promptType, content]);
+                await pool.query('INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())', [domainId, model, promptType, content]);
             }
             catch (error) {
                 console.error(`Failed ${model} for ${domain}:`, error);
             }
         }
     }
-    await pool.query('UPDATE domains SET status = $1, updated_at = NOW() WHERE id = $2', ['completed', parseInt(domainId.toString())]);
+    await pool.query('UPDATE domains SET status = $1, updated_at = NOW() WHERE id = $2', ['completed', domainId]);
 }
 // Start the cache population scheduler
 scheduler.startScheduler();
