@@ -187,62 +187,114 @@ app.post('/process-pending-domains', async (req, res) => {
 });
 async function processRealDomain(domainId, domain) {
     console.log(`processRealDomain called with domainId: ${domainId} (type: ${typeof domainId})`);
-    const models = ['gpt-4o-mini', 'gpt-3.5-turbo'];
+    // Multi-provider model configuration with rate limiting
+    const modelConfigs = [
+        // OpenAI models
+        {
+            provider: 'openai',
+            model: 'gpt-4o-mini',
+            apiKeys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
+            endpoint: 'https://api.openai.com/v1/chat/completions',
+            delay: 1000 // 1 second delay
+        },
+        {
+            provider: 'openai',
+            model: 'gpt-3.5-turbo',
+            apiKeys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
+            endpoint: 'https://api.openai.com/v1/chat/completions',
+            delay: 1000 // 1 second delay
+        },
+        // Anthropic models
+        {
+            provider: 'anthropic',
+            model: 'claude-3-haiku-20240307',
+            apiKeys: [process.env.ANTHROPIC_API_KEY, process.env.ANTHROPIC_API_KEY2].filter(k => k),
+            endpoint: 'https://api.anthropic.com/v1/messages',
+            delay: 2000 // 2 second delay (more conservative)
+        },
+        // DeepSeek models (very cheap)
+        {
+            provider: 'deepseek',
+            model: 'deepseek-chat',
+            apiKeys: [process.env.DEEPSEEK_API_KEY, process.env.DEEPSEEK_API_KEY2].filter(k => k),
+            endpoint: 'https://api.deepseek.com/v1/chat/completions',
+            delay: 500 // 0.5 second delay (cheaper, can go faster)
+        }
+    ].filter(config => config.apiKeys.length > 0); // Only include providers with valid keys
     const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
-    // Get multiple API keys from environment
-    const apiKeys = [
-        process.env.OPENAI_API_KEY,
-        process.env.OPENAI_API_KEY_2,
-        process.env.OPENAI_API_KEY_3,
-        process.env.OPENAI_API_KEY_4,
-        process.env.OPENAI_API_KEY_5
-    ].filter(key => key && key.trim() !== ''); // Remove empty/undefined keys
-    console.log(`🔑 Found ${apiKeys.length} API keys available`);
-    // Add rate limiting: 2 second delay between API calls
+    console.log(`🔑 Found ${modelConfigs.length} model configurations available`);
+    // Add rate limiting function
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-    let apiKeyIndex = 0;
+    let globalApiKeyIndex = 0;
     for (const promptType of prompts) {
-        for (const model of models) {
+        for (const modelConfig of modelConfigs) {
             try {
-                // Rotate through available API keys
-                const currentApiKey = apiKeys[apiKeyIndex % apiKeys.length];
-                apiKeyIndex++;
-                console.log(`🔄 Processing ${domain} with ${model} for ${promptType} (API key ${(apiKeyIndex - 1) % apiKeys.length + 1}/${apiKeys.length})`);
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
+                // Rotate through available API keys for this provider
+                const currentApiKey = modelConfig.apiKeys[globalApiKeyIndex % modelConfig.apiKeys.length];
+                globalApiKeyIndex++;
+                console.log(`🔄 Processing ${domain} with ${modelConfig.provider}/${modelConfig.model} for ${promptType} (key ${globalApiKeyIndex % modelConfig.apiKeys.length + 1}/${modelConfig.apiKeys.length})`);
+                let requestBody;
+                let headers;
+                // Configure request based on provider
+                if (modelConfig.provider === 'openai' || modelConfig.provider === 'deepseek') {
+                    headers = {
                         'Authorization': `Bearer ${currentApiKey}`,
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model,
+                    };
+                    requestBody = {
+                        model: modelConfig.model,
                         messages: [{ role: 'user', content: `Analyze ${domain} for ${promptType}` }],
                         max_tokens: 500
-                    })
+                    };
+                }
+                else if (modelConfig.provider === 'anthropic') {
+                    headers = {
+                        'x-api-key': currentApiKey,
+                        'Content-Type': 'application/json',
+                        'anthropic-version': '2023-06-01'
+                    };
+                    requestBody = {
+                        model: modelConfig.model,
+                        max_tokens: 500,
+                        messages: [{ role: 'user', content: `Analyze ${domain} for ${promptType}` }]
+                    };
+                }
+                const response = await fetch(modelConfig.endpoint, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(requestBody)
                 });
                 const data = await response.json();
-                // Check for rate limiting errors
-                if (data.error) {
-                    console.error(`❌ API Error for ${domain} (${model}) with API key ${(apiKeyIndex - 1) % apiKeys.length + 1}:`, data.error.message);
-                    if (data.error.type === 'rate_limit_exceeded') {
-                        console.log(`⏳ Rate limit hit on API key ${(apiKeyIndex - 1) % apiKeys.length + 1}, trying next key...`);
-                        await delay(5000); // Short delay before trying next key
-                        continue; // Skip this call, will retry with next key
+                // Check for errors (different providers have different error formats)
+                if (data.error || (data.type === 'error')) {
+                    const errorMsg = data.error?.message || data.message || 'Unknown error';
+                    console.error(`❌ API Error for ${domain} (${modelConfig.provider}/${modelConfig.model}):`, errorMsg);
+                    if (errorMsg.includes('rate_limit') || errorMsg.includes('rate limit')) {
+                        console.log(`⏳ Rate limit hit on ${modelConfig.provider}, waiting...`);
+                        await delay(modelConfig.delay * 2); // Double delay on rate limit
+                        continue;
                     }
-                    if (data.error.type === 'invalid_api_key') {
-                        console.log(`🔑 Invalid API key ${(apiKeyIndex - 1) % apiKeys.length + 1}, trying next key...`);
-                        continue; // Skip this call, will retry with next key
+                    if (errorMsg.includes('invalid') && errorMsg.includes('key')) {
+                        console.log(`🔑 Invalid API key for ${modelConfig.provider}, trying next...`);
+                        continue;
                     }
                     continue;
                 }
-                const content = data.choices[0].message.content;
-                await pool.query('INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())', [domainId, model, promptType, content]);
-                console.log(`✅ Stored response for ${domain} (${model}, ${promptType})`);
-                // Rate limiting: 1 second delay between calls (reduced due to multiple API keys)
-                await delay(1000);
+                // Extract content based on provider response format
+                let content;
+                if (modelConfig.provider === 'anthropic') {
+                    content = data.content?.[0]?.text || 'No response';
+                }
+                else {
+                    content = data.choices?.[0]?.message?.content || 'No response';
+                }
+                await pool.query('INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())', [domainId, `${modelConfig.provider}/${modelConfig.model}`, promptType, content]);
+                console.log(`✅ Stored response for ${domain} (${modelConfig.provider}/${modelConfig.model}, ${promptType})`);
+                // Provider-specific rate limiting
+                await delay(modelConfig.delay);
             }
             catch (error) {
-                console.error(`Failed ${model} for ${domain}:`, error);
+                console.error(`Failed ${modelConfig.provider}/${modelConfig.model} for ${domain}:`, error);
                 // Add delay even on errors to prevent rapid retries
                 await delay(1000);
             }
