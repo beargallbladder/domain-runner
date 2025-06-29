@@ -165,6 +165,53 @@ app.post('/run/premium', async (req, res) => {
         });
     }
 });
+// Add real domain processing endpoint
+app.post('/process-pending-domains', async (req, res) => {
+    try {
+        const pendingResult = await pool.query('SELECT id, domain FROM domains WHERE status = $1 ORDER BY updated_at ASC LIMIT 5', ['pending']);
+        if (pendingResult.rows.length === 0) {
+            return res.json({ message: 'No pending domains found', processed: 0 });
+        }
+        let processed = 0;
+        for (const domainRow of pendingResult.rows) {
+            await processRealDomain(domainRow.id, domainRow.domain);
+            processed++;
+        }
+        res.json({ processed });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+async function processRealDomain(domainId, domain) {
+    const models = ['gpt-4o-mini', 'gpt-3.5-turbo'];
+    const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
+    for (const promptType of prompts) {
+        for (const model of models) {
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model,
+                        messages: [{ role: 'user', content: `Analyze ${domain} for ${promptType}` }],
+                        max_tokens: 500
+                    })
+                });
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+                await pool.query('INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())', [parseInt(domainId.toString()), model, promptType, content]);
+            }
+            catch (error) {
+                console.error(`Failed ${model} for ${domain}:`, error);
+            }
+        }
+    }
+    await pool.query('UPDATE domains SET status = $1, updated_at = NOW() WHERE id = $2', ['completed', parseInt(domainId.toString())]);
+}
 // Start the cache population scheduler
 scheduler.startScheduler();
 app.listen(port, () => {
@@ -173,8 +220,10 @@ app.listen(port, () => {
     console.log(`🔧 Manual cache regen: /trigger-cache-regen`);
     console.log(`🚀 Weekly run: POST /run/weekly`);
     console.log(`💎 Premium run: POST /run/premium`);
+    console.log(`🔥 Domain processing: POST /process-pending-domains`);
     console.log(`🏥 Health check: /health`);
 }); // Force rebuild Mon Jun 16 10:22:22 PDT 2025
 // Force redeploy Mon Jun 16 10:41:55 PDT 2025
 // ULTRA DEEP FIX: cohesion_score schema mismatch resolved - Wed Jun 25 04:20:00 UTC 2025
+// DOMAIN PROCESSING ENDPOINT ADDED - Sat Jun 29 17:15:00 UTC 2025
 //# sourceMappingURL=index.js.map

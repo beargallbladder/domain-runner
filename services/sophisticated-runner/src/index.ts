@@ -203,7 +203,7 @@ app.post('/process-pending-domains', async (req, res) => {
   }
 });
 
-async function processRealDomain(domainId: number, domain: string) {
+async function processRealDomain(domainId: any, domain: string) {
   const models = ['gpt-4o-mini', 'gpt-3.5-turbo'];
   const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
   
@@ -228,7 +228,7 @@ async function processRealDomain(domainId: number, domain: string) {
         
         await pool.query(
           'INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())',
-          [domainId, model, promptType, content]
+          [parseInt(domainId.toString()), model, promptType, content]
         );
         
       } catch (error: any) {
@@ -239,7 +239,7 @@ async function processRealDomain(domainId: number, domain: string) {
   
   await pool.query(
     'UPDATE domains SET status = $1, updated_at = NOW() WHERE id = $2',
-    ['completed', domainId]
+    ['completed', parseInt(domainId.toString())]
   );
 }
 
