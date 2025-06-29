@@ -169,11 +169,13 @@ app.post('/run/premium', async (req, res) => {
 app.post('/process-pending-domains', async (req, res) => {
     try {
         const pendingResult = await pool.query('SELECT id, domain FROM domains WHERE status = $1 ORDER BY updated_at ASC LIMIT 5', ['pending']);
+        console.log(`Found ${pendingResult.rows.length} pending domains`);
         if (pendingResult.rows.length === 0) {
             return res.json({ message: 'No pending domains found', processed: 0 });
         }
         let processed = 0;
         for (const domainRow of pendingResult.rows) {
+            console.log(`Processing domain: ${domainRow.domain}, ID: ${domainRow.id} (type: ${typeof domainRow.id})`);
             await processRealDomain(domainRow.id, domainRow.domain);
             processed++;
         }
@@ -184,6 +186,7 @@ app.post('/process-pending-domains', async (req, res) => {
     }
 });
 async function processRealDomain(domainId, domain) {
+    console.log(`processRealDomain called with domainId: ${domainId} (type: ${typeof domainId})`);
     const models = ['gpt-4o-mini', 'gpt-3.5-turbo'];
     const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
     for (const promptType of prompts) {
