@@ -189,9 +189,12 @@ async function processRealDomain(domainId, domain) {
     console.log(`processRealDomain called with domainId: ${domainId} (type: ${typeof domainId})`);
     const models = ['gpt-4o-mini', 'gpt-3.5-turbo'];
     const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
+    // Add rate limiting: 2 second delay between API calls
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     for (const promptType of prompts) {
         for (const model of models) {
             try {
+                console.log(`🔄 Processing ${domain} with ${model} for ${promptType}`);
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: {
@@ -205,11 +208,26 @@ async function processRealDomain(domainId, domain) {
                     })
                 });
                 const data = await response.json();
+                // Check for rate limiting errors
+                if (data.error) {
+                    console.error(`❌ API Error for ${domain} (${model}):`, data.error.message);
+                    if (data.error.type === 'rate_limit_exceeded') {
+                        console.log('⏳ Rate limit hit, waiting 60 seconds...');
+                        await delay(60000); // Wait 1 minute for rate limit reset
+                        continue; // Skip this call, will retry later
+                    }
+                    continue;
+                }
                 const content = data.choices[0].message.content;
                 await pool.query('INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())', [domainId, model, promptType, content]);
+                console.log(`✅ Stored response for ${domain} (${model}, ${promptType})`);
+                // Rate limiting: 2 second delay between calls
+                await delay(2000);
             }
             catch (error) {
                 console.error(`Failed ${model} for ${domain}:`, error);
+                // Add delay even on errors to prevent rapid retries
+                await delay(1000);
             }
         }
     }
