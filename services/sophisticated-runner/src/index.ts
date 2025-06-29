@@ -211,18 +211,35 @@ async function processRealDomain(domainId: string, domain: string) {
   const models = ['gpt-4o-mini', 'gpt-3.5-turbo'];
   const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
   
+  // Get multiple API keys from environment
+  const apiKeys = [
+    process.env.OPENAI_API_KEY,
+    process.env.OPENAI_API_KEY_2,
+    process.env.OPENAI_API_KEY_3,
+    process.env.OPENAI_API_KEY_4,
+    process.env.OPENAI_API_KEY_5
+  ].filter(key => key && key.trim() !== ''); // Remove empty/undefined keys
+  
+  console.log(`🔑 Found ${apiKeys.length} API keys available`);
+  
   // Add rate limiting: 2 second delay between API calls
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  let apiKeyIndex = 0;
   
   for (const promptType of prompts) {
     for (const model of models) {
       try {
-        console.log(`🔄 Processing ${domain} with ${model} for ${promptType}`);
+        // Rotate through available API keys
+        const currentApiKey = apiKeys[apiKeyIndex % apiKeys.length];
+        apiKeyIndex++;
+        
+        console.log(`🔄 Processing ${domain} with ${model} for ${promptType} (API key ${(apiKeyIndex - 1) % apiKeys.length + 1}/${apiKeys.length})`);
         
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Authorization': `Bearer ${currentApiKey}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -236,11 +253,15 @@ async function processRealDomain(domainId: string, domain: string) {
         
         // Check for rate limiting errors
         if (data.error) {
-          console.error(`❌ API Error for ${domain} (${model}):`, data.error.message);
+          console.error(`❌ API Error for ${domain} (${model}) with API key ${(apiKeyIndex - 1) % apiKeys.length + 1}:`, data.error.message);
           if (data.error.type === 'rate_limit_exceeded') {
-            console.log('⏳ Rate limit hit, waiting 60 seconds...');
-            await delay(60000); // Wait 1 minute for rate limit reset
-            continue; // Skip this call, will retry later
+            console.log(`⏳ Rate limit hit on API key ${(apiKeyIndex - 1) % apiKeys.length + 1}, trying next key...`);
+            await delay(5000); // Short delay before trying next key
+            continue; // Skip this call, will retry with next key
+          }
+          if (data.error.type === 'invalid_api_key') {
+            console.log(`🔑 Invalid API key ${(apiKeyIndex - 1) % apiKeys.length + 1}, trying next key...`);
+            continue; // Skip this call, will retry with next key
           }
           continue;
         }
@@ -254,8 +275,8 @@ async function processRealDomain(domainId: string, domain: string) {
         
         console.log(`✅ Stored response for ${domain} (${model}, ${promptType})`);
         
-        // Rate limiting: 2 second delay between calls
-        await delay(2000);
+        // Rate limiting: 1 second delay between calls (reduced due to multiple API keys)
+        await delay(1000);
         
       } catch (error: any) {
         console.error(`Failed ${model} for ${domain}:`, error);
