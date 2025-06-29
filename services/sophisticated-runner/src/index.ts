@@ -198,7 +198,7 @@ app.post('/process-pending-domains', async (req, res) => {
     }
     
     res.json({ processed });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -223,7 +223,7 @@ async function processRealDomain(domainId: number, domain: string) {
           })
         });
         
-        const data = await response.json();
+        const data: any = await response.json();
         const content = data.choices[0].message.content;
         
         await pool.query(
@@ -231,7 +231,7 @@ async function processRealDomain(domainId: number, domain: string) {
           [domainId, model, promptType, content]
         );
         
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Failed ${model} for ${domain}:`, error);
       }
     }
@@ -252,7 +252,9 @@ app.listen(port, () => {
   console.log(`🔧 Manual cache regen: /trigger-cache-regen`);
   console.log(`🚀 Weekly run: POST /run/weekly`);
   console.log(`💎 Premium run: POST /run/premium`);
+  console.log(`🔥 Domain processing: POST /process-pending-domains`);
   console.log(`🏥 Health check: /health`);
 });// Force rebuild Mon Jun 16 10:22:22 PDT 2025
 // Force redeploy Mon Jun 16 10:41:55 PDT 2025
 // ULTRA DEEP FIX: cohesion_score schema mismatch resolved - Wed Jun 25 04:20:00 UTC 2025
+// DOMAIN PROCESSING ENDPOINT ADDED - Sat Jun 29 17:15:00 UTC 2025
