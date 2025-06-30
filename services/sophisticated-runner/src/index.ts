@@ -199,6 +199,61 @@ app.post('/run/premium', async (req, res) => {
   }
 });
 
+// Simple test endpoint to check if the processing logic works without API calls
+app.post('/test-processing', async (req, res) => {
+  try {
+    console.log('🧪 TEST: Starting processing test...');
+    
+    // Test model configuration without making API calls
+    const modelConfigs = [
+      { 
+        provider: 'openai', 
+        model: 'gpt-4o-mini', 
+        apiKeys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
+        endpoint: 'https://api.openai.com/v1/chat/completions'
+      },
+      { 
+        provider: 'anthropic', 
+        model: 'claude-3-haiku-20240307', 
+        apiKeys: [process.env.ANTHROPIC_API_KEY, process.env.ANTHROPIC_API_KEY2].filter(k => k),
+        endpoint: 'https://api.anthropic.com/v1/messages'
+      },
+      { 
+        provider: 'deepseek', 
+        model: 'deepseek-chat', 
+        apiKeys: [process.env.DEEPSEEK_API_KEY, process.env.DEEPSEEK_API_KEY2].filter(k => k),
+        endpoint: 'https://api.deepseek.com/v1/chat/completions'
+      },
+      { 
+        provider: 'mistral', 
+        model: 'mistral-small-latest', 
+        apiKeys: [process.env.MISTRAL_API_KEY].filter(k => k),
+        endpoint: 'https://api.mistral.ai/v1/chat/completions'
+      }
+    ].filter(config => config.apiKeys.length > 0);
+    
+    console.log(`🧪 TEST: Found ${modelConfigs.length} providers with API keys`);
+    
+    const result = {
+      availableProviders: modelConfigs.length,
+      providers: modelConfigs.map(c => ({
+        provider: c.provider,
+        model: c.model,
+        hasKeys: c.apiKeys.length > 0,
+        keyCount: c.apiKeys.length
+      })),
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('🧪 TEST: Processing test completed successfully');
+    res.json(result);
+    
+  } catch (error: any) {
+    console.error('🧪 TEST ERROR:', error);
+    res.status(500).json({ error: error.message, timestamp: new Date().toISOString() });
+  }
+});
+
 // Add real domain processing endpoint
 app.post('/process-pending-domains', async (req, res) => {
   try {
