@@ -496,3 +496,24 @@
 2025-06-26 11:33:19,459 - 🚀 Brand Intelligence Scheduler initialized!
 2025-06-26 11:33:19,459 - 📅 Weekly budget runs: Sundays
 2025-06-26 11:33:19,459 - 💎 Premium depth runs: Bi-weekly Wednesdays
+2025-06-27 23:26:00,755 - 🔑 Available APIs: OpenAI
+2025-06-27 23:26:00,756 - 🔑 Missing API keys: ANTHROPIC_API_KEY, GOOGLE_API_KEY, MISTRAL_API_KEY, PERPLEXITY_API_KEY, XAI_API_KEY, TOGETHER_API_KEY
+2025-06-27 23:26:00,756 - 💡 Set environment variables or the scheduler will skip those models
+2025-06-27 23:26:00,756 - 🚀 Brand Intelligence Scheduler initialized!
+2025-06-27 23:26:00,756 - 📅 Weekly budget runs: Sundays
+2025-06-27 23:26:00,756 - 💎 Premium depth runs: Bi-weekly Wednesdays
+2025-06-27 23:26:00,756 - 💎 STARTING BI-WEEKLY PREMIUM RUN
+2025-06-27 23:26:00,756 - ==================================================
+2025-06-27 23:26:00,756 - 🗓️ Date: 2025-06-27 23:26
+2025-06-27 23:26:00,756 - 🔥 Models: 3 premium models
+2025-06-27 23:26:00,756 - 📝 Prompts: 3 core prompt types
+2025-06-27 23:26:00,976 - 📊 Found 0 active domains
+2025-06-27 23:26:00,976 - 🎯 Scope: 0 domains
+2025-06-27 23:26:00,976 - 🔢 Total API calls: 0
+2025-06-27 23:26:00,976 - 💵 Estimated cost: $0.00
+2025-06-27 23:26:00,976 - 
+💎 BI-WEEKLY PREMIUM COMPLETE!
+2025-06-27 23:26:00,976 - ==================================================
+2025-06-27 23:26:00,976 - ✅ Successful calls: 0
+2025-06-27 23:26:00,976 - ❌ Failed calls: 0
+2025-06-27 23:26:00,977 - ⏱️ Total time: 0.0 minutes

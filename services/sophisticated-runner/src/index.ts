@@ -36,7 +36,11 @@ app.get('/api-keys', (req, res) => {
     openai: !!process.env.OPENAI_API_KEY,
     anthropic: !!process.env.ANTHROPIC_API_KEY,
     deepseek: !!process.env.DEEPSEEK_API_KEY,
-    mistral: !!process.env.MISTRAL_API_KEY
+    mistral: !!process.env.MISTRAL_API_KEY,
+    xai: !!process.env.XAI_API_KEY,
+    together: !!process.env.TOGETHER_API_KEY,
+    perplexity: !!process.env.PERPLEXITY_API_KEY,
+    google: !!process.env.GOOGLE_API_KEY
   };
   
   const working = Object.values(keys).filter(Boolean).length;
@@ -156,6 +160,30 @@ async function processAllLLMs(domain: string) {
       model: 'mistral-small-latest',
       key: process.env.MISTRAL_API_KEY,
       endpoint: 'https://api.mistral.ai/v1/chat/completions'
+    },
+    {
+      name: 'xai',
+      model: 'grok-beta',
+      key: process.env.XAI_API_KEY,
+      endpoint: 'https://api.x.ai/v1/chat/completions'
+    },
+    {
+      name: 'together',
+      model: 'meta-llama/Llama-3-8b-chat-hf',
+      key: process.env.TOGETHER_API_KEY,
+      endpoint: 'https://api.together.xyz/v1/chat/completions'
+    },
+    {
+      name: 'perplexity',
+      model: 'llama-3.1-sonar-small-128k-online',
+      key: process.env.PERPLEXITY_API_KEY,
+      endpoint: 'https://api.perplexity.ai/chat/completions'
+    },
+    {
+      name: 'google',
+      model: 'gemini-1.5-flash',
+      key: process.env.GOOGLE_API_KEY,
+      endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
     }
   ].filter(p => p.key); // Only use providers with keys
   
@@ -213,6 +241,32 @@ async function callLLM(provider: any, domain: string, prompt: string): Promise<s
       max_tokens: 500,
       messages: [{ role: 'user', content: promptText }]
     };
+  } else if (provider.name === 'google') {
+    headers = {
+      'Content-Type': 'application/json'
+    };
+    const endpoint = `${provider.endpoint}?key=${provider.key}`;
+    requestBody = {
+      contents: [{
+        parts: [{ text: promptText }]
+      }],
+      generationConfig: {
+        maxOutputTokens: 500
+      }
+    };
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data: any = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
   } else {
     headers = {
       'Authorization': `Bearer ${provider.key}`,
@@ -235,18 +289,18 @@ async function callLLM(provider: any, domain: string, prompt: string): Promise<s
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
   
-     const data: any = await response.json();
-   
-   if (data.error) {
-     throw new Error(data.error.message || 'API Error');
-   }
-   
-   // Extract content based on provider
-   if (provider.name === 'anthropic') {
-     return data.content?.[0]?.text || 'No response';
-   } else {
-     return data.choices?.[0]?.message?.content || 'No response';
-   }
+  const data: any = await response.json();
+  
+  if (data.error) {
+    throw new Error(data.error.message || 'API Error');
+  }
+  
+  // Extract content based on provider
+  if (provider.name === 'anthropic') {
+    return data.content?.[0]?.text || 'No response';
+  } else {
+    return data.choices?.[0]?.message?.content || 'No response';
+  }
 }
 
 app.listen(port, () => {
