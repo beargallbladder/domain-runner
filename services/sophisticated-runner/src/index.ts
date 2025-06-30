@@ -254,9 +254,23 @@ app.post('/test-processing', async (req, res) => {
   }
 });
 
-// Add real domain processing endpoint
+// Add real domain processing endpoint with timeout
 app.post('/process-pending-domains', async (req, res) => {
   try {
+    console.log('🔥 PROCESSING REQUEST RECEIVED');
+    
+    // Set a timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      console.log('⏰ PROCESSING TIMEOUT - Returning partial results');
+      if (!res.headersSent) {
+        res.status(408).json({ 
+          error: 'Processing timeout', 
+          message: 'Request timed out after 25 seconds',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }, 25000); // 25 second timeout
+    
     const pendingResult = await pool.query(
           'SELECT id, domain FROM domains WHERE status = $1 ORDER BY updated_at ASC LIMIT 5',
     ['pending']
@@ -265,6 +279,7 @@ app.post('/process-pending-domains', async (req, res) => {
     console.log(`Found ${pendingResult.rows.length} pending domains`);
     
     if (pendingResult.rows.length === 0) {
+      clearTimeout(timeoutId);
       return res.json({ message: 'No pending domains found', processed: 0 });
     }
     
@@ -272,13 +287,28 @@ app.post('/process-pending-domains', async (req, res) => {
     
     for (const domainRow of pendingResult.rows) {
       console.log(`Processing domain: ${domainRow.domain}, ID: ${domainRow.id} (type: ${typeof domainRow.id})`);
-      await processRealDomain(domainRow.id, domainRow.domain);
-      processed++;
+      
+      try {
+        await processRealDomain(domainRow.id, domainRow.domain);
+        processed++;
+        console.log(`✅ Successfully processed ${domainRow.domain}`);
+      } catch (domainError: any) {
+        console.error(`❌ Failed to process ${domainRow.domain}:`, domainError.message);
+        // Continue with other domains even if one fails
+      }
     }
     
-    res.json({ processed });
+    clearTimeout(timeoutId);
+    
+    if (!res.headersSent) {
+      res.json({ processed, timestamp: new Date().toISOString() });
+    }
+    
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('🚨 PROCESSING ERROR:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message, timestamp: new Date().toISOString() });
+    }
   }
 });
 
