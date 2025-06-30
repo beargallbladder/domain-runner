@@ -60,7 +60,8 @@ app.post('/process-pending-domains', async (req, res) => {
         console.log(`📊 Processing ${result.rows.length} domains`);
         let processed = 0;
         const errors = [];
-        for (const domainRow of result.rows) {
+        // Process all domains in parallel
+        const domainPromises = result.rows.map(async (domainRow) => {
             try {
                 console.log(`🔄 Processing ${domainRow.domain}`);
                 // Mark as processing
@@ -78,16 +79,20 @@ app.post('/process-pending-domains', async (req, res) => {
                 }
                 // Mark as completed
                 await pool.query('UPDATE domains SET status = $1, updated_at = NOW() WHERE id = $2', ['completed', domainRow.id]);
-                processed++;
                 console.log(`✅ Completed ${domainRow.domain} (${responses.filter(r => r.success).length}/${responses.length} responses)`);
+                return true;
             }
             catch (domainError) {
                 console.error(`❌ Failed ${domainRow.domain}:`, domainError.message);
                 errors.push(`${domainRow.domain}: ${domainError.message}`);
                 // Mark as pending again for retry
                 await pool.query('UPDATE domains SET status = $1, updated_at = NOW() WHERE id = $2', ['pending', domainRow.id]);
+                return false;
             }
-        }
+        });
+        // Wait for all domains to complete
+        const results = await Promise.allSettled(domainPromises);
+        processed = results.filter(r => r.status === 'fulfilled' && r.value).length;
         res.json({
             processed,
             errors: errors.length,
@@ -155,34 +160,25 @@ async function processAllLLMs(domain) {
             endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
         }
     ].filter(p => p.key); // Only use providers with keys
-    const allResponses = [];
-    // Process all prompts for all providers
+    // Process ALL prompts and providers in parallel
+    const allPromises = [];
     for (const prompt of prompts) {
-        const providerPromises = providers.map(provider => callLLM(provider, domain, prompt));
-        // Wait for all providers to respond for this prompt
-        const results = await Promise.allSettled(providerPromises);
-        results.forEach((result, index) => {
-            const provider = providers[index];
-            if (result.status === 'fulfilled') {
-                allResponses.push({
-                    success: true,
-                    model: `${provider.name}/${provider.model}`,
-                    prompt,
-                    content: result.value
-                });
-            }
-            else {
-                allResponses.push({
-                    success: false,
-                    model: `${provider.name}/${provider.model}`,
-                    prompt,
-                    error: result.reason?.message || 'Unknown error'
-                });
-            }
-        });
-        // Small delay between prompts to be conservative
-        await new Promise(resolve => setTimeout(resolve, 500));
+        for (const provider of providers) {
+            allPromises.push(callLLM(provider, domain, prompt).then(content => ({
+                success: true,
+                model: `${provider.name}/${provider.model}`,
+                prompt,
+                content
+            })).catch(error => ({
+                success: false,
+                model: `${provider.name}/${provider.model}`,
+                prompt,
+                error: error.message || 'Unknown error'
+            })));
+        }
     }
+    // Wait for ALL API calls to complete in parallel
+    const allResponses = await Promise.all(allPromises);
     return allResponses;
 }
 async function callLLM(provider, domain, prompt) {

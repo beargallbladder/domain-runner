@@ -70,9 +70,10 @@ app.post('/process-pending-domains', async (req: Request, res: Response) => {
     console.log(`📊 Processing ${result.rows.length} domains`);
     
     let processed = 0;
-    const errors = [];
+    const errors: string[] = [];
     
-    for (const domainRow of result.rows) {
+    // Process all domains in parallel
+    const domainPromises = result.rows.map(async (domainRow) => {
       try {
         console.log(`🔄 Processing ${domainRow.domain}`);
         
@@ -90,10 +91,10 @@ app.post('/process-pending-domains', async (req: Request, res: Response) => {
           if (response.success) {
             await pool.query(
               'INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at) VALUES ($1, $2, $3, $4, NOW())',
-              [domainRow.id, response.model, response.prompt, response.content]
+              [domainRow.id, response.model, response.prompt, (response as any).content]
             );
           } else {
-            errors.push(`${response.model}: ${response.error}`);
+            errors.push(`${response.model}: ${(response as any).error}`);
           }
         }
         
@@ -103,20 +104,25 @@ app.post('/process-pending-domains', async (req: Request, res: Response) => {
           ['completed', domainRow.id]
         );
         
-        processed++;
         console.log(`✅ Completed ${domainRow.domain} (${responses.filter(r => r.success).length}/${responses.length} responses)`);
+        return true;
         
-             } catch (domainError: any) {
-         console.error(`❌ Failed ${domainRow.domain}:`, domainError.message);
-         errors.push(`${domainRow.domain}: ${domainError.message}`);
+      } catch (domainError: any) {
+        console.error(`❌ Failed ${domainRow.domain}:`, domainError.message);
+        errors.push(`${domainRow.domain}: ${domainError.message}`);
         
         // Mark as pending again for retry
         await pool.query(
           'UPDATE domains SET status = $1, updated_at = NOW() WHERE id = $2',
           ['pending', domainRow.id]
         );
+        return false;
       }
-    }
+    });
+    
+    // Wait for all domains to complete
+    const results = await Promise.allSettled(domainPromises);
+    processed = results.filter(r => r.status === 'fulfilled' && r.value).length;
     
     res.json({
       processed,
@@ -187,39 +193,28 @@ async function processAllLLMs(domain: string) {
     }
   ].filter(p => p.key); // Only use providers with keys
   
-     const allResponses: any[] = [];
-  
-  // Process all prompts for all providers
-  for (const prompt of prompts) {
-    const providerPromises = providers.map(provider => 
-      callLLM(provider, domain, prompt)
-    );
-    
-    // Wait for all providers to respond for this prompt
-    const results = await Promise.allSettled(providerPromises);
-    
-    results.forEach((result, index) => {
-      const provider = providers[index];
-      if (result.status === 'fulfilled') {
-        allResponses.push({
-          success: true,
-          model: `${provider.name}/${provider.model}`,
-          prompt,
-          content: result.value
-        });
-      } else {
-        allResponses.push({
-          success: false,
-          model: `${provider.name}/${provider.model}`,
-          prompt,
-          error: result.reason?.message || 'Unknown error'
-        });
-      }
-    });
-    
-    // Small delay between prompts to be conservative
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
+        // Process ALL prompts and providers in parallel
+   const allPromises = [];
+   for (const prompt of prompts) {
+     for (const provider of providers) {
+       allPromises.push(
+         callLLM(provider, domain, prompt).then(content => ({
+           success: true,
+           model: `${provider.name}/${provider.model}`,
+           prompt,
+           content
+         })).catch(error => ({
+           success: false,
+           model: `${provider.name}/${provider.model}`,
+           prompt,
+           error: error.message || 'Unknown error'
+         }))
+       );
+     }
+   }
+   
+   // Wait for ALL API calls to complete in parallel
+   const allResponses = await Promise.all(allPromises);
   
   return allResponses;
 }
