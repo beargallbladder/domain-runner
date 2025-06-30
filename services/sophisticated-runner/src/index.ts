@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 
@@ -22,7 +22,7 @@ app.use(express.json());
 console.log('🚀 Starting Sophisticated Runner Service...');
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.json({ 
     status: 'healthy', 
     service: 'sophisticated-runner',
@@ -31,7 +31,7 @@ app.get('/health', (req, res) => {
 });
 
 // API key status check
-app.get('/api-keys', (req, res) => {
+app.get('/api-keys', (req: Request, res: Response) => {
   const keys = {
     openai: !!process.env.OPENAI_API_KEY,
     anthropic: !!process.env.ANTHROPIC_API_KEY,
@@ -53,7 +53,7 @@ app.get('/api-keys', (req, res) => {
 });
 
 // Fast domain processing endpoint
-app.post('/process-pending-domains', async (req, res) => {
+app.post('/process-pending-domains', async (req: Request, res: Response) => {
   try {
     console.log('🔥 FAST PROCESSING STARTED');
     
