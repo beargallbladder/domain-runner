@@ -36,6 +36,27 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Debug endpoint to check API keys
+app.get('/debug-keys', (req, res) => {
+  const keyStatus = {
+    openai: !!process.env.OPENAI_API_KEY,
+    openai2: !!process.env.OPENAI_API_KEY2,
+    anthropic: !!process.env.ANTHROPIC_API_KEY,
+    anthropic2: !!process.env.ANTHROPIC_API_KEY2,
+    deepseek: !!process.env.DEEPSEEK_API_KEY,
+    deepseek2: !!process.env.DEEPSEEK_API_KEY2,
+    mistral: !!process.env.MISTRAL_API_KEY
+  };
+  
+  const availableKeys = Object.values(keyStatus).filter(Boolean).length;
+  
+  res.json({
+    keyStatus,
+    totalAvailable: availableKeys,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // EMERGENCY FIX: Force realistic scores for 100% domains
 app.get('/emergency-fix-scores', async (req, res) => {
   try {
