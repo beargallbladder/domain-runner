@@ -182,8 +182,8 @@ app.post('/run/premium', async (req, res) => {
 app.post('/process-pending-domains', async (req, res) => {
   try {
     const pendingResult = await pool.query(
-      'SELECT id, domain FROM domains WHERE status = $1 ORDER BY updated_at ASC LIMIT 5',
-      ['pending']
+          'SELECT id, domain FROM domains WHERE status = $1 ORDER BY updated_at ASC LIMIT 5',
+    ['pending']
     );
     
     console.log(`Found ${pendingResult.rows.length} pending domains`);
@@ -217,14 +217,14 @@ async function processRealDomain(domainId: string, domain: string) {
       model: 'gpt-4o-mini', 
       apiKeys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
       endpoint: 'https://api.openai.com/v1/chat/completions',
-      delay: 1000 // 1 second delay
+      delay: 5000 // 5 second delay
     },
     { 
       provider: 'openai', 
       model: 'gpt-3.5-turbo', 
       apiKeys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
       endpoint: 'https://api.openai.com/v1/chat/completions',
-      delay: 1000 // 1 second delay
+      delay: 6000 // 6 second delay
     },
     // Anthropic models
     { 
@@ -232,7 +232,7 @@ async function processRealDomain(domainId: string, domain: string) {
       model: 'claude-3-haiku-20240307', 
       apiKeys: [process.env.ANTHROPIC_API_KEY, process.env.ANTHROPIC_API_KEY2].filter(k => k),
       endpoint: 'https://api.anthropic.com/v1/messages',
-      delay: 2000 // 2 second delay (more conservative)
+      delay: 8000 // 8 second delay (more conservative)
     },
     // DeepSeek models (very cheap)
     { 
@@ -240,7 +240,7 @@ async function processRealDomain(domainId: string, domain: string) {
       model: 'deepseek-chat', 
       apiKeys: [process.env.DEEPSEEK_API_KEY, process.env.DEEPSEEK_API_KEY2].filter(k => k),
       endpoint: 'https://api.deepseek.com/v1/chat/completions',
-      delay: 500 // 0.5 second delay (cheaper, can go faster)
+      delay: 3000 // 3 second delay (cheaper, can go faster)
     }
   ].filter(config => config.apiKeys.length > 0); // Only include providers with valid keys
   
