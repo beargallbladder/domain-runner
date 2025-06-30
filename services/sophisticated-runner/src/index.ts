@@ -209,64 +209,63 @@ app.post('/process-pending-domains', async (req, res) => {
 async function processRealDomain(domainId: string, domain: string) {
   console.log(`processRealDomain called with domainId: ${domainId} (type: ${typeof domainId})`);
   
-  // Multi-provider model configuration with rate limiting
+  // PARALLEL MULTI-PROVIDER CONFIGURATION - HIT DIFFERENT COMPANIES SIMULTANEOUSLY
   const modelConfigs = [
-    // OpenAI models
+    // OpenAI - one model only
     { 
       provider: 'openai', 
       model: 'gpt-4o-mini', 
       apiKeys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
-      endpoint: 'https://api.openai.com/v1/chat/completions',
-      delay: 500 // 0.5 second delay
+      endpoint: 'https://api.openai.com/v1/chat/completions'
     },
-    { 
-      provider: 'openai', 
-      model: 'gpt-3.5-turbo', 
-      apiKeys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
-      endpoint: 'https://api.openai.com/v1/chat/completions',
-      delay: 600 // 0.6 second delay
-    },
-    // Anthropic models
+    // Anthropic - different company, parallel safe
     { 
       provider: 'anthropic', 
       model: 'claude-3-haiku-20240307', 
       apiKeys: [process.env.ANTHROPIC_API_KEY, process.env.ANTHROPIC_API_KEY2].filter(k => k),
-      endpoint: 'https://api.anthropic.com/v1/messages',
-      delay: 800 // 0.8 second delay
+      endpoint: 'https://api.anthropic.com/v1/messages'
     },
-    // DeepSeek models (very cheap)
+    // DeepSeek - different company, parallel safe
     { 
       provider: 'deepseek', 
       model: 'deepseek-chat', 
       apiKeys: [process.env.DEEPSEEK_API_KEY, process.env.DEEPSEEK_API_KEY2].filter(k => k),
-      endpoint: 'https://api.deepseek.com/v1/chat/completions',
-      delay: 200 // 0.2 second delay (cheaper, can go faster)
+      endpoint: 'https://api.deepseek.com/v1/chat/completions'
+    },
+    // Mistral - different company, parallel safe
+    { 
+      provider: 'mistral', 
+      model: 'mistral-small-latest', 
+      apiKeys: [process.env.MISTRAL_API_KEY].filter(k => k),
+      endpoint: 'https://api.mistral.ai/v1/chat/completions'
     }
   ].filter(config => config.apiKeys.length > 0); // Only include providers with valid keys
   
   const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
   
   console.log(`🔑 Found ${modelConfigs.length} model configurations available`);
-  
-  // Add rate limiting function
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  console.log(`🚀 PARALLEL PROCESSING: Hitting all ${modelConfigs.length} providers simultaneously`);
   
   let globalApiKeyIndex = 0;
   
+  // PARALLEL PROCESSING - Hit all providers at once for each prompt
   for (const promptType of prompts) {
-    for (const modelConfig of modelConfigs) {
+    console.log(`\n🎯 Processing prompt: ${promptType} across ALL providers in parallel`);
+    
+    // Create parallel promises for all providers
+    const providerPromises = modelConfigs.map(async (modelConfig) => {
       try {
         // Rotate through available API keys for this provider
         const currentApiKey = modelConfig.apiKeys[globalApiKeyIndex % modelConfig.apiKeys.length];
         globalApiKeyIndex++;
         
-        console.log(`🔄 Processing ${domain} with ${modelConfig.provider}/${modelConfig.model} for ${promptType} (key ${globalApiKeyIndex % modelConfig.apiKeys.length + 1}/${modelConfig.apiKeys.length})`);
+        console.log(`🔄 PARALLEL: ${domain} with ${modelConfig.provider}/${modelConfig.model} for ${promptType}`);
         
         let requestBody: any;
         let headers: any;
         
         // Configure request based on provider
-        if (modelConfig.provider === 'openai' || modelConfig.provider === 'deepseek') {
+        if (modelConfig.provider === 'openai' || modelConfig.provider === 'deepseek' || modelConfig.provider === 'mistral') {
           headers = {
             'Authorization': `Bearer ${currentApiKey}`,
             'Content-Type': 'application/json'
@@ -301,17 +300,7 @@ async function processRealDomain(domainId: string, domain: string) {
         if (data.error || (data.type === 'error')) {
           const errorMsg = data.error?.message || data.message || 'Unknown error';
           console.error(`❌ API Error for ${domain} (${modelConfig.provider}/${modelConfig.model}):`, errorMsg);
-          
-          if (errorMsg.includes('rate_limit') || errorMsg.includes('rate limit')) {
-            console.log(`⏳ Rate limit hit on ${modelConfig.provider}, waiting...`);
-            await delay(modelConfig.delay * 2); // Double delay on rate limit
-            continue;
-          }
-          if (errorMsg.includes('invalid') && errorMsg.includes('key')) {
-            console.log(`🔑 Invalid API key for ${modelConfig.provider}, trying next...`);
-            continue;
-          }
-          continue;
+          return { success: false, provider: modelConfig.provider, error: errorMsg };
         }
         
         // Extract content based on provider response format
@@ -327,17 +316,21 @@ async function processRealDomain(domainId: string, domain: string) {
           [domainId, `${modelConfig.provider}/${modelConfig.model}`, promptType, content]
         );
         
-        console.log(`✅ Stored response for ${domain} (${modelConfig.provider}/${modelConfig.model}, ${promptType})`);
-        
-        // Provider-specific rate limiting
-        await delay(modelConfig.delay);
+        console.log(`✅ PARALLEL SUCCESS: ${domain} (${modelConfig.provider}/${modelConfig.model}, ${promptType})`);
+        return { success: true, provider: modelConfig.provider };
         
       } catch (error: any) {
-        console.error(`Failed ${modelConfig.provider}/${modelConfig.model} for ${domain}:`, error);
-        // Add delay even on errors to prevent rapid retries
-        await delay(1000);
+        console.error(`❌ PARALLEL FAILED: ${modelConfig.provider}/${modelConfig.model} for ${domain}:`, error);
+        return { success: false, provider: modelConfig.provider, error: error.message };
       }
-    }
+    });
+    
+    // Wait for all providers to complete in parallel
+    const results = await Promise.allSettled(providerPromises);
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const failed = results.length - successful;
+    
+    console.log(`📊 Prompt ${promptType} completed: ${successful} success, ${failed} failed`);
   }
   
   await pool.query(
