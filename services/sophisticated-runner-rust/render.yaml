@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: sophisticated-runner-rust
+    env: rust
+    buildCommand: cargo build --release
+    startCommand: ./target/release/sophisticated-runner-rust
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pgsql
+          name: raw_capture_db
+          property: connectionString
+      - key: RUST_LOG
+        value: info
+      - key: PORT
+        value: 10000
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+    plan: starter
+    region: oregon
+    branch: fix-ai-providers
+    autoDeploy: true
+    sync: false
+    syncKeys:
+      - key: OPENAI_API_KEY
+      - key: ANTHROPIC_API_KEY
+      - key: DEEPSEEK_API_KEY
+      - key: MISTRAL_API_KEY
+      - key: XAI_API_KEY
+      - key: TOGETHER_API_KEY
+      - key: PERPLEXITY_API_KEY
+      - key: GOOGLE_API_KEY 
