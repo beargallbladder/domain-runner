@@ -1,0 +1,32 @@
+{
+  "name": "llm-memory-runner",
+  "version": "1.0.0",
+  "description": "Real LLM Memory Tensor Analysis - 8 Provider Domain Runner",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "start": "node dist/main.js",
+    "dev": "ts-node src/main.ts",
+    "test": "npm run build && npm start"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "openai": "^4.28.4",
+    "@anthropic-ai/sdk": "^0.17.1",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.16",
+    "@types/pg": "^8.10.9",
+    "@types/cors": "^2.8.17",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
