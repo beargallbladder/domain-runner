@@ -88,13 +88,109 @@ async fn database_status() -> ResponseJson<Value> {
     }))
 }
 
-async fn process_pending_domains() -> Result<ResponseJson<Value>, StatusCode> {
+async fn process_pending_domains(
+    axum::extract::State((db_manager, mut ai_manager)): axum::extract::State<(DatabaseManager, AIProviderManager)>,
+) -> Result<ResponseJson<Value>, StatusCode> {
     info!("🚀 Processing pending domains with all 8 AI providers");
     
-    // This is a placeholder - the actual implementation would be more complex
+    // Get 100 domains for high-concurrency processing
+    let domains = match db_manager.get_pending_domains(100).await {
+        Ok(domains) => domains,
+        Err(e) => {
+            error!("Failed to get pending domains: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+    
+    if domains.is_empty() {
+        return Ok(ResponseJson(json!({
+            "status": "no_pending_domains",
+            "message": "No pending domains to process",
+            "domains_processed": 0
+        })));
+    }
+    
+    info!("📊 Processing {} domains with all 8 AI providers", domains.len());
+    
+    let prompts = vec![
+        "business_analysis".to_string(),
+        "content_strategy".to_string(), 
+        "technical_assessment".to_string()
+    ];
+    
+    let mut total_responses = 0;
+    let mut successful_domains = 0;
+    let mut failed_domains = 0;
+    
+    // Process domains in parallel batches
+    for (domain_id, domain) in domains {
+        // Mark domain as processing
+        if let Err(e) = db_manager.mark_domain_processing(domain_id).await {
+            warn!("Failed to mark domain {} as processing: {}", domain, e);
+            continue;
+        }
+        
+        let mut domain_success = true;
+        
+        // Process all prompts for this domain
+        for prompt in &prompts {
+            match ai_manager.process_domain_with_all_providers(&domain, prompt).await {
+                Ok(responses) => {
+                    // Save all responses to database
+                    for (provider_name, response, memory_score) in responses {
+                        match db_manager.save_domain_response(
+                            domain_id,
+                            &domain,
+                            &provider_name,
+                            prompt,
+                            &response,
+                            memory_score,
+                        ).await {
+                            Ok(_) => {
+                                total_responses += 1;
+                                info!("💾 Saved response: {} -> {} (score: {:?})", 
+                                      domain, provider_name, memory_score);
+                            }
+                            Err(e) => {
+                                error!("Failed to save response for {}: {}", domain, e);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to process {} with prompt '{}': {}", domain, prompt, e);
+                    domain_success = false;
+                }
+            }
+        }
+        
+        // Update domain status
+        if domain_success {
+            if let Err(e) = db_manager.mark_domain_completed(domain_id).await {
+                error!("Failed to mark domain {} as completed: {}", domain, e);
+            } else {
+                successful_domains += 1;
+                info!("✅ Completed domain: {}", domain);
+            }
+        } else {
+            if let Err(e) = db_manager.mark_domain_failed(domain_id, "AI processing failed").await {
+                error!("Failed to mark domain {} as failed: {}", domain, e);
+            } else {
+                failed_domains += 1;
+                warn!("❌ Failed domain: {}", domain);
+            }
+        }
+    }
+    
+    info!("🎉 Batch complete: {} successful, {} failed, {} total responses", 
+          successful_domains, failed_domains, total_responses);
+    
     Ok(ResponseJson(json!({
-        "status": "processing_started",
-        "message": "Domain processing initiated with all 8 AI providers",
+        "status": "processing_completed",
+        "domains_processed": successful_domains + failed_domains,
+        "successful_domains": successful_domains,
+        "failed_domains": failed_domains,
+        "total_responses": total_responses,
         "providers": ["openai", "anthropic", "deepseek", "mistral", "xai", "together", "perplexity", "google"]
     })))
 } 
