@@ -1,0 +1,27 @@
+{"level":"info","message":"🚀 Starting weekly tensor crawl - MISSION CRITICAL","timestamp":"2025-07-06T18:23:51.314Z"}
+{"level":"info","message":"🔍 Running pre-flight health check...","timestamp":"2025-07-06T18:23:51.315Z"}
+{"level":"info","message":"✅ Pre-flight health check PASSED - Proceeding with crawl","timestamp":"2025-07-06T18:23:52.807Z"}
+{"level":"info","message":"📊 Initialized crawl session: 3218 domains to process","timestamp":"2025-07-06T18:23:53.378Z"}
+{"error":"relation \"crawl_sessions\" does not exist","level":"error","message":"💥 Weekly tensor crawl FAILED","timestamp":"2025-07-06T18:23:53.457Z"}
+{"level":"info","message":"🚀 Starting weekly tensor crawl - MISSION CRITICAL","timestamp":"2025-07-06T18:24:06.494Z"}
+{"level":"info","message":"🔍 Running pre-flight health check...","timestamp":"2025-07-06T18:24:06.495Z"}
+{"level":"info","message":"✅ Pre-flight health check PASSED - Proceeding with crawl","timestamp":"2025-07-06T18:24:07.910Z"}
+{"level":"info","message":"📊 Initialized crawl session: 3218 domains to process","timestamp":"2025-07-06T18:24:08.604Z"}
+{"level":"info","message":"🔄 Resetting all domains to pending for fresh weekly crawl","timestamp":"2025-07-06T18:24:08.678Z"}
+{"level":"info","message":"✅ Reset 3218 domains to pending status","timestamp":"2025-07-06T18:24:08.787Z"}
+{"level":"info","message":"🎯 Starting batched crawl: 100 domains per batch","timestamp":"2025-07-06T18:24:08.788Z"}
+{"level":"info","message":"🔄 Processing batch: 100 domains","timestamp":"2025-07-06T18:24:08.857Z"}
+{"level":"warn","message":"⚠️ Batch failed (attempt 1/3): Request failed with status code 404","timestamp":"2025-07-06T18:24:09.056Z"}
+{"level":"warn","message":"⚠️ Batch failed (attempt 2/3): Request failed with status code 404","timestamp":"2025-07-06T18:24:14.360Z"}
+{"level":"warn","message":"⚠️ Batch failed (attempt 3/3): Request failed with status code 404","timestamp":"2025-07-06T18:24:24.532Z"}
+{"level":"info","message":"🚀 Starting weekly tensor crawl - MISSION CRITICAL","timestamp":"2025-07-06T18:26:43.756Z"}
+{"level":"info","message":"🔍 Running pre-flight health check...","timestamp":"2025-07-06T18:26:43.757Z"}
+{"level":"info","message":"✅ Pre-flight health check PASSED - Proceeding with crawl","timestamp":"2025-07-06T18:26:45.701Z"}
+{"level":"info","message":"📊 Initialized crawl session: 3218 domains to process","timestamp":"2025-07-06T18:26:46.313Z"}
+{"level":"info","message":"🔄 Resetting all domains to pending for fresh weekly crawl","timestamp":"2025-07-06T18:26:46.382Z"}
+{"level":"info","message":"✅ Reset 25 domains to pending status","timestamp":"2025-07-06T18:26:46.478Z"}
+{"level":"info","message":"🎯 Starting batched crawl: 100 domains per batch","timestamp":"2025-07-06T18:26:46.478Z"}
+{"level":"info","message":"🔄 Processing batch: 100 domains","timestamp":"2025-07-06T18:26:46.800Z"}
+{"level":"warn","message":"⚠️ Batch failed (attempt 1/3): Request failed with status code 404","timestamp":"2025-07-06T18:26:46.967Z"}
+{"level":"warn","message":"⚠️ Batch failed (attempt 2/3): Request failed with status code 404","timestamp":"2025-07-06T18:26:52.195Z"}
+{"level":"warn","message":"⚠️ Batch failed (attempt 3/3): Request failed with status code 404","timestamp":"2025-07-06T18:27:02.495Z"}

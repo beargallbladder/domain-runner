@@ -1,0 +1,28 @@
+{
+  "name": "weekly-tensor-guardian",
+  "version": "1.0.0",
+  "description": "Weekly AI Memory Tensor Collection & Infrastructure Guardian",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "health-check": "node dist/health-checker.js",
+    "weekly-crawl": "node dist/weekly-crawler.js",
+    "anomaly-detect": "node dist/anomaly-detector.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.0",
+    "pg": "^8.11.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/pg": "^8.10.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}

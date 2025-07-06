@@ -52,8 +52,8 @@ app.get('/api-keys', (req, res) => {
 app.post('/process-pending-domains', async (req, res) => {
     try {
         console.log('🔥 FAST PROCESSING STARTED');
-        // Get 10 pending domains
-        const result = await pool.query('SELECT id, domain FROM domains WHERE status = $1 ORDER BY updated_at ASC LIMIT 10', ['pending']);
+        // Get 100 pending domains for high-concurrency processing
+        const result = await pool.query('SELECT id, domain FROM domains WHERE status = $1 ORDER BY updated_at ASC LIMIT 100', ['pending']);
         if (result.rows.length === 0) {
             return res.json({ message: 'No pending domains', processed: 0 });
         }
@@ -108,67 +108,110 @@ app.post('/process-pending-domains', async (req, res) => {
         });
     }
 });
+// PROVIDER-SPECIFIC RATE LIMITS & MULTI-KEY CONFIGURATION
+const AI_PROVIDERS = [
+    // OPENAI - 500 RPM per key
+    {
+        name: 'openai',
+        model: 'gpt-4o-mini',
+        keys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        rpm_per_key: 500,
+        delay_ms: 120,
+        format: 'openai'
+    },
+    // ANTHROPIC - 50 RPM per key (strict limits!)
+    {
+        name: 'anthropic',
+        model: 'claude-3-5-sonnet-20241022',
+        keys: [process.env.ANTHROPIC_API_KEY, process.env.ANTHROPIC_API_KEY2].filter(k => k),
+        endpoint: 'https://api.anthropic.com/v1/messages',
+        rpm_per_key: 50,
+        delay_ms: 1200,
+        format: 'anthropic'
+    },
+    // DEEPSEEK - 60 RPM per key
+    {
+        name: 'deepseek',
+        model: 'deepseek-chat',
+        keys: [process.env.DEEPSEEK_API_KEY, process.env.DEEPSEEK_API_KEY2].filter(k => k),
+        endpoint: 'https://api.deepseek.com/v1/chat/completions',
+        rpm_per_key: 60,
+        delay_ms: 1000,
+        format: 'openai'
+    },
+    // MISTRAL - 100 RPM per key
+    {
+        name: 'mistral',
+        model: 'mistral-large-latest',
+        keys: [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY2].filter(k => k),
+        endpoint: 'https://api.mistral.ai/v1/chat/completions',
+        rpm_per_key: 100,
+        delay_ms: 600,
+        format: 'openai'
+    },
+    // XAI - 60 RPM per key
+    {
+        name: 'xai',
+        model: 'grok-2-1212',
+        keys: [process.env.XAI_API_KEY, process.env.XAI_API_KEY2].filter(k => k),
+        endpoint: 'https://api.x.ai/v1/chat/completions',
+        rpm_per_key: 60,
+        delay_ms: 1000,
+        format: 'openai'
+    },
+    // TOGETHER - 60 RPM per key
+    {
+        name: 'together',
+        model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+        keys: [process.env.TOGETHER_API_KEY, process.env.TOGETHER_API_KEY2].filter(k => k),
+        endpoint: 'https://api.together.xyz/v1/chat/completions',
+        rpm_per_key: 60,
+        delay_ms: 1000,
+        format: 'openai'
+    },
+    // PERPLEXITY - 20 RPM per key (very strict!)
+    {
+        name: 'perplexity',
+        model: 'llama-3.1-sonar-small-128k-online',
+        keys: [process.env.PERPLEXITY_API_KEY, process.env.PERPLEXITY_API_KEY2].filter(k => k),
+        endpoint: 'https://api.perplexity.ai/chat/completions',
+        rpm_per_key: 20,
+        delay_ms: 3000,
+        format: 'openai'
+    },
+    // GOOGLE - 60 RPM per key
+    {
+        name: 'google',
+        model: 'gemini-pro',
+        keys: [process.env.GOOGLE_API_KEY, process.env.GOOGLE_API_KEY2].filter(k => k),
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+        rpm_per_key: 60,
+        delay_ms: 1000,
+        format: 'google'
+    }
+].filter(p => p.keys.length > 0); // Only use providers with at least one key
+// Track last request time for each key
+const keyTimestamps = new Map();
+// Initialize all key timestamps
+AI_PROVIDERS.forEach(provider => {
+    provider.keys.forEach(key => {
+        if (key)
+            keyTimestamps.set(key, 0);
+    });
+});
+console.log(`🔧 Configured ${AI_PROVIDERS.length} providers with ${AI_PROVIDERS.reduce((sum, p) => sum + p.keys.length, 0)} total API keys`);
 async function processAllLLMs(domain) {
     const prompts = ['business_analysis', 'content_strategy', 'technical_assessment'];
-    const providers = [
-        {
-            name: 'openai',
-            model: 'gpt-4o-mini',
-            key: process.env.OPENAI_API_KEY,
-            endpoint: 'https://api.openai.com/v1/chat/completions'
-        },
-        {
-            name: 'anthropic',
-            model: 'claude-3-haiku-20240307',
-            key: process.env.ANTHROPIC_API_KEY,
-            endpoint: 'https://api.anthropic.com/v1/messages'
-        },
-        {
-            name: 'deepseek',
-            model: 'deepseek-chat',
-            key: process.env.DEEPSEEK_API_KEY,
-            endpoint: 'https://api.deepseek.com/v1/chat/completions'
-        },
-        {
-            name: 'mistral',
-            model: 'mistral-small-latest',
-            key: process.env.MISTRAL_API_KEY,
-            endpoint: 'https://api.mistral.ai/v1/chat/completions'
-        },
-        {
-            name: 'xai',
-            model: 'grok-beta',
-            key: process.env.XAI_API_KEY,
-            endpoint: 'https://api.x.ai/v1/chat/completions'
-        },
-        {
-            name: 'together',
-            model: 'meta-llama/Llama-3-8b-chat-hf',
-            key: process.env.TOGETHER_API_KEY,
-            endpoint: 'https://api.together.xyz/v1/chat/completions'
-        },
-        {
-            name: 'perplexity',
-            model: 'llama-3.1-sonar-small-128k-online',
-            key: process.env.PERPLEXITY_API_KEY,
-            endpoint: 'https://api.perplexity.ai/chat/completions'
-        },
-        {
-            name: 'google',
-            model: 'gemini-1.5-flash',
-            key: process.env.GOOGLE_API_KEY,
-            endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
-        }
-    ].filter(p => p.key); // Only use providers with keys
-    // Process ALL prompts and providers in parallel
+    // Process ALL prompts and providers in parallel with throttling
     const allPromises = [];
     for (const prompt of prompts) {
-        for (const provider of providers) {
-            allPromises.push(callLLM(provider, domain, prompt).then(content => ({
+        for (const provider of AI_PROVIDERS) {
+            allPromises.push(makeThrottledCall(provider, domain, prompt).then(response => ({
                 success: true,
-                model: `${provider.name}/${provider.model}`,
+                model: response.model,
                 prompt,
-                content
+                content: response.content
             })).catch(error => ({
                 success: false,
                 model: `${provider.name}/${provider.model}`,
@@ -180,6 +223,111 @@ async function processAllLLMs(domain) {
     // Wait for ALL API calls to complete in parallel
     const allResponses = await Promise.all(allPromises);
     return allResponses;
+}
+// THROTTLED API CALL WITH KEY ROTATION
+async function makeThrottledCall(provider, domain, prompt) {
+    // Find the key that's been idle longest
+    let bestKey = null;
+    let oldestTime = Date.now();
+    for (const key of provider.keys) {
+        if (!key)
+            continue;
+        const lastUsed = keyTimestamps.get(key) || 0;
+        if (lastUsed < oldestTime) {
+            oldestTime = lastUsed;
+            bestKey = key;
+        }
+    }
+    if (!bestKey) {
+        throw new Error(`No available keys for ${provider.name}`);
+    }
+    // Calculate required wait time
+    const now = Date.now();
+    const timeSinceLastUse = now - oldestTime;
+    const requiredDelay = provider.delay_ms;
+    if (timeSinceLastUse < requiredDelay) {
+        const waitTime = requiredDelay - timeSinceLastUse;
+        console.log(`⏳ ${provider.name}: waiting ${waitTime}ms for rate limit`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    // Update timestamp
+    keyTimestamps.set(bestKey, Date.now());
+    // Build request
+    const payload = buildPayload(provider, domain, prompt);
+    const headers = buildHeaders(provider, bestKey);
+    const response = await fetch(provider.endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+        throw new Error(`API error ${response.status}: ${response.statusText}`);
+    }
+    const responseData = await response.json();
+    const content = extractContent(responseData, provider);
+    return {
+        model: `${provider.name}/${provider.model}`,
+        content,
+        provider: provider.name
+    };
+}
+// BUILD REQUEST PAYLOAD
+function buildPayload(provider, domain, prompt) {
+    const fullPrompt = `${prompt}\n\nDomain: ${domain}`;
+    switch (provider.format) {
+        case 'openai':
+            return {
+                model: provider.model,
+                messages: [{ role: 'user', content: fullPrompt }],
+                max_tokens: 500,
+                temperature: 0.7
+            };
+        case 'anthropic':
+            return {
+                model: provider.model,
+                messages: [{ role: 'user', content: fullPrompt }],
+                max_tokens: 500
+            };
+        case 'google':
+            return {
+                contents: [{
+                        parts: [{ text: fullPrompt }]
+                    }]
+            };
+        default:
+            throw new Error(`Unknown format: ${provider.format}`);
+    }
+}
+// BUILD REQUEST HEADERS
+function buildHeaders(provider, apiKey) {
+    const headers = { 'Content-Type': 'application/json' };
+    switch (provider.format) {
+        case 'openai':
+            headers['Authorization'] = `Bearer ${apiKey}`;
+            break;
+        case 'anthropic':
+            headers['x-api-key'] = apiKey;
+            headers['anthropic-version'] = '2023-06-01';
+            break;
+        case 'google':
+            // Google uses API key in URL
+            provider.endpoint = `${provider.endpoint}?key=${apiKey}`;
+            break;
+    }
+    return headers;
+}
+// EXTRACT CONTENT FROM RESPONSE
+function extractContent(data, provider) {
+    switch (provider.format) {
+        case 'openai':
+            return data.choices?.[0]?.message?.content || 'No content';
+        case 'anthropic':
+            return data.content?.[0]?.text || 'No content';
+        case 'google':
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No content';
+        default:
+            return 'Unknown format';
+    }
 }
 async function callLLM(provider, domain, prompt) {
     const promptText = `Analyze ${domain} for ${prompt}. Provide detailed insights about this domain's business strategy, market position, and competitive advantages.`;
