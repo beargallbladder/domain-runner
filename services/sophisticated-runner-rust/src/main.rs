@@ -19,7 +19,7 @@ use axum::{
 use serde_json::{json, Value};
 use std::env;
 use tower_http::cors::CorsLayer;
-use tracing::{info, warn};
+use tracing::{info, warn, error};
 
 use crate::ai_providers::AIProviderManager;
 use crate::database::DatabaseManager;
