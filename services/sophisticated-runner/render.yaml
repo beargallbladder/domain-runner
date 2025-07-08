@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sophisticated-runner
+    name: tensor-processor-ts
     runtime: node
     buildCommand: cd services/sophisticated-runner && npm cache clean --force && npm install && npm run build
     startCommand: node dist/index.js
