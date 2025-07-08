@@ -142,7 +142,7 @@ app.post('/process-pending-domains', async (req: Request, res: Response) => {
 
 // PROVIDER-SPECIFIC RATE LIMITS & MULTI-KEY CONFIGURATION
 const AI_PROVIDERS = [
-  // OPENAI - 500 RPM per key
+  // OPENAI GPT-4O-MINI - 500 RPM per key
   {
     name: 'openai',
     model: 'gpt-4o-mini',
@@ -152,10 +152,20 @@ const AI_PROVIDERS = [
     delay_ms: 120, // 60000ms / 500 = 120ms between requests per key
     format: 'openai'
   },
+  // OPENAI GPT-3.5-TURBO - 500 RPM per key (CRITICAL FOR TENSOR COVERAGE)
+  {
+    name: 'openai',
+    model: 'gpt-3.5-turbo',
+    keys: [process.env.OPENAI_API_KEY, process.env.OPENAI_API_KEY2].filter(k => k),
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    rpm_per_key: 500,
+    delay_ms: 120, // 60000ms / 500 = 120ms between requests per key
+    format: 'openai'
+  },
   // ANTHROPIC - 50 RPM per key (strict limits!)
   {
     name: 'anthropic', 
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-3-haiku-20240307',
     keys: [process.env.ANTHROPIC_API_KEY, process.env.ANTHROPIC_API_KEY2].filter(k => k),
     endpoint: 'https://api.anthropic.com/v1/messages',
     rpm_per_key: 50,
@@ -175,7 +185,7 @@ const AI_PROVIDERS = [
   // MISTRAL - 100 RPM per key
   {
     name: 'mistral',
-    model: 'mistral-large-latest',
+    model: 'mistral-small-latest',
     keys: [process.env.MISTRAL_API_KEY, process.env.MISTRAL_API_KEY2].filter(k => k), 
     endpoint: 'https://api.mistral.ai/v1/chat/completions',
     rpm_per_key: 100,
@@ -195,7 +205,7 @@ const AI_PROVIDERS = [
   // TOGETHER - 60 RPM per key
   {
     name: 'together',
-    model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+    model: 'meta-llama/Llama-3-8b-chat-hf',
     keys: [process.env.TOGETHER_API_KEY, process.env.TOGETHER_API_KEY2].filter(k => k),
     endpoint: 'https://api.together.xyz/v1/chat/completions',
     rpm_per_key: 60, 
@@ -215,9 +225,9 @@ const AI_PROVIDERS = [
   // GOOGLE - 60 RPM per key
   {
     name: 'google',
-    model: 'gemini-pro',
+    model: 'gemini-1.5-flash',
     keys: [process.env.GOOGLE_API_KEY, process.env.GOOGLE_API_KEY2].filter(k => k),
-    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
     rpm_per_key: 60,
     delay_ms: 1000, // 60000ms / 60 = 1000ms between requests per key
     format: 'google'
