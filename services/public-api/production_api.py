@@ -1894,6 +1894,209 @@ async def simple_login(email: str, password: str):
     except Exception as e:
         return {"error": f"Login failed: {str(e)}"}
 
+@app.post("/api/process-pending-domains")
+async def process_pending_domains():
+    """
+    🚀 TENSOR PROCESSING - Process pending domains with all 8 LLMs
+    
+    Ensures complete 8/8 LLM coverage for valid tensor analysis
+    """
+    try:
+        import aiohttp
+        import asyncio
+        from datetime import datetime
+        
+        # LLM API configurations with exact database model names
+        llm_configs = [
+            {
+                "name": "openai",
+                "model": "gpt-4o-mini",
+                "url": "https://api.openai.com/v1/chat/completions",
+                "headers": {"Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY')}", "Content-Type": "application/json"},
+                "format": "openai"
+            },
+            {
+                "name": "openai", 
+                "model": "gpt-3.5-turbo",
+                "url": "https://api.openai.com/v1/chat/completions",
+                "headers": {"Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY')}", "Content-Type": "application/json"},
+                "format": "openai"
+            },
+            {
+                "name": "anthropic",
+                "model": "claude-3-haiku-20240307", 
+                "url": "https://api.anthropic.com/v1/messages",
+                "headers": {"x-api-key": os.environ.get('ANTHROPIC_API_KEY'), "anthropic-version": "2023-06-01", "Content-Type": "application/json"},
+                "format": "anthropic"
+            },
+            {
+                "name": "deepseek",
+                "model": "deepseek-chat",
+                "url": "https://api.deepseek.com/v1/chat/completions", 
+                "headers": {"Authorization": f"Bearer {os.environ.get('DEEPSEEK_API_KEY')}", "Content-Type": "application/json"},
+                "format": "openai"
+            },
+            {
+                "name": "mistral",
+                "model": "mistral-small-latest",
+                "url": "https://api.mistral.ai/v1/chat/completions",
+                "headers": {"Authorization": f"Bearer {os.environ.get('MISTRAL_API_KEY')}", "Content-Type": "application/json"},
+                "format": "openai"
+            },
+            {
+                "name": "together",
+                "model": "meta-llama/Llama-3-8b-chat-hf",
+                "url": "https://api.together.xyz/v1/chat/completions",
+                "headers": {"Authorization": f"Bearer {os.environ.get('TOGETHER_API_KEY')}", "Content-Type": "application/json"}, 
+                "format": "openai"
+            },
+            {
+                "name": "perplexity",
+                "model": "llama-3.1-sonar-small-128k-online",
+                "url": "https://api.perplexity.ai/chat/completions",
+                "headers": {"Authorization": f"Bearer {os.environ.get('PERPLEXITY_API_KEY')}", "Content-Type": "application/json"},
+                "format": "openai"
+            },
+            {
+                "name": "google",
+                "model": "gemini-1.5-flash",
+                "url": f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={os.environ.get('GOOGLE_API_KEY')}",
+                "headers": {"Content-Type": "application/json"},
+                "format": "google"
+            }
+        ]
+        
+        # Get pending domains
+        async with pool.acquire() as conn:
+            pending_domains = await conn.fetch("""
+                SELECT id, domain FROM domains 
+                WHERE status = 'pending' 
+                ORDER BY updated_at ASC 
+                LIMIT 10
+            """)
+            
+        if not pending_domains:
+            return {"message": "No pending domains", "processed": 0}
+            
+        logger.info(f"🚀 Processing {len(pending_domains)} domains with 8 LLMs")
+        
+        processed_count = 0
+        error_count = 0
+        
+        # Process each domain
+        for domain_row in pending_domains:
+            domain_id = domain_row['id'] 
+            domain = domain_row['domain']
+            
+            try:
+                # Mark as processing
+                async with pool.acquire() as conn:
+                    await conn.execute("""
+                        UPDATE domains SET status = 'processing', updated_at = NOW() 
+                        WHERE id = $1
+                    """, domain_id)
+                
+                # Process with all LLMs
+                domain_success = True
+                responses_saved = 0
+                
+                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+                    for llm_config in llm_configs:
+                        try:
+                            # Build request payload
+                            if llm_config["format"] == "openai":
+                                payload = {
+                                    "model": llm_config["model"],
+                                    "messages": [{"role": "user", "content": f"Analyze {domain} for business analysis"}],
+                                    "max_tokens": 500
+                                }
+                            elif llm_config["format"] == "anthropic":
+                                payload = {
+                                    "model": llm_config["model"], 
+                                    "messages": [{"role": "user", "content": f"Analyze {domain} for business analysis"}],
+                                    "max_tokens": 500
+                                }
+                            elif llm_config["format"] == "google":
+                                payload = {
+                                    "contents": [{"parts": [{"text": f"Analyze {domain} for business analysis"}]}]
+                                }
+                            
+                            # Make API call
+                            async with session.post(
+                                llm_config["url"],
+                                headers=llm_config["headers"], 
+                                json=payload
+                            ) as response:
+                                if response.status == 200:
+                                    data = await response.json()
+                                    
+                                    # Extract content based on format
+                                    if llm_config["format"] == "openai":
+                                        content = data.get("choices", [{}])[0].get("message", {}).get("content", "No response")
+                                    elif llm_config["format"] == "anthropic":
+                                        content = data.get("content", [{}])[0].get("text", "No response")
+                                    elif llm_config["format"] == "google":
+                                        content = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "No response")
+                                    
+                                    # Save to database
+                                    async with pool.acquire() as conn:
+                                        await conn.execute("""
+                                            INSERT INTO domain_responses (domain_id, model, prompt_type, response, created_at)
+                                            VALUES ($1, $2, $3, $4, NOW())
+                                            ON CONFLICT (domain_id, model, prompt_type) DO UPDATE SET
+                                            response = EXCLUDED.response, created_at = NOW()
+                                        """, domain_id, f"{llm_config['name']}/{llm_config['model']}", "business_analysis", content)
+                                    
+                                    responses_saved += 1
+                                    logger.info(f"✅ {domain}: {llm_config['name']}/{llm_config['model']}")
+                                else:
+                                    logger.warning(f"❌ {domain}: {llm_config['name']} failed with {response.status}")
+                                    domain_success = False
+                                    
+                        except Exception as llm_error:
+                            logger.error(f"❌ {domain}: {llm_config['name']} error - {llm_error}")
+                            domain_success = False
+                
+                # Update domain status
+                async with pool.acquire() as conn:
+                    if domain_success and responses_saved >= 6:  # At least 6/8 LLMs succeeded
+                        await conn.execute("""
+                            UPDATE domains SET status = 'completed', updated_at = NOW() 
+                            WHERE id = $1
+                        """, domain_id)
+                        processed_count += 1
+                        logger.info(f"✅ {domain}: COMPLETED ({responses_saved}/8 LLMs)")
+                    else:
+                        await conn.execute("""
+                            UPDATE domains SET status = 'pending', updated_at = NOW() 
+                            WHERE id = $1  
+                        """, domain_id)
+                        error_count += 1
+                        logger.warning(f"⚠️ {domain}: RETRYING ({responses_saved}/8 LLMs)")
+                        
+            except Exception as domain_error:
+                logger.error(f"💥 {domain}: Processing failed - {domain_error}")
+                error_count += 1
+                
+                # Reset to pending for retry
+                async with pool.acquire() as conn:
+                    await conn.execute("""
+                        UPDATE domains SET status = 'pending', updated_at = NOW() 
+                        WHERE id = $1
+                    """, domain_id)
+        
+        return {
+            "message": "Tensor processing completed",
+            "processed": processed_count,
+            "errors": error_count,
+            "total_domains": len(pending_domains),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"🚨 Tensor processing failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get('PORT', 8000))
