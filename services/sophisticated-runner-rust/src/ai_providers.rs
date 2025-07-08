@@ -48,22 +48,31 @@ impl AIProviderManager {
             .build()
             .expect("Failed to create HTTP client");
 
-        // Initialize all 8 AI providers with intelligent throttling configuration
+        // Initialize all 8 AI providers with EXACT DATABASE MODEL NAMES for tensor coverage
         let providers = vec![
             AIProvider {
                 name: "openai".to_string(),
                 api_key: std::env::var("OPENAI_API_KEY").unwrap_or_default(),
                 base_url: "https://api.openai.com/v1/chat/completions".to_string(),
-                model: "gpt-4".to_string(),
+                model: "gpt-4o-mini".to_string(),
                 speed_tier: SpeedTier::Fast,
                 rate_limit_per_minute: 500,  // High rate limit
                 typical_response_time_ms: 2000,
             },
             AIProvider {
+                name: "openai".to_string(),
+                api_key: std::env::var("OPENAI_API_KEY").unwrap_or_default(),
+                base_url: "https://api.openai.com/v1/chat/completions".to_string(),
+                model: "gpt-3.5-turbo".to_string(),
+                speed_tier: SpeedTier::Fast,
+                rate_limit_per_minute: 500,  // High rate limit
+                typical_response_time_ms: 1500,
+            },
+            AIProvider {
                 name: "anthropic".to_string(),
                 api_key: std::env::var("ANTHROPIC_API_KEY").unwrap_or_default(),
                 base_url: "https://api.anthropic.com/v1/messages".to_string(),
-                model: "claude-3-5-sonnet-20241022".to_string(),
+                model: "claude-3-haiku-20240307".to_string(),
                 speed_tier: SpeedTier::Fast,
                 rate_limit_per_minute: 300,  // Good rate limit
                 typical_response_time_ms: 2500,
@@ -81,25 +90,16 @@ impl AIProviderManager {
                 name: "mistral".to_string(),
                 api_key: std::env::var("MISTRAL_API_KEY").unwrap_or_default(),
                 base_url: "https://api.mistral.ai/v1/chat/completions".to_string(),
-                model: "mistral-large-latest".to_string(),
+                model: "mistral-small-latest".to_string(),
                 speed_tier: SpeedTier::Medium,
                 rate_limit_per_minute: 250,  // Medium rate limit
                 typical_response_time_ms: 3000,
             },
             AIProvider {
-                name: "xai".to_string(),
-                api_key: std::env::var("XAI_API_KEY").unwrap_or_default(),
-                base_url: "https://api.x.ai/v1/chat/completions".to_string(),
-                model: "grok-2-1212".to_string(),
-                speed_tier: SpeedTier::Slow,
-                rate_limit_per_minute: 100,  // Lower rate limit
-                typical_response_time_ms: 5000,
-            },
-            AIProvider {
                 name: "together".to_string(),
                 api_key: std::env::var("TOGETHER_API_KEY").unwrap_or_default(),
                 base_url: "https://api.together.xyz/v1/chat/completions".to_string(),
-                model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo".to_string(),
+                model: "meta-llama/Llama-3-8b-chat-hf".to_string(),
                 speed_tier: SpeedTier::Slow,
                 rate_limit_per_minute: 120,  // Lower rate limit
                 typical_response_time_ms: 6000,
@@ -116,8 +116,8 @@ impl AIProviderManager {
             AIProvider {
                 name: "google".to_string(),
                 api_key: std::env::var("GOOGLE_API_KEY").unwrap_or_default(),
-                base_url: format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={}", std::env::var("GOOGLE_API_KEY").unwrap_or_default()),
-                model: "gemini-pro".to_string(),
+                base_url: format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={}", std::env::var("GOOGLE_API_KEY").unwrap_or_default()),
+                model: "gemini-1.5-flash".to_string(),
                 speed_tier: SpeedTier::Slow,
                 rate_limit_per_minute: 60,   // Lowest rate limit
                 typical_response_time_ms: 7000,
