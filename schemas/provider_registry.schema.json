@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "provider_registry",
+  "type": "object",
+  "required": ["provider", "model", "status", "last_checked_iso", "endpoint", "params"],
+  "properties": {
+    "provider": {"type": "string"},
+    "model": {"type": "string"},
+    "status": {
+      "type": "string",
+      "enum": ["active", "trial", "deprecated", "eol", "unknown"]
+    },
+    "last_checked_iso": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "endpoint": {"type": "string"},
+    "params": {"type": "object"},
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "search_augmented": {"type": "boolean"},
+        "tools": {"type": "boolean"},
+        "max_context": {"type": "integer"},
+        "cost_per_1k_tokens": {"type": "number"}
+      }
+    },
+    "notes": {"type": "string"}
+  },
+  "additionalProperties": false
+}

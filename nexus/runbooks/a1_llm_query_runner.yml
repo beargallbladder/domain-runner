@@ -1,0 +1,20 @@
+name: A1 LLM Query Runner
+triggers:
+  - schedule: "cron(0 * * * *)"   # hourly
+  - event: "prompt_catalog.updated"
+inputs:
+  domains_ref: "s3://placeholder/domains.json"
+  prompts_ref: "s3://placeholder/prompt_sets/v1.json"
+  models: ["gpt-4o","claude-3.5","deepseek-v3"]
+policy:
+  retries: 3
+  budget_usd_per_hour: 15
+gates:
+  require_schema: "schemas/responses_raw.schema.json"
+  require_tests: ["agents/llm-query-runner/tests/test_runner_basic.py","agents/llm-query-runner/tests/test_runner_failures.py"]
+on_success:
+  - emit_event: "a1.batch.completed"
+  - store_rows: "warehouse.responses_raw"
+on_failure:
+  - emit_event: "a1.batch.failed"
+  - open_issue: "A1 failing {{reason}}"

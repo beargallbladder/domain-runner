@@ -1,0 +1,55 @@
+# Render deployment configuration
+databases:
+  - name: domain-runner-db
+    plan: free
+    databaseName: domain_runner
+    user: nexus
+
+services:
+  # Backend API & Orchestrator
+  - type: web
+    name: nexus-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scripts/hourly_pipeline.py
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: domain-runner-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+  # Background worker for scheduled runs
+  - type: worker
+    name: nexus-worker
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python orchestrator.py --live
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: domain-runner-db
+          property: connectionString
+      - fromGroup: llm-api-keys
+
+# Cron job for hourly pipeline
+  - type: cron
+    name: nexus-hourly
+    env: python
+    plan: free
+    schedule: "0 * * * *"  # Every hour
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scripts/hourly_pipeline.py
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: domain-runner-db
+          property: connectionString
+      - fromGroup: llm-api-keys

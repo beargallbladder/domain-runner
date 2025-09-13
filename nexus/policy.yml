@@ -1,0 +1,31 @@
+version: 1
+merge_gates:
+  - name: require_prd_reference
+    type: file_must_reference
+    params: { path_glob: "agents/**", must_reference: "PRD:" }
+  - name: golden_tests_green
+    type: required_status
+    params: { checks: ["ci"] }
+  - name: coverage_threshold
+    type: coverage_min
+    params: { percent: 90 }
+  - name: path_allowlist
+    type: only_modify_paths
+    params:
+      allow:
+        - "agents/**"
+        - "schemas/**"
+        - "nexus/**"
+        - ".github/**"
+        - "tools/**"
+        - "Makefile"
+        - "requirements.txt"
+        - "README.md"
+        - "pyproject.toml"
+      deny_create_executables: true
+auto_actions:
+  on_fail:
+    - open_issue_with_template: "Nexus policy fail: {{gate_name}}"
+    - label_pr: ["needs-fix"]
+  on_pass:
+    - label_pr: ["ready-to-merge"]

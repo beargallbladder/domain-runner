@@ -1,0 +1,91 @@
+{
+  "timestamp": "2025-08-01T06:14:00.000Z",
+  "system": {
+    "name": "domain-runner",
+    "version": "2.1.1",
+    "environment": "production"
+  },
+  "resources": {
+    "cpu": {
+      "usage": 65,
+      "cores": 4,
+      "load": [2.1, 1.8, 1.5]
+    },
+    "memory": {
+      "used": 3200,
+      "total": 8192,
+      "percentage": 39
+    },
+    "network": {
+      "latency": {
+        "api": 145,
+        "database": 23,
+        "average": 84
+      },
+      "throughput": {
+        "inbound": 125,
+        "outbound": 340
+      }
+    }
+  },
+  "services": {
+    "llm_providers": {
+      "total": 11,
+      "active": 7,
+      "failed": 4,
+      "providers": {
+        "openai": {"status": "active", "latency": 120, "success_rate": 0.98},
+        "anthropic": {"status": "active", "latency": 180, "success_rate": 0.97},
+        "deepseek": {"status": "active", "latency": 90, "success_rate": 0.99},
+        "mistral": {"status": "active", "latency": 110, "success_rate": 0.96},
+        "xai": {"status": "failed", "error": "API key expired"},
+        "together": {"status": "active", "latency": 150, "success_rate": 0.95},
+        "perplexity": {"status": "failed", "error": "API key expired"},
+        "google": {"status": "failed", "error": "API permission issue"},
+        "cohere": {"status": "active", "latency": 130, "success_rate": 0.97},
+        "ai21": {"status": "failed", "error": "No API key"},
+        "groq": {"status": "active", "latency": 85, "success_rate": 0.99}
+      }
+    },
+    "database": {
+      "connections": {
+        "active": 12,
+        "idle": 8,
+        "max": 100
+      },
+      "queries": {
+        "average_time": 45,
+        "slow_queries": 3,
+        "cache_hit_rate": 0.78
+      }
+    },
+    "queues": {
+      "pending_domains": 156,
+      "processing": 24,
+      "completed_today": 892,
+      "failed_today": 12
+    }
+  },
+  "bottlenecks": [
+    {
+      "component": "api_calls",
+      "severity": "high",
+      "cause": "4 providers offline",
+      "impact": "36% reduced capacity"
+    },
+    {
+      "component": "database_writes",
+      "severity": "medium",
+      "cause": "No write batching",
+      "impact": "Increased latency"
+    }
+  ],
+  "predictions": {
+    "completion_time": 4500,
+    "success_probability": 0.92,
+    "resource_exhaustion": {
+      "memory": "2 hours",
+      "connections": "45 minutes"
+    }
+  }
+}

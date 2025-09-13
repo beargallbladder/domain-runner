@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "observation_status",
+  "type": "object",
+  "required": [
+    "run_id",
+    "domain",
+    "prompt_id",
+    "model",
+    "status",
+    "attempts"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "prompt_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "running", "success", "failed", "skipped"]
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "last_error": {
+      "type": ["string", "null"]
+    },
+    "latency_ms": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "response_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    }
+  },
+  "additionalProperties": false
+}

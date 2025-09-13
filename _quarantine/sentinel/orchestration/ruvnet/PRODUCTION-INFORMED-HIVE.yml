@@ -1,0 +1,328 @@
+# RuvNet Hive Orchestration - Production-Informed Configuration
+# Based on actual working crawler analysis from Aug 2025
+
+hive:
+  name: sentinel-production-wrapper
+  version: 2.0.0
+  mode: enhancement_not_replacement
+  
+  # KEY LEARNING: The crawler works, it just needs triggers
+  core_principle: |
+    "Don't fix what isn't broken. The crawler processed 11,182 responses 
+    successfully. It just needs operational intelligence wrapped around it."
+  
+  # Production Reality Check
+  production_facts:
+    working_components:
+      crawler_code:
+        location: services/domain-processor-v2/crawler-tensor.js
+        status: FULLY_FUNCTIONAL
+        providers: 16
+        success_rate: 0.90
+        
+      database:
+        type: PostgreSQL
+        location: Render
+        status: OPERATIONAL
+        tables: [domains, domain_responses]
+        
+      api_layer:
+        url: https://www.llmrank.io
+        status: SERVING_TRAFFIC
+        endpoints: 4
+        
+      provider_keys:
+        location: Render environment
+        count: 13
+        status: CONFIGURED
+    
+    broken_components:
+      triggers:
+        current: NONE
+        impact: "Crawler never runs"
+        
+      monitoring:
+        current: NONE
+        impact: "No visibility into failures"
+        
+      recovery:
+        current: NONE
+        impact: "32 domains stuck for 12+ days"
+        
+      optimization:
+        current: NONE
+        impact: "Same batch sizes, no learning"
+  
+  # Swarm Architecture - Based on Production Needs
+  swarms:
+    # SWARM 1: Operational Intelligence (Priority 1)
+    operational_swarm:
+      purpose: "Keep the existing crawler running 24/7"
+      topology: star  # Central coordinator with specialized workers
+      
+      queen:
+        name: trigger_coordinator
+        responsibilities:
+          - Monitor database for pending domains
+          - Decide when to trigger crawls
+          - Prevent concurrent executions
+          - Manage resource allocation
+        
+        decision_logic: |
+          IF pending_domains > 100 AND !is_running THEN
+            trigger_crawl()
+          ELSIF last_run > 1_hour_ago AND pending_domains > 0 THEN
+            trigger_crawl()
+          ELSIF stuck_domains > 10 THEN
+            recover_and_trigger()
+          END
+      
+      workers:
+        - health_monitor:
+            checks:
+              - domains_processing_rate
+              - api_success_rate
+              - stuck_domain_count
+            alerts:
+              - no_activity_5min
+              - success_rate < 0.7
+              - stuck_domains > 50
+        
+        - error_recovery:
+            handles:
+              - stuck_domains: "Reset status to pending"
+              - failed_providers: "Mark for retry"
+              - rate_limits: "Exponential backoff"
+            
+        - performance_tracker:
+            metrics:
+              - domains_per_hour
+              - cost_per_domain
+              - provider_success_rates
+              - api_response_times
+    
+    # SWARM 2: Provider Optimization (Priority 2)
+    provider_swarm:
+      purpose: "Optimize provider usage based on production data"
+      topology: mesh  # Providers share learnings
+      
+      agents:
+        - openai_specialist:
+            model: gpt-4o-mini
+            observed_rate: 60_per_minute
+            optimal_batch: 20
+            success_rate: 0.95
+            
+        - anthropic_specialist:
+            model: claude-3-haiku
+            observed_rate: 50_per_minute
+            optimal_batch: 15
+            success_rate: 0.93
+            
+        - deepseek_specialist:
+            model: deepseek-chat
+            observed_rate: 100_per_minute
+            optimal_batch: 30
+            success_rate: 0.91
+            
+        - cost_optimizer:
+            strategy: |
+              1. Use cheapest providers first (DeepSeek, Groq)
+              2. Fall back to premium for failures
+              3. Use expensive models only for high-value domains
+    
+    # SWARM 3: Learning System (Priority 3)
+    learning_swarm:
+      purpose: "Learn from production patterns"
+      topology: hierarchical
+      
+      collectors:
+        - pattern_collector:
+            tracks:
+              - provider_failure_patterns
+              - optimal_crawl_times
+              - domain_complexity_indicators
+              
+        - success_analyzer:
+            identifies:
+              - high_performing_prompts
+              - provider_domain_affinity
+              - batch_size_sweet_spots
+      
+      appliers:
+        - configuration_updater:
+            updates:
+              - batch_sizes_per_provider
+              - retry_strategies
+              - prompt_templates
+              
+        - schedule_optimizer:
+            optimizes:
+              - crawl_frequency
+              - provider_rotation
+              - resource_allocation
+  
+  # Memory System - Persistent Learning
+  memory:
+    # Short-term (Redis)
+    operational:
+      current_run:
+        started_at: timestamp
+        domains_processed: count
+        providers_used: list
+        errors_encountered: list
+      
+      provider_states:
+        rate_limits: map
+        last_success: map
+        failure_count: map
+    
+    # Long-term (PostgreSQL)
+    analytical:
+      provider_performance:
+        table: provider_metrics
+        retention: 90_days
+        
+      domain_patterns:
+        table: domain_analysis
+        retention: 180_days
+        
+      optimization_history:
+        table: optimization_log
+        retention: 365_days
+  
+  # Coordination Protocols
+  protocols:
+    startup:
+      sequence:
+        1: check_existing_crawler_process
+        2: verify_database_connectivity
+        3: validate_api_keys
+        4: clear_stuck_domains
+        5: initialize_swarms
+        6: begin_monitoring
+    
+    trigger_decision:
+      inputs:
+        - pending_domain_count
+        - time_since_last_run
+        - current_api_costs
+        - provider_availability
+      
+      output: boolean_trigger_now
+    
+    failure_recovery:
+      detection:
+        - no_new_responses_5min
+        - provider_errors > 3
+        - stuck_domains > threshold
+      
+      actions:
+        - reset_stuck_domains
+        - rotate_providers
+        - adjust_batch_sizes
+        - alert_operators
+    
+    optimization_cycle:
+      frequency: daily
+      steps:
+        1: analyze_previous_24h
+        2: identify_patterns
+        3: propose_adjustments
+        4: test_in_sandbox
+        5: apply_if_beneficial
+  
+  # Integration Points
+  integrations:
+    existing_crawler:
+      wrapper_approach: true
+      modification: NONE
+      interface: child_process_spawn
+      
+    database:
+      connection: existing_pool
+      new_tables: 
+        - sentinel_metrics
+        - provider_performance
+        - optimization_log
+      
+    api_layer:
+      new_endpoints:
+        - /api/trigger-crawl
+        - /api/crawl-status
+        - /api/sentinel/metrics
+      
+    monitoring:
+      prometheus:
+        enabled: true
+        port: 9090
+        
+      grafana:
+        enabled: true
+        dashboards:
+          - operational_health
+          - provider_performance
+          - cost_tracking
+  
+  # Deployment Strategy
+  deployment:
+    phase1_immediate:
+      goal: "Resume crawling TODAY"
+      actions:
+        - Add trigger endpoint
+        - Deploy basic CRON
+        - Clear stuck domains
+      
+    phase2_monitoring:
+      goal: "Never miss a crawl"
+      timeline: "Week 1"
+      actions:
+        - Deploy health monitors
+        - Add auto-recovery
+        - Set up alerts
+    
+    phase3_optimization:
+      goal: "Reduce costs 20%"
+      timeline: "Week 2"
+      actions:
+        - Implement learning system
+        - Optimize provider usage
+        - Tune batch sizes
+    
+    phase4_autonomous:
+      goal: "Full self-management"
+      timeline: "Month 1"
+      actions:
+        - Predictive triggers
+        - Self-healing
+        - Continuous optimization
+  
+  # Success Metrics
+  metrics:
+    operational:
+      uptime: 99.9%
+      domains_per_hour: 1500
+      stuck_domains: < 10
+      
+    efficiency:
+      cost_per_domain: < $0.01
+      api_success_rate: > 95%
+      processing_time: < 1hr_per_batch
+      
+    intelligence:
+      learning_cycles_completed: daily
+      optimizations_applied: > 5_per_week
+      cost_reduction: 20%_in_30_days
+  
+  # Critical Insights
+  lessons_learned:
+    - "The crawler code is solid - 11,182 successful responses prove it"
+    - "The problem is operational, not technical"
+    - "Triggers are the missing piece, not better code"
+    - "32 stuck domains show need for monitoring"
+    - "No activity for 12 days shows need for alerts"
+    - "Multiple provider types show need for optimization"
+    
+  mantra: |
+    "Wrap, don't replace. Monitor, don't modify. 
+     Trigger, don't rebuild. Learn, don't assume."

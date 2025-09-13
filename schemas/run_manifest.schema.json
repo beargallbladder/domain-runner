@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_manifest",
+  "type": "object",
+  "required": [
+    "run_id",
+    "window_start",
+    "window_end",
+    "target_combos",
+    "min_floor",
+    "target_coverage",
+    "observed_ok",
+    "observed_fail",
+    "coverage",
+    "tier",
+    "status"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "window_start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "window_end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "target_combos": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "min_floor": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "target_coverage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "observed_ok": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "observed_fail": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "coverage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["invalid", "degraded", "healthy"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "closing", "closed"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

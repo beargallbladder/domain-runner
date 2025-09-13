@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "backfill_provenance",
+  "type": "object",
+  "required": ["legacy_source_id", "legacy_primary_key", "new_id_raw", "ingested_at", "mapping_version", "checksum"],
+  "properties": {
+    "legacy_source_id": {"type": "string"},
+    "legacy_primary_key": {"type": "string"},
+    "new_id_raw": {"type": "string"},
+    "new_id_norm": {"type": ["string", "null"]},
+    "ingested_at": {"type": "string", "format": "date-time"},
+    "mapping_version": {"type": "string"},
+    "checksum": {"type": "string"},
+    "status": {"type": "string", "enum": ["ok", "quarantined", "skipped"]},
+    "reason": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

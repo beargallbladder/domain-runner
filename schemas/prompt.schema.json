@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prompt",
+  "type": "object",
+  "required": ["prompt_id", "text", "task", "version", "safety_tags", "created_by", "created_at"],
+  "properties": {
+    "prompt_id": {"type": "string", "minLength": 1},
+    "text": {"type": "string", "minLength": 1},
+    "task": {"type": "string", "enum": ["brand", "domain", "category", "other"]},
+    "variant": {"type": "string"},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "safety_tags": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "created_by": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

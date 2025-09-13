@@ -1,0 +1,21 @@
+
+=== CACHE HEALTH REPORT ===
+Time: 2025-07-29 09:43:25
+
+Cache Statistics:
+- Total domains: 3239
+- Fresh (<24h): 2101 (64.9%)
+- Fresh (<72h): 2101
+- Fresh (<1 week): 2101
+- Average age: 177.7 hours
+- Oldest update: 2025-07-09 04:03:57.830768
+- Newest update: 2025-07-29 09:42:40.709469
+
+Scheduler Statistics:
+- Running since: 2025-07-29 09:43:24.792028
+- Incremental runs: 0
+- Full runs: 0
+- High volatility runs: 0
+- Last incremental: None
+- Last full refresh: None
+===========================

@@ -1,0 +1,51 @@
+swarm:
+  name: sentinel-crawl
+  inputs:
+    - targets: specs/targets.json
+    - model_matrix: specs/models.json
+  environment:
+    # Pull from Render service environment
+    source: render
+  steps:
+    - name: validate-inputs
+      run: >
+        python scripts/validate_inputs.py
+        --targets specs/targets.json
+        --models specs/models.json
+      continue_on_error: false
+    
+    - name: plan
+      run: >
+        node services/runner-node/src/plan.js
+        --spec specs/sentinel.prd.md
+        --targets specs/targets.json
+        --models specs/models.json
+        --out runs/${RUN_ID}/plan.json
+      timeout_seconds: 30
+    
+    - name: execute-crawls
+      run: >
+        node services/runner-node/src/crawl.js
+        --plan runs/${RUN_ID}/plan.json
+        --checkpoint runs/${RUN_ID}/checkpoint.json
+        --resume-on-failure
+        --parallel ${PARALLEL_WORKERS:-4}
+        --out runs/${RUN_ID}/crawl.jsonl
+      retry: 
+        max: 2
+        backoff_seconds: 30
+      timeout_seconds: 600
+    
+    - name: validate-output
+      run: >
+        python scripts/validate_crawl.py
+        --input runs/${RUN_ID}/crawl.jsonl
+        --schema interfaces/artifact.schema.json
+      
+    - name: collect-errors
+      run: >
+        python scripts/classify_errors.py
+        --crawl runs/${RUN_ID}/crawl.jsonl
+        --buckets "timeout,rate_limit,auth,parse,network,unknown"
+        --out runs/${RUN_ID}/error_buckets.json
+      continue_on_error: true

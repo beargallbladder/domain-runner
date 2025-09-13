@@ -1,0 +1,22 @@
+mode: "real"     # "mock" | "real"
+llm_budget:
+  hourly_usd_cap: 50
+
+providers:
+  openai:      { enabled: true,  model: "gpt-4o",                api_key_env: "OPENAI_API_KEY",      timeout_s: 30 }
+  anthropic:   { enabled: true,  model: "claude-3-5-sonnet-20240620", api_key_env: "ANTHROPIC_API_KEY", timeout_s: 30 }
+  deepseek:    { enabled: true,  model: "deepseek-chat",         api_key_env: "DEEPSEEK_API_KEY",    timeout_s: 30 }
+  mistral:     { enabled: false, model: "mistral-large-latest",  api_key_env: "MISTRAL_API_KEY",     timeout_s: 30 }
+  cohere:      { enabled: false, model: "command-r-plus",        api_key_env: "COHERE_API_KEY",      timeout_s: 30 }
+  ai21:        { enabled: false, model: "jamba-instruct",        api_key_env: "AI21_API_KEY",        timeout_s: 30 }
+  google:      { enabled: false, model: "gemini-1.5-pro",        api_key_env: "GOOGLE_API_KEY",      timeout_s: 30 }
+  groq:        { enabled: false, model: "llama-3.1-70b-versatile", api_key_env: "GROQ_API_KEY",      timeout_s: 30 }
+  together:    { enabled: false, model: "meta-llama/llama-3-70b-instruct", api_key_env: "TOGETHER_API_KEY", timeout_s: 30 }
+  perplexity:  { enabled: false, model: "sonar-large-online",    api_key_env: "PERPLEXITY_API_KEY",  timeout_s: 30 }
+  xai:         { enabled: false, model: "grok-2",                api_key_env: "XAI_API_KEY",         timeout_s: 30 }
+
+# Optional: per-provider rate limits (requests/min) to avoid 429s
+ratelimits:
+  openai:     { rpm: 60 }
+  anthropic:  { rpm: 60 }
+  deepseek:   { rpm: 60 }

@@ -1,0 +1,17 @@
+version: "1.0.0"
+legacy_source_id: "pg://legacy-db.llm_runs"
+fields:
+  ts_iso: "timestamp"
+  model: "model_name"
+  domain: "domain"
+  raw: "raw_response"
+  latency_ms: "latency_ms"
+  status: "status"   # optional; else infer from raw emptiness
+derive:
+  prompt_id_from_text: true
+  ts_bucket: "minute"
+defaults:
+  status_if_missing: "success"
+guards:
+  max_row_size_bytes: 1048576
+  allow_models: ["gpt-4o", "claude-3.5", "deepseek-v3", "unknown-*"]

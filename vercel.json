@@ -1,0 +1,31 @@
+{
+  "name": "nexus-dashboard",
+  "version": 2,
+  "builds": [
+    {
+      "src": "dashboard/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/status",
+      "dest": "https://nexus-api.onrender.com/status"
+    },
+    {
+      "src": "/api/pipeline",
+      "dest": "https://nexus-api.onrender.com/pipeline"
+    },
+    {
+      "src": "/api/metrics",
+      "dest": "https://nexus-api.onrender.com/metrics"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dashboard/$1"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://nexus-api.onrender.com"
+  }
+}

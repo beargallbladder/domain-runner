@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain Runner - Monitoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #1a1a1a;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            font-size: 2.5rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .summary-card.healthy .value { color: #4CAF50; }
+        .summary-card.warning .value { color: #ff9800; }
+        .summary-card.critical .value { color: #f44336; }
+
+        .section {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .service-card {
+            background-color: #0a0a0a;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .service-name {
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-badge.healthy { background-color: #4CAF50; color: white; }
+        .status-badge.unhealthy { background-color: #f44336; color: white; }
+        .status-badge.degraded { background-color: #ff9800; color: white; }
+        .status-badge.unknown { background-color: #666; color: white; }
+
+        .service-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .service-detail {
+            color: #888;
+        }
+
+        .service-detail span {
+            color: #e0e0e0;
+        }
+
+        .alert-item {
+            background-color: #0a0a0a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+        }
+
+        .alert-item.critical { border-left-color: #f44336; }
+        .alert-item.warning { border-left-color: #ff9800; }
+        .alert-item.info { border-left-color: #2196F3; }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .alert-title {
+            font-weight: bold;
+        }
+
+        .alert-time {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .connection-status.connected {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .connection-status.disconnected {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .updating {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status disconnected" id="connectionStatus">
+        Disconnected
+    </div>
+
+    <header>
+        <div class="container">
+            <h1>Domain Runner Monitoring Dashboard</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="summary-grid" id="summaryGrid">
+            <div class="loading">Loading dashboard data...</div>
+        </div>
+
+        <div class="section">
+            <h2>Service Status</h2>
+            <div class="service-grid" id="serviceGrid">
+                <div class="loading">Loading services...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Active Alerts</h2>
+            <div id="alertsList">
+                <div class="loading">Loading alerts...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Processing Status</h2>
+            <div id="processingStatus">
+                <div class="loading">Loading processing status...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const WS_URL = `ws://${window.location.host}`;
+        
+        let ws = null;
+        let dashboardData = null;
+
+        // Initialize WebSocket connection
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                updateConnectionStatus(true);
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                handleWebSocketMessage(message);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                updateConnectionStatus(false);
+                // Reconnect after 5 seconds
+                setTimeout(connectWebSocket, 5000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function handleWebSocketMessage(message) {
+            console.log('Received:', message.type);
+
+            switch (message.type) {
+                case 'dashboard:full':
+                    updateFullDashboard(message.data);
+                    break;
+                case 'health:update':
+                    updateHealthStatus(message.data);
+                    break;
+                case 'metrics:update':
+                    updateMetrics(message.data);
+                    break;
+                case 'alerts:new':
+                    updateAlerts(message.data);
+                    break;
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            if (connected) {
+                status.textContent = 'Connected';
+                status.className = 'connection-status connected';
+            } else {
+                status.textContent = 'Disconnected';
+                status.className = 'connection-status disconnected';
+            }
+        }
+
+        function updateFullDashboard(data) {
+            dashboardData = data;
+            updateSummary(data.summary);
+            updateServices(data.services);
+            updateAlertsList(data.alerts);
+            updateProcessingStatus(data.metrics?.database);
+        }
+
+        function updateSummary(summary) {
+            const grid = document.getElementById('summaryGrid');
+            grid.innerHTML = `
+                <div class="summary-card healthy">
+                    <h3>Healthy Services</h3>
+                    <div class="value">${summary.healthyServices}</div>
+                </div>
+                <div class="summary-card ${summary.unhealthyServices > 0 ? 'critical' : ''}">
+                    <h3>Unhealthy Services</h3>
+                    <div class="value">${summary.unhealthyServices}</div>
+                </div>
+                <div class="summary-card ${summary.degradedServices > 0 ? 'warning' : ''}">
+                    <h3>Degraded Services</h3>
+                    <div class="value">${summary.degradedServices}</div>
+                </div>
+                <div class="summary-card ${summary.criticalAlerts > 0 ? 'critical' : summary.activeAlerts > 0 ? 'warning' : ''}">
+                    <h3>Active Alerts</h3>
+                    <div class="value">${summary.activeAlerts}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Processing Rate</h3>
+                    <div class="value">${summary.processingRate}/hr</div>
+                </div>
+                <div class="summary-card ${summary.pendingDomains > 5000 ? 'warning' : ''}">
+                    <h3>Pending Domains</h3>
+                    <div class="value">${summary.pendingDomains.toLocaleString()}</div>
+                </div>
+            `;
+        }
+
+        function updateServices(services) {
+            const grid = document.getElementById('serviceGrid');
+            grid.innerHTML = services.map(service => `
+                <div class="service-card">
+                    <div class="service-header">
+                        <span class="service-name">${service.name}</span>
+                        <span class="status-badge ${service.status}">${service.status}</span>
+                    </div>
+                    <div class="service-details">
+                        <div class="service-detail">Type: <span>${service.type}</span></div>
+                        <div class="service-detail">Criticality: <span>${service.criticality}</span></div>
+                        <div class="service-detail">Response: <span>${service.health.responseTime}ms</span></div>
+                        <div class="service-detail">Alerts: <span>${service.alerts.length}</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateAlertsList(alerts) {
+            const list = document.getElementById('alertsList');
+            if (alerts.length === 0) {
+                list.innerHTML = '<p style="color: #888; text-align: center;">No active alerts</p>';
+                return;
+            }
+
+            list.innerHTML = alerts.map(alert => `
+                <div class="alert-item ${alert.severity}">
+                    <div class="alert-header">
+                        <span class="alert-title">${alert.title}</span>
+                        <span class="alert-time">${new Date(alert.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div>${alert.message}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateProcessingStatus(database) {
+            if (!database) return;
+
+            const status = document.getElementById('processingStatus');
+            status.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div>
+                        <h4 style="color: #888; margin-bottom: 10px;">Total Domains</h4>
+                        <p style="font-size: 1.5rem; font-weight: bold;">${database.totalDomains.toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <h4 style="color: #888; margin-bottom: 10px;">Completed</h4>
+                        <p style="font-size: 1.5rem; font-weight: bold; color: #4CAF50;">${database.completedDomains.toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <h4 style="color: #888; margin-bottom: 10px;">Pending</h4>
+                        <p style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">${database.pendingDomains.toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <h4 style="color: #888; margin-bottom: 10px;">Failed</h4>
+                        <p style="font-size: 1.5rem; font-weight: bold; color: #f44336;">${database.failedDomains.toLocaleString()}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateHealthStatus(health) {
+            // Update service statuses based on health data
+            if (dashboardData && dashboardData.services) {
+                dashboardData.health = health;
+                updateServices(dashboardData.services);
+            }
+        }
+
+        function updateMetrics(metrics) {
+            // Update processing status with new metrics
+            if (metrics.database) {
+                updateProcessingStatus(metrics.database);
+            }
+        }
+
+        function updateAlerts(alerts) {
+            // Add new alerts to the list
+            updateAlertsList(alerts);
+        }
+
+        // Fallback: Fetch initial data via HTTP if WebSocket fails
+        async function fetchInitialData() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard`);
+                const data = await response.json();
+                updateFullDashboard(data);
+            } catch (error) {
+                console.error('Failed to fetch initial data:', error);
+            }
+        }
+
+        // Initialize
+        connectWebSocket();
+        fetchInitialData();
+    </script>
+</body>
+</html>

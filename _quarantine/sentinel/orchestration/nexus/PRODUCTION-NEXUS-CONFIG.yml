@@ -1,0 +1,422 @@
+# RuvNet Nexus Configuration - Production-Informed
+# Based on actual crawler analysis and operational gaps discovered
+
+nexus:
+  name: sentinel-nexus-production
+  version: 2.0.0
+  mode: operational_wrapper
+  
+  # Core Discovery from Production
+  reality_check:
+    working_system:
+      crawler: "services/domain-processor-v2/crawler-tensor.js"
+      performance: "11,182 responses in 587 minutes"
+      providers: "16 working LLM integrations"
+      database: "PostgreSQL on Render"
+      
+    failure_modes:
+      no_triggers: "System never starts automatically"
+      no_monitoring: "Failures go unnoticed for weeks"
+      no_recovery: "32 domains stuck indefinitely"
+      no_learning: "Same settings, no optimization"
+  
+  # Nexus Features Mapped to Real Problems
+  features:
+    # PRIORITY 1: Fix the trigger problem
+    intelligent_triggers:
+      enabled: true
+      purpose: "Never let the crawler sleep again"
+      
+      neural_trigger_network:
+        inputs:
+          - pending_domain_count
+          - time_since_last_run
+          - current_hour_of_day
+          - api_rate_limit_status
+          - cost_accumulation
+          - provider_availability
+        
+        decision_model:
+          type: lstm_classifier
+          training_data: historical_crawl_patterns
+          output: trigger_probability
+          
+        trigger_threshold: 0.7
+        
+        patterns_learned:
+          - "Best times to crawl for each provider"
+          - "Optimal batch sizes by time of day"
+          - "Cost-effective provider rotation"
+    
+    # PRIORITY 2: Add monitoring
+    adaptive_monitoring:
+      enabled: true
+      purpose: "See problems before they become disasters"
+      
+      topology_switching:
+        normal_operations:
+          topology: ring
+          check_interval: 60s
+          
+        high_load:
+          topology: mesh
+          check_interval: 10s
+          
+        failure_mode:
+          topology: star
+          check_interval: 5s
+      
+      neural_anomaly_detection:
+        model: autoencoder
+        training: unsupervised
+        
+        detects:
+          - unusual_response_times
+          - provider_degradation
+          - stuck_domain_patterns
+          - cost_spikes
+    
+    # PRIORITY 3: Self-healing
+    self_healing:
+      enabled: true
+      purpose: "Fix problems without human intervention"
+      
+      healing_protocols:
+        stuck_domains:
+          detection: "status='processing' > 10min"
+          action: reset_to_pending
+          prevention: adjust_timeout_per_provider
+          
+        provider_failure:
+          detection: "3 consecutive errors"
+          action: disable_and_redistribute
+          recovery: test_and_reintroduce
+          
+        rate_limit_hit:
+          detection: "429 response"
+          action: exponential_backoff
+          learning: track_rate_limit_patterns
+    
+    # PRIORITY 4: Cost optimization
+    quantum_inspired_optimization:
+      enabled: true
+      purpose: "Reduce costs while maintaining quality"
+      
+      optimization_strategies:
+        provider_selection:
+          algorithm: simulated_annealing
+          objective: minimize_cost_per_quality
+          
+          variables:
+            - provider_cost_per_call
+            - provider_success_rate
+            - provider_response_quality
+            - current_rate_limits
+          
+        batch_size_tuning:
+          algorithm: genetic_algorithm
+          objective: maximize_throughput
+          
+          chromosome:
+            - batch_size_per_provider
+            - parallel_workers
+            - retry_strategy
+    
+    # PRIORITY 5: Continuous learning
+    cross_swarm_memory:
+      enabled: true
+      purpose: "Learn from every crawl, improve every time"
+      
+      memory_layers:
+        immediate:
+          storage: redis
+          ttl: 1_hour
+          
+          tracks:
+            - current_run_stats
+            - active_rate_limits
+            - recent_failures
+        
+        operational:
+          storage: redis
+          ttl: 7_days
+          
+          tracks:
+            - provider_performance_history
+            - optimal_batch_sizes
+            - cost_patterns
+        
+        analytical:
+          storage: postgresql
+          retention: 365_days
+          
+          tracks:
+            - long_term_trends
+            - seasonal_patterns
+            - provider_evolution
+      
+      learning_cycles:
+        hourly:
+          - analyze_last_run
+          - update_provider_scores
+          - adjust_batch_sizes
+        
+        daily:
+          - identify_patterns
+          - optimize_schedules
+          - tune_parameters
+        
+        weekly:
+          - deep_analysis
+          - strategy_revision
+          - cost_optimization
+  
+  # Node Configuration for Distributed Processing
+  nodes:
+    primary_coordinator:
+      role: orchestrator
+      location: render_main
+      
+      responsibilities:
+        - trigger_decisions
+        - swarm_coordination
+        - memory_aggregation
+        
+      resources:
+        cpu: 2
+        memory: 4GB
+        
+    crawler_workers:
+      count: dynamic  # Scale based on load
+      min: 1
+      max: 10
+      
+      spawn_conditions:
+        - pending_domains > 500
+        - processing_time > 30min
+        - cost_budget_available
+  
+  # Swarm Configurations
+  swarms:
+    # Operational Swarm - Keeps things running
+    operational_swarm:
+      topology: adaptive
+      
+      agents:
+        - trigger_agent:
+            type: decision_maker
+            model: neural_trigger_network
+            
+        - monitor_agent:
+            type: observer
+            watches: all_metrics
+            
+        - healer_agent:
+            type: fixer
+            fixes: known_problems
+    
+    # Optimization Swarm - Makes things better
+    optimization_swarm:
+      topology: mesh
+      
+      agents:
+        - cost_optimizer:
+            focus: reduce_api_costs
+            
+        - speed_optimizer:
+            focus: increase_throughput
+            
+        - quality_optimizer:
+            focus: improve_accuracy
+    
+    # Learning Swarm - Gets smarter
+    learning_swarm:
+      topology: hierarchical
+      
+      agents:
+        - pattern_recognizer:
+            identifies: recurring_patterns
+            
+        - predictor:
+            forecasts: future_needs
+            
+        - strategist:
+            develops: new_approaches
+  
+  # Neural Models
+  neural:
+    models:
+      - trigger_predictor:
+          type: lstm
+          inputs: 6
+          hidden: 128
+          outputs: 1
+          
+          training:
+            data: historical_triggers
+            epochs: 100
+            learning_rate: 0.001
+      
+      - anomaly_detector:
+          type: autoencoder
+          architecture: [100, 50, 20, 50, 100]
+          
+          training:
+            data: normal_operations
+            epochs: 200
+            anomaly_threshold: 0.95
+      
+      - cost_predictor:
+          type: transformer
+          attention_heads: 8
+          
+          training:
+            data: cost_history
+            objective: predict_next_hour_cost
+  
+  # Resilience Features
+  resilience:
+    failure_detection:
+      heartbeat_interval: 30s
+      timeout: 60s
+      
+    recovery_strategies:
+      agent_failure:
+        action: spawn_replacement
+        timeout: 5s
+        
+      swarm_failure:
+        action: rebuild_from_memory
+        timeout: 30s
+        
+      total_failure:
+        action: fallback_to_simple_cron
+        alert: page_on_call
+  
+  # Integration with Existing System
+  integration:
+    wrapper_pattern:
+      preserve:
+        - crawler-tensor.js
+        - database_schema
+        - api_endpoints
+        
+      enhance:
+        - add_triggers
+        - add_monitoring
+        - add_recovery
+        - add_learning
+    
+    database_extensions:
+      new_tables:
+        - nexus_triggers
+        - nexus_metrics
+        - nexus_learning
+        - nexus_optimization
+    
+    api_additions:
+      endpoints:
+        - /nexus/status
+        - /nexus/trigger
+        - /nexus/metrics
+        - /nexus/learning
+  
+  # Telemetry
+  telemetry:
+    metrics:
+      operational:
+        - triggers_per_hour
+        - domains_processed
+        - provider_success_rates
+        - stuck_domain_count
+        
+      performance:
+        - processing_speed
+        - cost_per_domain
+        - quality_scores
+        - optimization_gains
+        
+      learning:
+        - patterns_identified
+        - predictions_accuracy
+        - optimizations_applied
+        - cost_savings
+    
+    dashboards:
+      - name: operational_health
+        refresh: 10s
+        
+      - name: cost_tracking
+        refresh: 60s
+        
+      - name: learning_progress
+        refresh: 300s
+  
+  # Deployment Strategy
+  deployment:
+    immediate_fix:
+      priority: CRITICAL
+      
+      steps:
+        1: "Add trigger endpoint to API"
+        2: "Deploy basic CRON job"
+        3: "Clear stuck domains"
+        4: "Verify crawling resumes"
+    
+    nexus_enhancement:
+      priority: HIGH
+      timeline: "1 week"
+      
+      steps:
+        1: "Deploy neural trigger network"
+        2: "Enable anomaly detection"
+        3: "Activate self-healing"
+        4: "Start learning cycles"
+    
+    full_autonomy:
+      priority: MEDIUM
+      timeline: "1 month"
+      
+      steps:
+        1: "Complete learning system"
+        2: "Enable predictive triggers"
+        3: "Activate cost optimization"
+        4: "Remove manual controls"
+  
+  # Cost Management
+  cost_optimization:
+    targets:
+      immediate: "Resume crawling at any cost"
+      week_1: "Baseline cost established"
+      week_2: "10% reduction via optimization"
+      month_1: "20% reduction via learning"
+      
+    strategies:
+      - use_cheapest_providers_first
+      - batch_similar_domains
+      - cache_frequent_queries
+      - predict_and_prevent_failures
+  
+  # Success Criteria
+  success_metrics:
+    operational:
+      crawler_uptime: "> 99%"
+      stuck_domains: "< 10 at any time"
+      trigger_reliability: "100%"
+      
+    performance:
+      domains_per_hour: "> 1500"
+      cost_per_domain: "< $0.01"
+      success_rate: "> 95%"
+      
+    intelligence:
+      self_healing_rate: "> 90%"
+      prediction_accuracy: "> 80%"
+      optimization_impact: "> 20% improvement"
+  
+  # Key Insight
+  core_learning: |
+    "The crawler works perfectly - it processed 11,182 responses successfully.
+     It just needs to be triggered, monitored, and optimized.
+     Nexus provides the operational intelligence layer without
+     breaking the working code."

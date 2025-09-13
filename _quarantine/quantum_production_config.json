@@ -1,0 +1,10 @@
+{
+  "quantum_enabled": true,
+  "quantum_shadow_mode": false,
+  "quantum_api_exposed": true,
+  "quantum_max_calc_time_ms": 5000,
+  "quantum_cache_enabled": true,
+  "quantum_cache_ttl_seconds": 3600,
+  "quantum_performance_mode": "production",
+  "quantum_monitoring_enabled": true
+}

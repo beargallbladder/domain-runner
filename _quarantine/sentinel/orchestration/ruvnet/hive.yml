@@ -1,0 +1,37 @@
+hive:
+  name: sentinel-hive
+  spec_path: specs/sentinel.prd.md
+  run_root: runs/
+  entry: 
+    - swarms/crawl.yml
+    - swarms/score.yml
+    - swarms/publish.yml
+  env:
+    # All secrets pulled from Render environment
+    SERVICE_IMPL: ${SERVICE_IMPL:-node}
+    RENDER_SERVICE_URL: ${RENDER_SERVICE_URL}
+    # These will be available in Render environment
+    # OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.
+  telemetry:
+    provider: ruvnet
+    dashboard: sentinel
+    metrics:
+      - run_duration_seconds
+      - llm_calls_per_brand
+      - error_rate_by_model
+      - memory_score_delta
+      - consensus_score_delta
+  artifacts:
+    write_hashes: true
+    validate_schemas: true
+  error_handling:
+    max_retries: 2
+    backoff_seconds: 30
+    continue_on_error: false
+  notifications:
+    on_failure:
+      - type: github_issue
+        repo: ${GITHUB_REPOSITORY:-samkim/domain-runner}
+    on_degraded:
+      - type: webhook
+        url: ${SLACK_WEBHOOK_URL:-}

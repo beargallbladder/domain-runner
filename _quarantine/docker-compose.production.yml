@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  # Public API Service
+  public-api:
+    build:
+      context: ./services/public-api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=8000
+      - WORKERS=2
+      - CACHE_TTL=1800
+      - MAX_CONNECTIONS=15
+      - MIN_CONNECTIONS=5
+      - CONNECTION_TIMEOUT=10
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Sophisticated Runner Service
+  sophisticated-runner:
+    build:
+      context: ./services/sophisticated-runner
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - SERVICE_NAME=sophisticated-runner
+      - DATABASE_URL=${DATABASE_URL}
+      - SERVICE_MODE=sophisticated_parallel
+      - PROCESSOR_ID=sophisticated_v1_prod
+      - DOMAINS_SOURCE=premium_500_plus
+      - MAX_CONCURRENT_REQUESTS=30
+      - BATCH_SIZE=50
+      - TIMEOUT_MS=300000
+      # API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_KEY_2=${OPENAI_API_KEY_2}
+      - OPENAI_API_KEY_3=${OPENAI_API_KEY_3}
+      - OPENAI_API_KEY_4=${OPENAI_API_KEY_4}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_API_KEY_2=${ANTHROPIC_API_KEY_2}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_API_KEY_2=${DEEPSEEK_API_KEY_2}
+      - DEEPSEEK_API_KEY_3=${DEEPSEEK_API_KEY_3}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - MISTRAL_API_KEY_2=${MISTRAL_API_KEY_2}
+      - XAI_API_KEY=${XAI_API_KEY}
+      - XAI_API_KEY_2=${XAI_API_KEY_2}
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY}
+      - TOGETHER_API_KEY_2=${TOGETHER_API_KEY_2}
+      - TOGETHER_API_KEY_3=${TOGETHER_API_KEY_3}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      - PERPLEXITY_API_KEY_2=${PERPLEXITY_API_KEY_2}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_API_KEY_2=${GOOGLE_API_KEY_2}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # SEO Metrics Runner Service
+  seo-metrics-runner:
+    build:
+      context: ./services/seo-metrics-runner
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - SERVICE_NAME=seo-metrics-runner
+      - DATABASE_URL=${DATABASE_URL}
+      - CACHE_TTL=3600
+      - RATE_LIMIT_RPM=1000
+      - PORT=3004
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Monitoring and Logging
+  monitoring:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Reverse Proxy with SSL Termination
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - public-api
+      - sophisticated-runner
+      - seo-metrics-runner
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  grafana-storage:
+
+networks:
+  default:
+    name: domain-runner-production

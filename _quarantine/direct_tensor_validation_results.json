@@ -1,0 +1,30 @@
+{
+  "database_connected": true,
+  "tensor_computations": {},
+  "validation_results": {
+    "c4a449d0-38f8-45e3-9686-8304ac220573": {
+      "success": false,
+      "error": "Failed to compute tensor analysis"
+    },
+    "4174f6b3-7181-457b-a591-392765e0b5e1": {
+      "success": false,
+      "error": "Failed to compute tensor analysis"
+    },
+    "e4e8dfea-9422-4143-a62b-c4c3afac96c4": {
+      "success": false,
+      "error": "Failed to compute tensor analysis"
+    }
+  },
+  "errors": [
+    "Sentiment tensor failed for c4a449d0-38f8-45e3-9686-8304ac220573: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Grounding tensor failed for c4a449d0-38f8-45e3-9686-8304ac220573: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Consensus scoring failed for c4a449d0-38f8-45e3-9686-8304ac220573: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Sentiment tensor failed for 4174f6b3-7181-457b-a591-392765e0b5e1: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Grounding tensor failed for 4174f6b3-7181-457b-a591-392765e0b5e1: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Drift detection failed for 4174f6b3-7181-457b-a591-392765e0b5e1: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Consensus scoring failed for 4174f6b3-7181-457b-a591-392765e0b5e1: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Sentiment tensor failed for e4e8dfea-9422-4143-a62b-c4c3afac96c4: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Grounding tensor failed for e4e8dfea-9422-4143-a62b-c4c3afac96c4: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+    "Consensus scoring failed for e4e8dfea-9422-4143-a62b-c4c3afac96c4: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'"
+  ]
+}

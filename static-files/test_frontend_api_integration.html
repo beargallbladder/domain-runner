@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend-API Integration Test</title>
+</head>
+<body>
+    <h1>Frontend-API Integration Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const API_KEY = 'llmpr_4e8cba54e2b91212a81243d0463133cc1fb2a682d5e911c6417b67e9cbddf8b9';
+        const API_BASE = 'https://llmrank.io';
+        const results = document.getElementById('results');
+
+        async function testEndpoint(name, url, headers = {}) {
+            try {
+                const response = await fetch(url, { headers });
+                const data = await response.json();
+                return {
+                    name,
+                    status: response.status,
+                    ok: response.ok,
+                    cors: response.headers.get('access-control-allow-origin') || 'No CORS header',
+                    data: data
+                };
+            } catch (error) {
+                return {
+                    name,
+                    error: error.message
+                };
+            }
+        }
+
+        async function runTests() {
+            const tests = [
+                { name: 'Health Check', url: `${API_BASE}/health` },
+                { name: 'Stats', url: `${API_BASE}/api/stats`, headers: { 'X-API-Key': API_KEY } },
+                { name: 'Rankings', url: `${API_BASE}/api/rankings?limit=5`, headers: { 'X-API-Key': API_KEY } },
+                { name: 'Domain Intelligence', url: `${API_BASE}/api/domains/tesla.com/public`, headers: { 'X-API-Key': API_KEY } },
+                { name: 'Ticker', url: `${API_BASE}/api/ticker?limit=5`, headers: { 'X-API-Key': API_KEY } }
+            ];
+
+            results.innerHTML = '<h2>Running tests...</h2>';
+            
+            for (const test of tests) {
+                const result = await testEndpoint(test.name, test.url, test.headers);
+                results.innerHTML += `
+                    <div style="margin: 20px 0; padding: 10px; border: 1px solid #ccc;">
+                        <h3>${result.name}</h3>
+                        <p>Status: ${result.status || 'N/A'}</p>
+                        <p>Success: ${result.ok || false}</p>
+                        <p>CORS: ${result.cors || 'N/A'}</p>
+                        ${result.error ? `<p style="color: red;">Error: ${result.error}</p>` : ''}
+                        <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        runTests();
+    </script>
+</body>
+</html>

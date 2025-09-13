@@ -1,0 +1,36 @@
+{
+  "name": "sentinel-runner-node",
+  "version": "1.0.0",
+  "description": "Sentinel Node.js runner for LLM crawling and scoring",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "crawl": "node src/crawl.js",
+    "score": "node src/score.js",
+    "plan": "node src/plan.js",
+    "test": "node --test",
+    "lint": "eslint src/",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "openai": "^4.24.0",
+    "@anthropic-ai/sdk": "^0.16.0",
+    "dotenv": "^16.3.1",
+    "yargs": "^17.7.2",
+    "p-limit": "^5.0.0",
+    "winston": "^3.11.0",
+    "jsonlines": "^0.1.1",
+    "axios": "^1.6.5",
+    "ajv": "^8.12.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "@types/node": "^20.10.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

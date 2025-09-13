@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Fix domain_responses schema",
+    "status": "success",
+    "timestamp": 1753033592.3727622
+  },
+  {
+    "name": "Update domains table schema",
+    "status": "success",
+    "timestamp": 1753033592.487437
+  },
+  {
+    "name": "Performance indexes",
+    "status": "failed",
+    "error": "CREATE INDEX CONCURRENTLY cannot run inside a transaction block",
+    "timestamp": 1753033592.5557718
+  },
+  {
+    "name": "Data validation triggers",
+    "status": "success",
+    "timestamp": 1753033592.6913311
+  },
+  {
+    "name": "Monitoring views",
+    "status": "success",
+    "timestamp": 1753033592.764427
+  }
+]

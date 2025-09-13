@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: llm-pagerank-public-api
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn production_api:app --host 0.0.0.0 --port $PORT"
+    plan: starter
+    healthCheckPath: /health
+    # Custom domain configuration
+    domains:
+      - llmrank.io
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        value: "postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db"
+      - key: REDIS_URL
+        value: "redis://localhost:6379"
+      - key: API_KEY_1
+        value: "demo-key-1"
+      - key: API_KEY_2
+        value: "demo-key-2"  
+      - key: API_KEY_3
+        value: "demo-key-3"
+    autoDeploy: true
+    branch: main
+    rootDir: services/public-api 

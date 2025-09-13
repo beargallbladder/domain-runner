@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"responses_raw",
+  "type":"object",
+  "required":["id","domain","prompt_id","model","ts_iso","raw","status","latency_ms","attempt"],
+  "properties":{
+    "id":{"type":"string"},
+    "domain":{"type":"string","minLength":1},
+    "prompt_id":{"type":"string","minLength":1},
+    "model":{"type":"string","minLength":1},
+    "ts_iso":{"type":"string","format":"date-time"},
+    "raw":{"type":"string"},
+    "status":{"type":"string","enum":["success","failed","timeout"]},
+    "latency_ms":{"type":"number","minimum":0},
+    "attempt":{"type":"integer","minimum":1}
+  },
+  "additionalProperties":false
+}

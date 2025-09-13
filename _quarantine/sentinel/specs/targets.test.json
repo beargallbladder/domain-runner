@@ -1,0 +1,19 @@
+{
+  "brands": [
+    {
+      "name": "Tesla",
+      "domain": "tesla.com",
+      "category": "automotive",
+      "priority": "high"
+    },
+    {
+      "name": "Nike",
+      "domain": "nike.com",
+      "category": "apparel",
+      "priority": "high"
+    }
+  ],
+  "prompt_templates": [
+    "What do you know about {brand}?"
+  ]
+}

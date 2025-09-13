@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres
+    environment:
+      POSTGRES_DB: domain_runner
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexus123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nexus Orchestrator
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexus-orchestrator
+    environment:
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-nexus123}@postgres:5432/domain_runner
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+      # LLM Keys from .env
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+      COHERE_API_KEY: ${COHERE_API_KEY}
+      AI21_API_KEY: ${AI21_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      TOGETHER_API_KEY: ${TOGETHER_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      XAI_API_KEY: ${XAI_API_KEY}
+      # Run Configuration
+      MIN_FLOOR: ${MIN_FLOOR:-0.70}
+      TARGET_COVERAGE: ${TARGET_COVERAGE:-0.95}
+      MAX_RETRIES: ${MAX_RETRIES:-3}
+      WINDOW_HOURS: ${WINDOW_HOURS:-1}
+      DRY_RUN: ${DRY_RUN:-false}
+    volumes:
+      - ./agents:/app/agents
+      - ./config:/app/config
+      - ./artifacts:/app/artifacts
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python3 orchestrator.py --live
+
+  # PMR Service (Provider & Model Registry)
+  pmr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexus-pmr
+    environment:
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-nexus123}@postgres:5432/domain_runner
+    volumes:
+      - ./agents/pmr:/app/agents/pmr
+      - ./config:/app/config
+      - ./artifacts:/app/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python3 -m agents.pmr.src.registry --watch
+
+  # Web Dashboard (Optional)
+  dashboard:
+    image: nginx:alpine
+    container_name: nexus-dashboard
+    volumes:
+      - ./dashboard:/usr/share/nginx/html
+    ports:
+      - "8080:80"
+    depends_on:
+      - orchestrator
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: nexus-network

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "drift_scores",
+  "type": "object",
+  "required": ["drift_id", "domain", "prompt_id", "model", "ts_iso", "similarity_prev", "drift_score", "status"],
+  "properties": {
+    "drift_id": {"type": "string"},
+    "domain": {"type": "string"},
+    "prompt_id": {"type": "string"},
+    "model": {"type": "string"},
+    "ts_iso": {"type": "string", "format": "date-time"},
+    "similarity_prev": {"type": "number", "minimum": 0, "maximum": 1},
+    "drift_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "status": {"type": "string", "enum": ["stable", "drifting", "decayed"]},
+    "explanation": {"type": "string"}
+  },
+  "additionalProperties": false
+}

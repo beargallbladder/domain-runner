@@ -1,0 +1,128 @@
+{
+  "timestamp": "2025-08-06T06:24:21.586Z",
+  "totalProviders": 11,
+  "healthyProviders": 11,
+  "providers": [
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "status": "healthy",
+      "healthScore": 90,
+      "successRate": "0.0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 1,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "mistral",
+      "name": "Mistral",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "xai",
+      "name": "xAI",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "together",
+      "name": "Together",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "perplexity",
+      "name": "Perplexity",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "google",
+      "name": "Google",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "cohere",
+      "name": "Cohere",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "ai21",
+      "name": "AI21",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    },
+    {
+      "id": "groq",
+      "name": "Groq",
+      "status": "healthy",
+      "healthScore": 100,
+      "successRate": "0%",
+      "avgResponseTime": "0ms",
+      "circuitBreakerState": "closed",
+      "keysAvailable": 0,
+      "lastSuccess": "2025-08-01T07:09:51.904Z"
+    }
+  ]
+}

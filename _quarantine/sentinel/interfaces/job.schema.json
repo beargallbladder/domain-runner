@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SentinelJob",
+  "type": "object",
+  "required": ["run_id", "spec_version", "targets", "model_matrix"],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}Z$",
+      "description": "UTC timestamp of the run"
+    },
+    "spec_version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Version of the sentinel spec"
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "List of brands/domains to query"
+    },
+    "model_matrix": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "List of LLM models to test"
+    },
+    "schedule": {
+      "type": "string",
+      "description": "Cron schedule or 'manual'"
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "timeout_ms": {"type": "integer", "minimum": 1000, "maximum": 60000},
+        "retry_count": {"type": "integer", "minimum": 0, "maximum": 5},
+        "batch_size": {"type": "integer", "minimum": 1, "maximum": 100}
+      }
+    }
+  }
+}

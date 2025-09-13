@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pmr_change_proposal",
+  "type": "object",
+  "required": ["action", "provider", "model", "reason", "evidence", "impact"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["add", "upgrade", "deprecate", "remove"]
+    },
+    "provider": {"type": "string"},
+    "model": {"type": "string"},
+    "reason": {"type": "string"},
+    "evidence": {"type": "object"},
+    "impact": {
+      "type": "object",
+      "properties": {
+        "delta_mii": {"type": "number"},
+        "budget_delta": {"type": "number"},
+        "coverage_tier": {"type": "string"}
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

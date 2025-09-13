@@ -1,0 +1,51 @@
+swarm:
+  name: sentinel-publish
+  depends_on: sentinel-score
+  environment:
+    # Use Render service for API calls
+    API_BASE_URL: ${RENDER_SERVICE_URL}/api
+  steps:
+    - name: prepare-payload
+      run: >
+        python scripts/prepare_publish.py
+        --scores runs/${RUN_ID}/score.json
+        --metrics runs/${RUN_ID}/metrics.json
+        --out runs/${RUN_ID}/publish_payload.json
+    
+    - name: push-to-api
+      run: >
+        curl -X POST "${API_BASE_URL}/internal/runs/${RUN_ID}/score"
+        -H "Content-Type: application/json"
+        -H "X-API-Key: ${RENDER_API_KEY}"
+        -d @runs/${RUN_ID}/publish_payload.json
+        -o runs/${RUN_ID}/publish_response.json
+      retry:
+        max: 3
+        backoff_seconds: 10
+    
+    - name: trigger-frontend-build
+      run: >
+        curl -X POST "${VERCEL_BUILD_HOOK}"
+        -H "Content-Type: application/json"
+        -d '{"run_id":"${RUN_ID}"}'
+      continue_on_error: true
+    
+    - name: create-envelope
+      run: >
+        python scripts/collect_logs.py
+        --run-id ${RUN_ID}
+        --spec-version ${SPEC_VERSION:-v1.0.0}
+        --run-root runs/${RUN_ID}
+        --out runs/${RUN_ID}/run.envelope.json
+    
+    - name: update-latest-symlink
+      run: |
+        cd runs && ln -sfn ${RUN_ID} latest
+    
+    - name: notify-completion
+      run: >
+        python scripts/notify.py
+        --status ${SWARM_STATUS:-ok}
+        --run-id ${RUN_ID}
+        --metrics runs/${RUN_ID}/metrics.json
+      continue_on_error: true

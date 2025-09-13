@@ -1,0 +1,1 @@
+All persistent outputs must conform to JSON Schemas here and be validated in CI.

@@ -1,0 +1,357 @@
+{
+  "timestamp": 1753033592.167995,
+  "tables": [
+    "prompt_templates",
+    "domains",
+    "responses",
+    "competitor_discoveries",
+    "processing_logs",
+    "rate_limits",
+    "crisis_discoveries",
+    "jolt_events",
+    "jolt_baselines",
+    "jolt_analysis",
+    "competitive_intelligence",
+    "news_events",
+    "cohort_analysis_cache",
+    "perception_correlations",
+    "domain_processing_queue",
+    "cohort_rankings",
+    "tesla_jolt_scans",
+    "domain_categories",
+    "category_competitors",
+    "seo_metrics",
+    "usage_analytics",
+    "pricing_tiers",
+    "users",
+    "api_keys",
+    "user_domains",
+    "billing_events",
+    "partner_api_keys",
+    "domain_responses",
+    "crawl_sessions",
+    "public_domain_cache"
+  ],
+  "indexes": [
+    {
+      "name": "domains_pkey",
+      "definition": "CREATE UNIQUE INDEX domains_pkey ON public.domains USING btree (id)"
+    },
+    {
+      "name": "domains_domain_key",
+      "definition": "CREATE UNIQUE INDEX domains_domain_key ON public.domains USING btree (domain)"
+    },
+    {
+      "name": "idx_domains_jolt",
+      "definition": "CREATE INDEX idx_domains_jolt ON public.domains USING btree (is_jolt) WHERE (is_jolt = true)"
+    },
+    {
+      "name": "idx_domains_cohort_status",
+      "definition": "CREATE INDEX idx_domains_cohort_status ON public.domains USING btree (cohort, status)"
+    },
+    {
+      "name": "idx_domains_priority_status",
+      "definition": "CREATE INDEX idx_domains_priority_status ON public.domains USING btree (priority DESC, status, created_at)"
+    },
+    {
+      "name": "idx_domains_discovery",
+      "definition": "CREATE INDEX idx_domains_discovery ON public.domains USING btree (discovery_source)"
+    },
+    {
+      "name": "processing_logs_pkey",
+      "definition": "CREATE UNIQUE INDEX processing_logs_pkey ON public.processing_logs USING btree (id)"
+    },
+    {
+      "name": "rate_limits_pkey",
+      "definition": "CREATE UNIQUE INDEX rate_limits_pkey ON public.rate_limits USING btree (id)"
+    },
+    {
+      "name": "rate_limits_model_key",
+      "definition": "CREATE UNIQUE INDEX rate_limits_model_key ON public.rate_limits USING btree (model)"
+    },
+    {
+      "name": "prompt_templates_pkey",
+      "definition": "CREATE UNIQUE INDEX prompt_templates_pkey ON public.prompt_templates USING btree (id)"
+    },
+    {
+      "name": "responses_pkey",
+      "definition": "CREATE UNIQUE INDEX responses_pkey ON public.responses USING btree (id)"
+    },
+    {
+      "name": "competitor_discoveries_pkey",
+      "definition": "CREATE UNIQUE INDEX competitor_discoveries_pkey ON public.competitor_discoveries USING btree (id)"
+    },
+    {
+      "name": "competitor_discoveries_source_domain_suggested_by_model_key",
+      "definition": "CREATE UNIQUE INDEX competitor_discoveries_source_domain_suggested_by_model_key ON public.competitor_discoveries USING btree (source_domain, suggested_by_model)"
+    },
+    {
+      "name": "idx_competitor_discoveries_domain",
+      "definition": "CREATE INDEX idx_competitor_discoveries_domain ON public.competitor_discoveries USING btree (source_domain)"
+    },
+    {
+      "name": "crisis_discoveries_pkey",
+      "definition": "CREATE UNIQUE INDEX crisis_discoveries_pkey ON public.crisis_discoveries USING btree (id)"
+    },
+    {
+      "name": "crisis_discoveries_domain_key",
+      "definition": "CREATE UNIQUE INDEX crisis_discoveries_domain_key ON public.crisis_discoveries USING btree (domain)"
+    },
+    {
+      "name": "idx_crisis_discoveries_domain",
+      "definition": "CREATE INDEX idx_crisis_discoveries_domain ON public.crisis_discoveries USING btree (domain)"
+    },
+    {
+      "name": "jolt_events_pkey",
+      "definition": "CREATE UNIQUE INDEX jolt_events_pkey ON public.jolt_events USING btree (id)"
+    },
+    {
+      "name": "jolt_events_event_id_key",
+      "definition": "CREATE UNIQUE INDEX jolt_events_event_id_key ON public.jolt_events USING btree (event_id)"
+    },
+    {
+      "name": "jolt_baselines_pkey",
+      "definition": "CREATE UNIQUE INDEX jolt_baselines_pkey ON public.jolt_baselines USING btree (id)"
+    },
+    {
+      "name": "jolt_analysis_pkey",
+      "definition": "CREATE UNIQUE INDEX jolt_analysis_pkey ON public.jolt_analysis USING btree (id)"
+    },
+    {
+      "name": "competitive_intelligence_pkey",
+      "definition": "CREATE UNIQUE INDEX competitive_intelligence_pkey ON public.competitive_intelligence USING btree (id)"
+    },
+    {
+      "name": "competitive_intelligence_industry_key",
+      "definition": "CREATE UNIQUE INDEX competitive_intelligence_industry_key ON public.competitive_intelligence USING btree (industry)"
+    },
+    {
+      "name": "news_events_pkey",
+      "definition": "CREATE UNIQUE INDEX news_events_pkey ON public.news_events USING btree (id)"
+    },
+    {
+      "name": "idx_news_events_domain",
+      "definition": "CREATE INDEX idx_news_events_domain ON public.news_events USING btree (domain)"
+    },
+    {
+      "name": "idx_news_events_date",
+      "definition": "CREATE INDEX idx_news_events_date ON public.news_events USING btree (event_date)"
+    },
+    {
+      "name": "idx_news_events_type",
+      "definition": "CREATE INDEX idx_news_events_type ON public.news_events USING btree (event_type)"
+    },
+    {
+      "name": "perception_correlations_pkey",
+      "definition": "CREATE UNIQUE INDEX perception_correlations_pkey ON public.perception_correlations USING btree (id)"
+    },
+    {
+      "name": "idx_correlations_domain",
+      "definition": "CREATE INDEX idx_correlations_domain ON public.perception_correlations USING btree (domain)"
+    },
+    {
+      "name": "idx_correlations_event",
+      "definition": "CREATE INDEX idx_correlations_event ON public.perception_correlations USING btree (news_event_id)"
+    },
+    {
+      "name": "idx_correlations_model",
+      "definition": "CREATE INDEX idx_correlations_model ON public.perception_correlations USING btree (model_name)"
+    },
+    {
+      "name": "domain_processing_queue_pkey",
+      "definition": "CREATE UNIQUE INDEX domain_processing_queue_pkey ON public.domain_processing_queue USING btree (id)"
+    },
+    {
+      "name": "domain_processing_queue_domain_key",
+      "definition": "CREATE UNIQUE INDEX domain_processing_queue_domain_key ON public.domain_processing_queue USING btree (domain)"
+    },
+    {
+      "name": "cohort_analysis_cache_pkey",
+      "definition": "CREATE UNIQUE INDEX cohort_analysis_cache_pkey ON public.cohort_analysis_cache USING btree (id)"
+    },
+    {
+      "name": "cohort_rankings_pkey",
+      "definition": "CREATE UNIQUE INDEX cohort_rankings_pkey ON public.cohort_rankings USING btree (id)"
+    },
+    {
+      "name": "cohort_rankings_category_name_domain_ranking_date_key",
+      "definition": "CREATE UNIQUE INDEX cohort_rankings_category_name_domain_ranking_date_key ON public.cohort_rankings USING btree (category_name, domain, ranking_date)"
+    },
+    {
+      "name": "tesla_jolt_scans_pkey",
+      "definition": "CREATE UNIQUE INDEX tesla_jolt_scans_pkey ON public.tesla_jolt_scans USING btree (id)"
+    },
+    {
+      "name": "domain_categories_pkey",
+      "definition": "CREATE UNIQUE INDEX domain_categories_pkey ON public.domain_categories USING btree (id)"
+    },
+    {
+      "name": "domain_categories_domain_category_name_key",
+      "definition": "CREATE UNIQUE INDEX domain_categories_domain_category_name_key ON public.domain_categories USING btree (domain, category_name)"
+    },
+    {
+      "name": "category_competitors_pkey",
+      "definition": "CREATE UNIQUE INDEX category_competitors_pkey ON public.category_competitors USING btree (id)"
+    },
+    {
+      "name": "category_competitors_domain_category_name_competitor_domain_key",
+      "definition": "CREATE UNIQUE INDEX category_competitors_domain_category_name_competitor_domain_key ON public.category_competitors USING btree (domain, category_name, competitor_domain)"
+    },
+    {
+      "name": "seo_metrics_pkey",
+      "definition": "CREATE UNIQUE INDEX seo_metrics_pkey ON public.seo_metrics USING btree (id)"
+    },
+    {
+      "name": "idx_seo_domain",
+      "definition": "CREATE INDEX idx_seo_domain ON public.seo_metrics USING btree (domain)"
+    },
+    {
+      "name": "idx_seo_captured_at",
+      "definition": "CREATE INDEX idx_seo_captured_at ON public.seo_metrics USING btree (captured_at)"
+    },
+    {
+      "name": "pricing_tiers_pkey",
+      "definition": "CREATE UNIQUE INDEX pricing_tiers_pkey ON public.pricing_tiers USING btree (tier_name)"
+    },
+    {
+      "name": "users_pkey",
+      "definition": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)"
+    },
+    {
+      "name": "users_email_key",
+      "definition": "CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)"
+    },
+    {
+      "name": "users_stripe_customer_id_key",
+      "definition": "CREATE UNIQUE INDEX users_stripe_customer_id_key ON public.users USING btree (stripe_customer_id)"
+    },
+    {
+      "name": "idx_users_email",
+      "definition": "CREATE INDEX idx_users_email ON public.users USING btree (email)"
+    },
+    {
+      "name": "idx_users_stripe_customer",
+      "definition": "CREATE INDEX idx_users_stripe_customer ON public.users USING btree (stripe_customer_id)"
+    },
+    {
+      "name": "idx_users_subscription_tier",
+      "definition": "CREATE INDEX idx_users_subscription_tier ON public.users USING btree (subscription_tier)"
+    },
+    {
+      "name": "idx_users_created_at",
+      "definition": "CREATE INDEX idx_users_created_at ON public.users USING btree (created_at)"
+    },
+    {
+      "name": "api_keys_pkey",
+      "definition": "CREATE UNIQUE INDEX api_keys_pkey ON public.api_keys USING btree (id)"
+    },
+    {
+      "name": "api_keys_api_key_key",
+      "definition": "CREATE UNIQUE INDEX api_keys_api_key_key ON public.api_keys USING btree (api_key)"
+    },
+    {
+      "name": "idx_api_keys_key",
+      "definition": "CREATE INDEX idx_api_keys_key ON public.api_keys USING btree (api_key)"
+    },
+    {
+      "name": "idx_api_keys_user",
+      "definition": "CREATE INDEX idx_api_keys_user ON public.api_keys USING btree (user_id)"
+    },
+    {
+      "name": "idx_api_keys_active",
+      "definition": "CREATE INDEX idx_api_keys_active ON public.api_keys USING btree (is_active, expires_at)"
+    },
+    {
+      "name": "user_domains_pkey",
+      "definition": "CREATE UNIQUE INDEX user_domains_pkey ON public.user_domains USING btree (id)"
+    },
+    {
+      "name": "user_domains_user_id_domain_key",
+      "definition": "CREATE UNIQUE INDEX user_domains_user_id_domain_key ON public.user_domains USING btree (user_id, domain)"
+    },
+    {
+      "name": "idx_user_domains_user",
+      "definition": "CREATE INDEX idx_user_domains_user ON public.user_domains USING btree (user_id)"
+    },
+    {
+      "name": "idx_user_domains_domain",
+      "definition": "CREATE INDEX idx_user_domains_domain ON public.user_domains USING btree (domain)"
+    },
+    {
+      "name": "billing_events_pkey",
+      "definition": "CREATE UNIQUE INDEX billing_events_pkey ON public.billing_events USING btree (id)"
+    },
+    {
+      "name": "billing_events_stripe_event_id_key",
+      "definition": "CREATE UNIQUE INDEX billing_events_stripe_event_id_key ON public.billing_events USING btree (stripe_event_id)"
+    },
+    {
+      "name": "idx_billing_events_user",
+      "definition": "CREATE INDEX idx_billing_events_user ON public.billing_events USING btree (user_id)"
+    },
+    {
+      "name": "idx_billing_events_stripe",
+      "definition": "CREATE INDEX idx_billing_events_stripe ON public.billing_events USING btree (stripe_event_id)"
+    },
+    {
+      "name": "idx_billing_events_created",
+      "definition": "CREATE INDEX idx_billing_events_created ON public.billing_events USING btree (created_at)"
+    },
+    {
+      "name": "usage_analytics_pkey",
+      "definition": "CREATE UNIQUE INDEX usage_analytics_pkey ON public.usage_analytics USING btree (id)"
+    },
+    {
+      "name": "idx_usage_analytics_user_date",
+      "definition": "CREATE INDEX idx_usage_analytics_user_date ON public.usage_analytics USING btree (user_id, created_at)"
+    },
+    {
+      "name": "idx_usage_analytics_created",
+      "definition": "CREATE INDEX idx_usage_analytics_created ON public.usage_analytics USING btree (created_at)"
+    },
+    {
+      "name": "partner_api_keys_pkey",
+      "definition": "CREATE UNIQUE INDEX partner_api_keys_pkey ON public.partner_api_keys USING btree (id)"
+    },
+    {
+      "name": "partner_api_keys_api_key_hash_key",
+      "definition": "CREATE UNIQUE INDEX partner_api_keys_api_key_hash_key ON public.partner_api_keys USING btree (api_key_hash)"
+    },
+    {
+      "name": "idx_partner_api_keys_hash",
+      "definition": "CREATE INDEX idx_partner_api_keys_hash ON public.partner_api_keys USING btree (api_key_hash)"
+    },
+    {
+      "name": "domain_responses_pkey",
+      "definition": "CREATE UNIQUE INDEX domain_responses_pkey ON public.domain_responses USING btree (id)"
+    },
+    {
+      "name": "idx_domain_responses_domain_model",
+      "definition": "CREATE INDEX idx_domain_responses_domain_model ON public.domain_responses USING btree (domain_id, model) INCLUDE (response, created_at)"
+    },
+    {
+      "name": "idx_domain_responses_domain_id",
+      "definition": "CREATE INDEX idx_domain_responses_domain_id ON public.domain_responses USING btree (domain_id)"
+    },
+    {
+      "name": "idx_domain_responses_created_at",
+      "definition": "CREATE INDEX idx_domain_responses_created_at ON public.domain_responses USING btree (created_at)"
+    },
+    {
+      "name": "crawl_sessions_pkey",
+      "definition": "CREATE UNIQUE INDEX crawl_sessions_pkey ON public.crawl_sessions USING btree (id)"
+    },
+    {
+      "name": "public_domain_cache_pkey",
+      "definition": "CREATE UNIQUE INDEX public_domain_cache_pkey ON public.public_domain_cache USING btree (id)"
+    },
+    {
+      "name": "idx_domain_cache",
+      "definition": "CREATE INDEX idx_domain_cache ON public.public_domain_cache USING btree (domain)"
+    },
+    {
+      "name": "idx_memory_score",
+      "definition": "CREATE INDEX idx_memory_score ON public.public_domain_cache USING btree (memory_score DESC)"
+    }
+  ]
+}

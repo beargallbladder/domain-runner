@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: weekly-domain-scheduler
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python weekly_domain_scheduler.py"
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        value: "postgresql://raw_capture_db_user:wjFesUM8ISNEvE2b4kZtRAKgGYJVtKK5@dpg-d11fqgndiees73fb35dg-a.oregon-postgres.render.com/raw_capture_db"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: XAI_API_KEY
+        sync: false
+      - key: TOGETHER_API_KEY
+        sync: false
+    autoDeploy: true
+    branch: main 

@@ -1,0 +1,12 @@
+{
+  "test_domains": [
+    "c4a449d0-38f8-45e3-9686-8304ac220573",
+    "4174f6b3-7181-457b-a591-392765e0b5e1",
+    "e4e8dfea-9422-4143-a62b-c4c3afac96c4",
+    "fa5fb0c3-f274-4bf8-bfae-f175475f9230",
+    "b988a291-47bc-4519-9d9f-3e960538c36c"
+  ],
+  "database_setup": true,
+  "tensor_tables_created": true,
+  "sample_data_inserted": true
+}
