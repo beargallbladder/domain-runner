@@ -6,14 +6,18 @@ databases:
     user: nexus
 
 services:
-  # Backend API & Orchestrator
+  # Web API Service
   - type: web
-    name: nexus-api
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python scripts/hourly_pipeline.py
+    name: domain-runner-web
+    env: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /healthz
     envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: NODE_ENV
+        value: production
       - key: DATABASE_URL
         fromDatabase:
           name: domain-runner-db
@@ -22,34 +26,64 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: PYTHON_VERSION
-        value: 3.11.9
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: COHERE_API_KEY
+        sync: false
+      - key: AI21_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TOGETHER_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: XAI_API_KEY
+        sync: false
 
-  # Background worker for scheduled runs
+  # Background Worker Service
   - type: worker
-    name: nexus-worker
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python orchestrator.py --live
+    name: domain-runner-worker
+    env: docker
+    plan: starter
+    autoDeploy: true
+    dockerCommand: python -m src.worker
     envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: NODE_ENV
+        value: production
+      - key: WORKER_INTERVAL_SEC
+        value: "300"
+      - key: WORKER_BATCH_SIZE
+        value: "10"
+      - key: ENABLE_DRIFT_MONITORING
+        value: "true"
+      - key: ENABLE_TENSOR_PROCESSING
+        value: "true"
       - key: DATABASE_URL
         fromDatabase:
           name: domain-runner-db
           property: connectionString
       - fromGroup: llm-api-keys
 
-# Cron job for hourly pipeline
-  - type: cron
-    name: nexus-hourly
-    env: python
-    plan: free
-    schedule: "0 * * * *"  # Every hour
-    buildCommand: pip install -r requirements.txt
-    startCommand: python scripts/hourly_pipeline.py
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: domain-runner-db
-          property: connectionString
-      - fromGroup: llm-api-keys
+# Optional: Cron job for scheduled crawls
+# Uncomment when ready to enable
+# - type: cron
+#   name: domain-runner-hourly-crawl
+#   env: docker
+#   plan: starter
+#   schedule: "0 * * * *"  # Every hour
+#   dockerCommand: python -m src.worker run_once
+#   envVars:
+#     - key: NODE_ENV
+#       value: production
+#     - key: DATABASE_URL
+#       fromDatabase:
+#         name: domain-runner-db
+#         property: connectionString
+#     - fromGroup: llm-api-keys

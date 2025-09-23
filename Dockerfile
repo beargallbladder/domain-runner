@@ -1,34 +1,48 @@
-FROM python:3.9-slim
+# Simple and reliable Python base
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    PORT=8080
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# OS deps for Python packages and PostgreSQL
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    tini \
     gcc \
+    g++ \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
+# Copy requirements first for better caching
+COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY agents/ ./agents/
-COPY config/ ./config/
-COPY schemas/ ./schemas/
-COPY orchestrator.py .
-COPY orchestrator_demo.py .
+# Copy source code
+COPY src ./src
+COPY orchestrator.py ./orchestrator.py
+COPY orchestrator_demo.py ./orchestrator_demo.py
+COPY agents ./agents
+COPY services ./services
+COPY config ./config
+COPY schemas ./schemas
+
+# Copy .env.example as fallback
+COPY .env.example ./.env.example
 
 # Create directories for artifacts and logs
 RUN mkdir -p artifacts logs
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
+EXPOSE 8080
 
-# Health check
+# Health check for web service
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python3 -c "from agents.database_connector.src.connector import DatabaseConnector; db = DatabaseConnector(); print(db.health_check())"
+    CMD curl -f http://localhost:8080/healthz || exit 1
 
-# Default command
-CMD ["python3", "orchestrator.py"]
+# Default command: web service
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["uvicorn", "src.api_service:app", "--host", "0.0.0.0", "--port", "8080"]
