@@ -35,23 +35,79 @@ class CrawlRequest(BaseModel):
 async def startup_event():
     """Initialize orchestrator and database on startup"""
     global orchestrator, db
+
+    # Import database safety checks
+    from database_safety import wait_for_database, apply_migrations
+
     try:
+        # Wait for database and apply migrations
+        database_url = os.getenv("DATABASE_URL")
+        if database_url:
+            print("[API] Waiting for database...")
+            if wait_for_database(database_url):
+                print("[API] Applying migrations if needed...")
+                apply_migrations(database_url)
+                db = DatabaseConnector()
+                print("[API] Database initialized")
+            else:
+                print("[API] WARNING: Database not available, running without database")
+                db = None
+        else:
+            print("[API] WARNING: DATABASE_URL not set, running without database")
+            db = None
+
+        # Initialize orchestrator (can work without DB)
         orchestrator = NexusOrchestrator()
-        db = DatabaseConnector()
-        print("[API] Orchestrator and database initialized")
+        print("[API] Orchestrator initialized")
     except Exception as e:
         print(f"[API] Failed to initialize: {e}")
         traceback.print_exc()
+        # Don't crash on startup - allow health check to work
+        orchestrator = None
+        db = None
 
 @app.get("/healthz")
 async def healthz():
-    """Health check endpoint for Render"""
+    """Health check endpoint for Render - always returns 200 if service is running"""
     return {
         "ok": True,
         "service": "domain-runner",
         "env": os.getenv("NODE_ENV", "dev"),
         "version": "1.0.0",
-        "orchestrator_ready": orchestrator is not None
+        "orchestrator_ready": orchestrator is not None,
+        "database_ready": db is not None
+    }
+
+@app.get("/readyz")
+async def readyz():
+    """Readiness check - returns 503 if not ready to serve traffic"""
+    checks = {
+        "orchestrator": orchestrator is not None,
+        "database": db is not None,
+        "llm_keys": False
+    }
+
+    # Check if we have at least one LLM key
+    from config import settings
+    available_keys = settings.get_available_llm_keys()
+    checks["llm_keys"] = len(available_keys) > 0
+
+    all_ready = all(checks.values())
+
+    if not all_ready:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "ready": False,
+                "checks": checks,
+                "available_providers": list(available_keys.keys()) if available_keys else []
+            }
+        )
+
+    return {
+        "ready": True,
+        "checks": checks,
+        "available_providers": list(available_keys.keys())
     }
 
 @app.get("/status")
