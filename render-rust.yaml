@@ -43,6 +43,8 @@ services:
         sync: false
       - key: XAI_API_KEY
         sync: false
+      - key: DB_READONLY
+        value: "true"
 
   # Rust Worker Service
   - type: worker
@@ -68,3 +70,5 @@ services:
           name: domain-runner-db
           property: connectionString
       - fromGroup: llm-api-keys
+      - key: DB_READONLY
+        value: "true"

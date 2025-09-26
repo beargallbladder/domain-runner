@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto Deploy</title>
+</head>
+<body>
+    <h1>Deploying Domain Runner...</h1>
+    <form id="deployForm" action="https://dashboard.render.com/select-repo" method="GET">
+        <input type="hidden" name="type" value="blueprint">
+        <input type="hidden" name="repo" value="https://github.com/beargallbladder/domain-runner">
+        <input type="hidden" name="branch" value="main">
+        <input type="hidden" name="blueprintPath" value="render-rust.yaml">
+    </form>
+    <script>
+        document.getElementById('deployForm').submit();
+    </script>
+</body>
+</html>

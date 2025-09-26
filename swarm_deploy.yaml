@@ -1,0 +1,218 @@
+# Swarm Framework Deployment Specification
+# Flow: Iterative deployment with continuous validation
+# Nexus: Convergence on production-ready state
+
+version: "1.0"
+name: domain-runner-rust-deployment
+
+flow:
+  stages:
+    - name: prepare
+      tasks:
+        - validate_repository
+        - check_dependencies
+        - build_containers
+
+    - name: deploy
+      parallel: true
+      tasks:
+        - deploy_web_service
+        - deploy_worker_service
+        - create_database_views
+
+    - name: validate
+      tasks:
+        - health_check
+        - readiness_check
+        - data_verification
+
+    - name: iterate
+      condition: validation_failed
+      tasks:
+        - analyze_logs
+        - fix_issues
+        - redeploy
+
+    - name: enable_features
+      condition: validation_passed
+      tasks:
+        - enable_drift_monitoring
+        - enable_worker_writes
+        - enable_cron_jobs
+
+nexus:
+  convergence_criteria:
+    - health_endpoints_active: true
+    - real_data_visible: true
+    - no_write_attempts: true
+    - response_time_ms: < 50
+    - memory_usage_mb: < 50
+
+  feedback_loops:
+    - name: performance_monitoring
+      interval: 60s
+      actions:
+        - check_response_times
+        - check_memory_usage
+        - adjust_pool_size
+
+    - name: safety_monitoring
+      interval: 30s
+      actions:
+        - check_audit_logs
+        - verify_readonly_mode
+        - alert_on_writes
+
+services:
+  web:
+    name: domain-runner-rust-web
+    type: web
+    image: docker
+    dockerfile: Dockerfile.rust
+    command: web
+    health_check: /healthz
+    readiness_check: /readyz
+
+    environment:
+      # Logging
+      RUST_LOG: info,tower_http=debug
+
+      # Safety flags - start read-only
+      DB_READONLY: true
+      FEATURE_WRITE_DRIFT: false
+      FEATURE_CRON: false
+      FEATURE_WORKER_WRITES: false
+
+      # Performance
+      CONNECTION_POOL_SIZE: 20
+      REQUEST_TIMEOUT_SEC: 30
+
+    scaling:
+      min_instances: 1
+      max_instances: 3
+      cpu_threshold: 70
+      memory_threshold: 80
+
+  worker:
+    name: domain-runner-rust-worker
+    type: worker
+    image: docker
+    dockerfile: Dockerfile.rust
+    command: worker
+
+    environment:
+      RUST_LOG: info
+
+      # Worker configuration
+      WORKER_INTERVAL_SEC: 300
+      WORKER_BATCH_SIZE: 10
+
+      # Safety - observe only initially
+      DB_READONLY: true
+      FEATURE_WORKER_WRITES: false
+      ENABLE_DRIFT_MONITORING: true
+      ENABLE_TENSOR_PROCESSING: false
+
+    scaling:
+      min_instances: 1
+      max_instances: 2
+
+database:
+  compatibility_views:
+    - |
+      CREATE OR REPLACE VIEW domain_responses AS
+      SELECT * FROM responses;
+    - |
+      CREATE OR REPLACE VIEW drift_scores AS
+      SELECT * FROM drift;
+    - |
+      CREATE TABLE IF NOT EXISTS rust_audit_log (
+        id SERIAL PRIMARY KEY,
+        action VARCHAR(50),
+        table_name VARCHAR(50),
+        record_id UUID,
+        db_readonly BOOLEAN,
+        feature_flags JSONB,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+monitoring:
+  endpoints:
+    - path: /healthz
+      expected: 200
+      interval: 30s
+
+    - path: /readyz
+      expected: 200
+      interval: 60s
+
+    - path: /status
+      expected: 200
+      validate_response:
+        - db_readonly: true
+        - domains: "> 0"
+
+  alerts:
+    - name: unauthorized_writes
+      condition: "audit_log.action = 'BLOCKED_WRITE'"
+      severity: warning
+
+    - name: service_down
+      condition: "health_check.status != 200"
+      severity: critical
+
+    - name: high_memory
+      condition: "memory_usage_mb > 100"
+      severity: warning
+
+rollout:
+  phases:
+    - name: read_only
+      duration: 24h
+      environment:
+        DB_READONLY: true
+
+    - name: drift_writes
+      duration: 24h
+      environment:
+        DB_READONLY: false
+        FEATURE_WRITE_DRIFT: true
+
+    - name: worker_writes
+      duration: 24h
+      environment:
+        FEATURE_WORKER_WRITES: true
+
+    - name: full_production
+      environment:
+        FEATURE_CRON: true
+
+automation:
+  deployment_script: |
+    #!/bin/bash
+    # Auto-deploy with swarm framework
+
+    echo "🦀 SWARM DEPLOYMENT INITIATED"
+
+    # Deploy using render.yaml
+    render blueprint deploy \
+      --repo beargallbladder/domain-runner \
+      --branch main \
+      --blueprint render-rust.yaml
+
+    # Monitor deployment
+    while true; do
+      status=$(curl -s https://domain-runner-rust-web.onrender.com/healthz)
+      if [ "$?" -eq 0 ]; then
+        echo "✅ Deployment successful"
+        break
+      fi
+      echo "⏳ Waiting for deployment..."
+      sleep 10
+    done
+
+    # Verify data
+    curl -s https://domain-runner-rust-web.onrender.com/status | jq '.'
+
+    # Check audit logs
+    echo "SELECT * FROM rust_audit_log ORDER BY created_at DESC LIMIT 10;" | psql $DATABASE_URL

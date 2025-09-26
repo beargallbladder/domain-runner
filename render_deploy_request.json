@@ -1,0 +1,43 @@
+{
+  "name": "domain-runner-rust",
+  "services": [
+    {
+      "type": "web",
+      "name": "domain-runner-rust-web",
+      "repo": {
+        "url": "https://github.com/beargallbladder/domain-runner",
+        "branch": "main"
+      },
+      "buildCommand": "",
+      "startCommand": "web",
+      "envVars": {
+        "RUST_LOG": "info",
+        "DB_READONLY": "true",
+        "FEATURE_WRITE_DRIFT": "false",
+        "FEATURE_CRON": "false",
+        "FEATURE_WORKER_WRITES": "false"
+      },
+      "dockerfilePath": "./Dockerfile.rust",
+      "healthCheckPath": "/healthz",
+      "plan": "free"
+    },
+    {
+      "type": "worker",
+      "name": "domain-runner-rust-worker",
+      "repo": {
+        "url": "https://github.com/beargallbladder/domain-runner",
+        "branch": "main"
+      },
+      "buildCommand": "",
+      "startCommand": "worker",
+      "envVars": {
+        "RUST_LOG": "info",
+        "DB_READONLY": "true",
+        "FEATURE_WORKER_WRITES": "false",
+        "WORKER_INTERVAL_SEC": "300"
+      },
+      "dockerfilePath": "./Dockerfile.rust",
+      "plan": "free"
+    }
+  ]
+}

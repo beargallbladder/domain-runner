@@ -1,0 +1,143 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if no changes'
+        required: false
+        default: 'false'
+
+env:
+  RENDER_WEB_SERVICE_URL: "https://domain-runner-rust-web.onrender.com"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Rust Services to Render
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up deployment status
+      id: deployment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const deployment = await github.rest.repos.createDeployment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: context.sha,
+            environment: 'production',
+            description: 'Deploy Rust services to Render',
+            auto_merge: false,
+            required_contexts: []
+          });
+
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: deployment.data.id,
+            state: 'in_progress',
+            description: 'Starting deployment to Render'
+          });
+
+          return deployment.data.id;
+
+    - name: Deploy Web Service to Render
+      uses: JorgeLNJunior/render-deploy@v1.4.5
+      with:
+        service_id: ${{ secrets.RENDER_WEB_SERVICE_ID }}
+        api_key: ${{ secrets.RENDER_API_KEY }}
+        wait_deploy: true
+        clear_cache: false
+        github_deployment: false
+
+    - name: Deploy Worker Service to Render
+      uses: JorgeLNJunior/render-deploy@v1.4.5
+      with:
+        service_id: ${{ secrets.RENDER_WORKER_SERVICE_ID }}
+        api_key: ${{ secrets.RENDER_API_KEY }}
+        wait_deploy: true
+        clear_cache: false
+        github_deployment: false
+
+    - name: Wait for services to be ready
+      run: |
+        echo "Waiting for services to be ready..."
+        sleep 60  # Give services time to start
+
+    - name: Run deployment monitor
+      run: |
+        chmod +x ./deployment_monitor.sh
+        export RENDER_API_KEY="${{ secrets.RENDER_API_KEY }}"
+        export RENDER_SERVICE_ID="${{ secrets.RENDER_WEB_SERVICE_ID }}"
+        ./deployment_monitor.sh health
+
+    - name: Update deployment status - Success
+      if: success()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.deployment.outputs.result }},
+            state: 'success',
+            description: 'Successfully deployed to Render',
+            environment_url: '${{ env.RENDER_WEB_SERVICE_URL }}'
+          });
+
+    - name: Update deployment status - Failure
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.deployment.outputs.result }},
+            state: 'failure',
+            description: 'Deployment to Render failed'
+          });
+
+  monitor:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+    name: Monitor Deployment
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run continuous monitoring (5 minutes)
+      run: |
+        chmod +x ./deployment_monitor.sh
+        export RENDER_API_KEY="${{ secrets.RENDER_API_KEY }}"
+        export RENDER_SERVICE_ID="${{ secrets.RENDER_WEB_SERVICE_ID }}"
+
+        # Run monitoring for 5 minutes to verify stability
+        timeout 300s ./deployment_monitor.sh monitor || true
+
+        # Final health check
+        ./deployment_monitor.sh health
+
+    - name: Create deployment summary
+      run: |
+        echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Web Service URL**: ${{ env.RENDER_WEB_SERVICE_URL }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Health Check**: ${{ env.RENDER_WEB_SERVICE_URL }}/healthz" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deployment Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Service Status" >> $GITHUB_STEP_SUMMARY
+
+        if curl -f "${{ env.RENDER_WEB_SERVICE_URL }}/healthz" > /dev/null 2>&1; then
+          echo "✅ Web service is healthy" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Web service health check failed" >> $GITHUB_STEP_SUMMARY
+        fi
