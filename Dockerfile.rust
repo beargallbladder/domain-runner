@@ -47,6 +47,12 @@ COPY --from=builder /app/migrations ./migrations
 ENV RUST_LOG=info
 ENV PORT=8080
 
+# SAFETY: Default to read-only mode in production
+ENV DB_READONLY=true
+ENV FEATURE_WRITE_DRIFT=false
+ENV FEATURE_CRON=false
+ENV FEATURE_WORKER_WRITES=false
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/healthz || exit 1

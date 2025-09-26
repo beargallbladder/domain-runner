@@ -20,7 +20,7 @@ pub struct Worker {
 
 impl Worker {
     pub async fn new(settings: Settings) -> Result<Self> {
-        let db = Database::new(&settings.database_url).await?;
+        let db = Database::new(&settings.database_url, settings.clone()).await?;
         db.migrate().await?;
 
         Ok(Self {

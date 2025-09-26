@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // Initialize database with retry logic
-    let db = match Database::new(&settings.database_url).await {
+    let db = match Database::new(&settings.database_url, settings.clone()).await {
         Ok(db) => {
             info!("Database connected");
             // Run migrations

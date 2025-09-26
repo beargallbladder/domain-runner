@@ -1,6 +1,8 @@
 use crate::domain::*;
 use crate::error::Result;
+use crate::{Settings, Error};
 use chrono::{DateTime, Utc};
+use serde_json::json;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::time::Duration;
 use tracing::{error, info, warn};
@@ -8,12 +10,13 @@ use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct Database {
-    pool: Pool<Postgres>,
+    pub pool: Pool<Postgres>,  // Make pool accessible for direct queries
+    settings: Settings,
 }
 
 impl Database {
     /// Create new database connection pool with retry logic
-    pub async fn new(database_url: &str) -> Result<Self> {
+    pub async fn new(database_url: &str, settings: Settings) -> Result<Self> {
         let max_retries = 10;
         let retry_delay = Duration::from_secs(5);
 
@@ -26,8 +29,8 @@ impl Database {
                 .await
             {
                 Ok(pool) => {
-                    info!("Database connected on attempt {}", attempt);
-                    return Ok(Self { pool });
+                    info!("Database connected on attempt {} (read_only={})", attempt, settings.db_readonly);
+                    return Ok(Self { pool, settings });
                 }
                 Err(e) if attempt < max_retries => {
                     warn!(
@@ -183,8 +186,43 @@ impl Database {
         Ok(domains)
     }
 
+    /// Audit log for tracking all operations
+    async fn audit_log(&self, action: &str, table: &str, record_id: &str, value: serde_json::Value) -> Result<()> {
+        sqlx::query!(
+            r#"
+            INSERT INTO rust_audit_log (action, table_name, record_id, new_value, db_readonly, feature_flags)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            "#,
+            action,
+            table,
+            record_id,
+            value,
+            self.settings.db_readonly,
+            json!({
+                "write_drift": self.settings.feature_write_drift,
+                "cron": self.settings.feature_cron,
+                "worker_writes": self.settings.feature_worker_writes
+            })
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     /// Save a domain response
     pub async fn save_domain_response(&self, response: &DomainResponse) -> Result<Uuid> {
+        // Check read-only mode
+        if self.settings.db_readonly {
+            warn!("Attempted to save domain response in read-only mode");
+            self.audit_log(
+                "BLOCKED_WRITE",
+                "domain_responses",
+                &response.id.to_string(),
+                json!(response),
+            )
+            .await?;
+            return Err(Error::BadRequest("Database is in read-only mode".to_string()));
+        }
         let id = sqlx::query_scalar!(
             r#"
             INSERT INTO domain_responses (
@@ -213,6 +251,18 @@ impl Database {
 
     /// Save drift score
     pub async fn save_drift_score(&self, drift: &DriftScore) -> Result<Uuid> {
+        // Check read-only mode AND feature flag
+        if self.settings.db_readonly || !self.settings.feature_write_drift {
+            warn!("Attempted to save drift score in read-only mode or feature disabled");
+            self.audit_log(
+                "BLOCKED_WRITE",
+                "drift_scores",
+                &drift.drift_id.to_string(),
+                json!(drift),
+            )
+            .await?;
+            return Err(Error::BadRequest("Drift writes are disabled".to_string()));
+        }
         let id = sqlx::query_scalar!(
             r#"
             INSERT INTO drift_scores (

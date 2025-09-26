@@ -97,13 +97,55 @@ async fn status(State(state): State<Arc<AppState>>) -> Result<impl IntoResponse>
         .as_ref()
         .ok_or_else(|| Error::NotReady("Database not initialized".to_string()))?;
 
-    let coverage = db.get_domain_coverage().await?;
-    let model_stats = db.get_model_performance_stats().await?;
+    // Get real data from existing tables
+    let domain_count = sqlx::query_scalar!(
+        "SELECT COUNT(DISTINCT domain) FROM domains WHERE active = true"
+    )
+    .fetch_one(&db.pool)
+    .await
+    .unwrap_or(0);
+
+    let drift_rows_7d = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM drift_scores WHERE ts_iso >= NOW() - INTERVAL '7 days'"
+    )
+    .fetch_one(&db.pool)
+    .await
+    .unwrap_or(0);
+
+    let last_observation = sqlx::query_scalar!(
+        "SELECT MAX(ts_iso) FROM drift_scores"
+    )
+    .fetch_optional(&db.pool)
+    .await?;
+
+    let models_seen = sqlx::query_scalar!(
+        "SELECT DISTINCT model FROM drift_scores ORDER BY 1"
+    )
+    .fetch_all(&db.pool)
+    .await
+    .unwrap_or_default();
+
+    let coverage = db.get_domain_coverage().await.ok();
+    let model_stats = db.get_model_performance_stats().await.ok();
 
     Ok(Json(json!({
         "ok": true,
-        "coverage": coverage,
-        "model_performance": model_stats,
+        "environment": {
+            "db_readonly": state.settings.db_readonly,
+            "features": {
+                "write_drift": state.settings.feature_write_drift,
+                "cron": state.settings.feature_cron,
+                "worker_writes": state.settings.feature_worker_writes,
+            }
+        },
+        "data": {
+            "domains": domain_count,
+            "drift_rows_7d": drift_rows_7d,
+            "last_observation": last_observation,
+            "models_seen": models_seen,
+            "coverage": coverage,
+            "model_performance": model_stats,
+        },
         "available_providers": state.settings.get_available_llm_keys().keys().collect::<Vec<_>>(),
     })))
 }

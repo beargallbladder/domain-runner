@@ -35,6 +35,12 @@ pub struct Settings {
     // Embedding settings
     pub embed_provider: String,
     pub embed_model: String,
+
+    // Safety flags - default to read-only for production safety
+    pub db_readonly: bool,
+    pub feature_write_drift: bool,
+    pub feature_cron: bool,
+    pub feature_worker_writes: bool,
 }
 
 impl Settings {
@@ -53,6 +59,11 @@ impl Settings {
             .set_default("enable_tensor_processing", true)?
             .set_default("embed_provider", "openai")?
             .set_default("embed_model", "text-embedding-3-small")?
+            // Safety defaults - start in read-only mode
+            .set_default("db_readonly", true)?  // DEFAULT TO SAFE
+            .set_default("feature_write_drift", false)?
+            .set_default("feature_cron", false)?
+            .set_default("feature_worker_writes", false)?
             // Add environment variables
             .add_source(Environment::default())
             // Override with PORT if set (for Render)
