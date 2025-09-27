@@ -69,6 +69,5 @@ services:
         fromDatabase:
           name: domain-runner-db
           property: connectionString
-      - fromGroup: llm-api-keys
       - key: DB_READONLY
         value: "true"

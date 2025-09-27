@@ -69,7 +69,6 @@ services:
         fromDatabase:
           name: domain-runner-db
           property: connectionString
-      - fromGroup: llm-api-keys
 
 # Optional: Cron job for scheduled crawls
 # Uncomment when ready to enable

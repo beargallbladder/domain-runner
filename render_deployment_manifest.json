@@ -1,0 +1,30 @@
+{
+  "deployment": {
+    "name": "domain-runner-rust",
+    "repo": "https://github.com/beargallbladder/domain-runner",
+    "branch": "main",
+    "blueprint": "render-rust.yaml",
+    "services": [
+      {
+        "name": "domain-runner-rust-web",
+        "type": "web",
+        "dockerfile": "Dockerfile.rust",
+        "command": "web",
+        "env": {
+          "DB_READONLY": "true",
+          "RUST_LOG": "info"
+        }
+      },
+      {
+        "name": "domain-runner-rust-worker",
+        "type": "worker",
+        "dockerfile": "Dockerfile.rust",
+        "command": "worker",
+        "env": {
+          "DB_READONLY": "true",
+          "FEATURE_WORKER_WRITES": "false"
+        }
+      }
+    ]
+  }
+}
