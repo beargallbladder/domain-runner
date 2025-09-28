@@ -1,0 +1,84 @@
+# Render deployment configuration WITHOUT creating a new database
+# Uses your existing database
+
+services:
+  # Rust Web Service
+  - type: web
+    name: domain-runner-rust-web
+    env: docker
+    dockerfilePath: ./Dockerfile.rust
+    dockerCommand: web
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /healthz
+    envVars:
+      - key: RUST_LOG
+        value: info,tower_http=debug
+
+      # IMPORTANT: Set this to your existing database URL
+      - key: DATABASE_URL
+        sync: false  # You'll set this manually in Render dashboard
+
+      # Safety flags - start read-only
+      - key: DB_READONLY
+        value: "true"
+      - key: FEATURE_WRITE_DRIFT
+        value: "false"
+      - key: FEATURE_CRON
+        value: "false"
+      - key: FEATURE_WORKER_WRITES
+        value: "false"
+
+      # API Keys (set these in dashboard)
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: COHERE_API_KEY
+        sync: false
+      - key: AI21_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TOGETHER_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: XAI_API_KEY
+        sync: false
+
+  # Rust Worker Service
+  - type: worker
+    name: domain-runner-rust-worker
+    env: docker
+    dockerfilePath: ./Dockerfile.rust
+    dockerCommand: worker
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: RUST_LOG
+        value: info
+      - key: WORKER_INTERVAL_SEC
+        value: "300"
+      - key: WORKER_BATCH_SIZE
+        value: "10"
+
+      # IMPORTANT: Set this to your existing database URL
+      - key: DATABASE_URL
+        sync: false  # You'll set this manually in Render dashboard
+
+      # Safety - observe only initially
+      - key: DB_READONLY
+        value: "true"
+      - key: FEATURE_WORKER_WRITES
+        value: "false"
+      - key: ENABLE_DRIFT_MONITORING
+        value: "true"
+      - key: ENABLE_TENSOR_PROCESSING
+        value: "false"
