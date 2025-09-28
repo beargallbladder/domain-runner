@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install only what we need
+RUN pip install --no-cache-dir \
+    fastapi==0.104.1 \
+    uvicorn[standard]==0.24.0 \
+    psycopg2-binary==2.9.9
+
+# Copy the emergency fix
+COPY emergency_fix.py .
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8080}/healthz || exit 1
+
+# Run the service
+CMD ["python", "emergency_fix.py"]

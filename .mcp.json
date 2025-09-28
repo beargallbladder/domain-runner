@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "claude-flow": {
+    "claude-flow@alpha": {
       "command": "npx",
       "args": [
         "claude-flow@alpha",
@@ -13,6 +13,15 @@
       "command": "npx",
       "args": [
         "ruv-swarm@latest",
+        "mcp",
+        "start"
+      ],
+      "type": "stdio"
+    },
+    "flow-nexus": {
+      "command": "npx",
+      "args": [
+        "flow-nexus@latest",
         "mcp",
         "start"
       ],

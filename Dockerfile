@@ -43,6 +43,9 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/healthz || exit 1
 
-# Default command: web service
+# Copy emergency fix
+COPY emergency_fix.py ./emergency_fix.py
+
+# Default command: web service (with fallback to emergency fix)
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["sh", "-c", "uvicorn src.api_service:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "python emergency_fix.py || uvicorn src.api_service:app --host 0.0.0.0 --port ${PORT:-8080}"]
