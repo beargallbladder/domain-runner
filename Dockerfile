@@ -1,4 +1,4 @@
-# Phase 2: Add core dependencies
+# Phase 3: Add basic LLM providers (OpenAI, Anthropic)
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Phase 2: Core dependencies (database, web framework, utilities)
+# Phase 3: Core dependencies + Basic LLM providers
 RUN pip install --no-cache-dir \
     fastapi==0.104.1 \
     uvicorn[standard]==0.24.0 \
@@ -30,7 +30,11 @@ RUN pip install --no-cache-dir \
     requests==2.31.0 \
     httpx==0.25.2 \
     click==8.1.7 \
-    rich==13.7.0
+    rich==13.7.0 \
+    openai==1.6.1 \
+    anthropic==0.8.1 \
+    structlog==23.2.0 \
+    prometheus-client==0.19.0
 
 # Copy application files
 COPY emergency_fix.py ./emergency_fix.py
