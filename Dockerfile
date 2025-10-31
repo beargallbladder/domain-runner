@@ -1,4 +1,4 @@
-# Phase 3: Add basic LLM providers (OpenAI, Anthropic)
+# Phase 4: Switch to real API service
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -41,6 +41,11 @@ COPY emergency_fix.py ./emergency_fix.py
 COPY src ./src
 COPY config ./config
 COPY schemas ./schemas
+COPY orchestrator.py ./orchestrator.py
+COPY agents ./agents
+
+# Copy .env.example as fallback
+COPY .env.example ./.env.example
 
 # Create runtime directories
 RUN mkdir -p artifacts logs
@@ -51,6 +56,6 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/healthz || exit 1
 
-# Run emergency fix (will switch to full app in later phases)
+# Phase 4: Try running real API service with fallback to emergency fix
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["python", "emergency_fix.py"]
+CMD ["sh", "-c", "uvicorn src.api_service:app --host 0.0.0.0 --port ${PORT:-8080} || python emergency_fix.py"]
