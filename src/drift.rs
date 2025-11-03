@@ -1,13 +1,11 @@
 /*!
 Sentinel Drift Detection System (PRD_05)
-10x faster than Python thanks to Rust + rust-bert
+Simplified version for initial deployment (without ML dependencies)
+TODO: Add rust-bert embeddings with libtorch dependencies
 */
 
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use rust_bert::pipelines::sentence_embeddings::{
-    SentenceEmbeddingsBuilder, SentenceEmbeddingsModel, SentenceEmbeddingsModelType,
-};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -24,22 +22,13 @@ pub struct DriftAnalysis {
 }
 
 pub struct SentinelDetector {
-    embedding_model: SentenceEmbeddingsModel,
     threshold_stable: f32,
     threshold_decayed: f32,
 }
 
 impl SentinelDetector {
     pub async fn new() -> Result<Self> {
-        // Load sentence embedding model (all-MiniLM-L6-v2)
-        // This downloads the model on first run and caches it
-        let embedding_model = SentenceEmbeddingsBuilder::remote(
-            SentenceEmbeddingsModelType::AllMiniLmL6V2
-        )
-        .create_model()?;
-
         Ok(Self {
-            embedding_model,
             threshold_stable: 0.3,
             threshold_decayed: 0.7,
         })
@@ -82,14 +71,9 @@ impl SentinelDetector {
             };
         }
 
-        // Generate embeddings (10x faster than Python!)
-        let embeddings = self.embedding_model.encode(&[
-            current_answer,
-            baseline_answer,
-        ]).unwrap();
-
-        // Compute cosine similarity
-        let similarity = cosine_similarity(&embeddings[0], &embeddings[1]);
+        // Use Jaccard similarity on word tokens (simplified version)
+        // TODO: Replace with rust-bert embeddings for production
+        let similarity = jaccard_similarity(current_answer, baseline_answer);
         let similarity = similarity.clamp(0.0, 1.0);
 
         // Compute drift score
@@ -127,14 +111,28 @@ impl SentinelDetector {
     }
 }
 
-fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
-    let dot_product: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
-    let magnitude_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
-    let magnitude_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
+/// Simplified Jaccard similarity on word tokens
+/// TODO: Replace with semantic embeddings (rust-bert) for production
+fn jaccard_similarity(a: &str, b: &str) -> f32 {
+    use std::collections::HashSet;
 
-    if magnitude_a == 0.0 || magnitude_b == 0.0 {
+    let words_a: HashSet<&str> = a.split_whitespace().collect();
+    let words_b: HashSet<&str> = b.split_whitespace().collect();
+
+    if words_a.is_empty() && words_b.is_empty() {
+        return 1.0;
+    }
+
+    if words_a.is_empty() || words_b.is_empty() {
         return 0.0;
     }
 
-    dot_product / (magnitude_a * magnitude_b)
+    let intersection = words_a.intersection(&words_b).count();
+    let union = words_a.union(&words_b).count();
+
+    if union == 0 {
+        return 0.0;
+    }
+
+    intersection as f32 / union as f32
 }
