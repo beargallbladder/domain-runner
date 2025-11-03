@@ -1,0 +1,8 @@
+{
+  "serviceDetails": {
+    "env": "docker",
+    "dockerfilePath": "./Dockerfile",
+    "dockerContext": ".",
+    "healthCheckPath": "/healthz"
+  }
+}

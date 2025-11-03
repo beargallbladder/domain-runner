@@ -1,0 +1,26 @@
+{
+  "type": "web_service",
+  "name": "domain-runner-api",
+  "ownerId": "tea-d11fnnm3jp1c73euph3g",
+  "repo": "https://github.com/beargallbladder/domain-runner",
+  "autoDeploy": "yes",
+  "branch": "main",
+  "serviceDetails": {
+    "env": "docker",
+    "healthCheckPath": "/healthz",
+    "plan": "starter",
+    "region": "oregon",
+    "dockerfilePath": "./Dockerfile",
+    "dockerContext": "."
+  },
+  "envVars": [
+    {
+      "key": "PYTHONUNBUFFERED",
+      "value": "1"
+    },
+    {
+      "key": "DATABASE_URL",
+      "value": "postgresql://nexus@dpg-d3c6odj7mgec73a930n0-a/domain_runner"
+    }
+  ]
+}
