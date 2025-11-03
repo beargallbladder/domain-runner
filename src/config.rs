@@ -1,156 +1,93 @@
-use crate::error::Result;
-use config::{Config, ConfigError, Environment};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+/*!
+Configuration and Settings
+*/
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+use serde::Deserialize;
+use std::env;
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
-    // Environment
-    pub env: String,
-    pub port: u16,
-    pub host: String,
-
     // Database
     pub database_url: String,
 
     // LLM API Keys
     pub openai_api_key: Option<String>,
     pub anthropic_api_key: Option<String>,
-    pub deepseek_api_key: Option<String>,
-    pub mistral_api_key: Option<String>,
-    pub cohere_api_key: Option<String>,
-    pub ai21_api_key: Option<String>,
-    pub google_api_key: Option<String>,
-    pub groq_api_key: Option<String>,
     pub together_api_key: Option<String>,
-    pub perplexity_api_key: Option<String>,
-    pub xai_api_key: Option<String>,
 
-    // Worker settings
-    pub worker_interval_sec: u64,
-    pub worker_batch_size: usize,
-    pub enable_drift_monitoring: bool,
-    pub enable_tensor_processing: bool,
+    // Sentinel Configuration
+    pub drift_threshold_stable: f32,
+    pub drift_threshold_decayed: f32,
+    pub similarity_window_days: i64,
 
-    // Embedding settings
-    pub embed_provider: String,
-    pub embed_model: String,
+    // LLM Configuration
+    pub llm_timeout_seconds: u64,
+    pub llm_max_retries: u32,
+    pub llm_temperature: f32,
+    pub llm_max_tokens: u32,
 
-    // Safety flags - default to read-only for production safety
-    pub db_readonly: bool,
-    pub feature_write_drift: bool,
-    pub feature_cron: bool,
-    pub feature_worker_writes: bool,
+    // Feature Flags
+    pub enable_drift_detection: bool,
+    pub enable_competitive_ranking: bool,
 }
 
 impl Settings {
-    pub fn new() -> Result<Self> {
-        // Load .env file if it exists
+    pub fn load() -> anyhow::Result<Self> {
+        // Load .env file if exists
         dotenvy::dotenv().ok();
 
-        let config = Config::builder()
-            // Set defaults
-            .set_default("env", "development")?
-            .set_default("port", 8080)?
-            .set_default("host", "0.0.0.0")?
-            .set_default("worker_interval_sec", 300)?
-            .set_default("worker_batch_size", 10)?
-            .set_default("enable_drift_monitoring", true)?
-            .set_default("enable_tensor_processing", true)?
-            .set_default("embed_provider", "openai")?
-            .set_default("embed_model", "text-embedding-3-small")?
-            // Safety defaults - start in read-only mode
-            .set_default("db_readonly", true)?  // DEFAULT TO SAFE
-            .set_default("feature_write_drift", false)?
-            .set_default("feature_cron", false)?
-            .set_default("feature_worker_writes", false)?
-            // Add environment variables
-            .add_source(Environment::default())
-            // Override with PORT if set (for Render)
-            .add_source(
-                Environment::with_prefix("PORT")
-                    .try_parsing(true)
-                    .separator("_"),
-            )
-            .build()?;
+        Ok(Self {
+            database_url: env::var("DATABASE_URL")
+                .unwrap_or_else(|_| "postgresql://nexus:IbzPnTJnqc8g0JbdVvBVITq5NVf4Rwu3@dpg-d3c6odj7mgec73a930n0-a.oregon-postgres.render.com/domain_runner".to_string()),
 
-        let mut settings: Settings = config.try_deserialize()?;
+            openai_api_key: env::var("OPENAI_API_KEY").ok(),
+            anthropic_api_key: env::var("ANTHROPIC_API_KEY").ok(),
+            together_api_key: env::var("TOGETHER_API_KEY").ok(),
 
-        // Use PORT env var if set (Render compatibility)
-        if let Ok(port) = std::env::var("PORT") {
-            if let Ok(p) = port.parse::<u16>() {
-                settings.port = p;
-            }
-        }
+            drift_threshold_stable: env::var("DRIFT_THRESHOLD_STABLE")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0.3),
 
-        Ok(settings)
-    }
+            drift_threshold_decayed: env::var("DRIFT_THRESHOLD_DECAYED")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0.7),
 
-    /// Get all available LLM API keys
-    pub fn get_available_llm_keys(&self) -> HashMap<String, String> {
-        let mut keys = HashMap::new();
+            similarity_window_days: env::var("SIMILARITY_WINDOW_DAYS")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(7),
 
-        if let Some(ref key) = self.openai_api_key {
-            keys.insert("openai".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.anthropic_api_key {
-            keys.insert("anthropic".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.deepseek_api_key {
-            keys.insert("deepseek".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.mistral_api_key {
-            keys.insert("mistral".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.cohere_api_key {
-            keys.insert("cohere".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.ai21_api_key {
-            keys.insert("ai21".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.google_api_key {
-            keys.insert("google".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.groq_api_key {
-            keys.insert("groq".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.together_api_key {
-            keys.insert("together".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.perplexity_api_key {
-            keys.insert("perplexity".to_string(), key.clone());
-        }
-        if let Some(ref key) = self.xai_api_key {
-            keys.insert("xai".to_string(), key.clone());
-        }
+            llm_timeout_seconds: env::var("LLM_TIMEOUT_SECONDS")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(30),
 
-        keys
-    }
+            llm_max_retries: env::var("LLM_MAX_RETRIES")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(2),
 
-    /// Check if configuration is valid
-    pub fn validate(&self) -> Result<()> {
-        if self.database_url.is_empty() {
-            return Err(crate::error::Error::Config(
-                "DATABASE_URL not configured".to_string(),
-            ));
-        }
+            llm_temperature: env::var("LLM_TEMPERATURE")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0.0),
 
-        let available_keys = self.get_available_llm_keys();
-        if available_keys.is_empty() {
-            tracing::warn!("No LLM API keys configured");
-        } else {
-            tracing::info!(
-                "Available LLM providers: {:?}",
-                available_keys.keys().collect::<Vec<_>>()
-            );
-        }
+            llm_max_tokens: env::var("LLM_MAX_TOKENS")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(500),
 
-        Ok(())
-    }
-}
+            enable_drift_detection: env::var("ENABLE_DRIFT_DETECTION")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(true),
 
-impl Default for Settings {
-    fn default() -> Self {
-        Self::new().expect("Failed to load settings")
+            enable_competitive_ranking: env::var("ENABLE_COMPETITIVE_RANKING")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(true),
+        })
     }
 }

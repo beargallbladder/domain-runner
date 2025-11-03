@@ -1,298 +1,210 @@
-use crate::domain::*;
-use crate::error::Result;
-use crate::{Settings, Error};
+/*!
+Database Layer
+Preserves existing schema, adds Sentinel drift_scores table
+*/
+
 use chrono::{DateTime, Utc};
-use serde_json::json;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use std::time::Duration;
-use tracing::{error, info, warn};
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
+
+use crate::drift::DriftAnalysis;
 
 #[derive(Clone)]
 pub struct Database {
-    pub pool: Pool<Postgres>,  // Make pool accessible for direct queries
-    settings: Settings,
+    pool: PgPool,
+}
+
+#[derive(Debug)]
+pub struct DriftStats {
+    pub total: i64,
+    pub stable: i64,
+    pub drifting: i64,
+    pub decayed: i64,
 }
 
 impl Database {
-    /// Create new database connection pool with retry logic
-    pub async fn new(database_url: &str, settings: Settings) -> Result<Self> {
-        let max_retries = 10;
-        let retry_delay = Duration::from_secs(5);
-
-        for attempt in 1..=max_retries {
-            match PgPoolOptions::new()
-                .max_connections(20)
-                .min_connections(2)
-                .connect_timeout(Duration::from_secs(10))
-                .connect(database_url)
-                .await
-            {
-                Ok(pool) => {
-                    info!("Database connected on attempt {} (read_only={})", attempt, settings.db_readonly);
-                    return Ok(Self { pool, settings });
-                }
-                Err(e) if attempt < max_retries => {
-                    warn!(
-                        "Database connection failed (attempt {}/{}): {}, retrying in {:?}",
-                        attempt, max_retries, e, retry_delay
-                    );
-                    tokio::time::sleep(retry_delay).await;
-                }
-                Err(e) => {
-                    error!("Database connection failed after {} attempts: {}", max_retries, e);
-                    return Err(e.into());
-                }
-            }
-        }
-
-        unreachable!()
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
     }
 
-    /// Run migrations
-    pub async fn migrate(&self) -> Result<()> {
-        sqlx::migrate!("./migrations").run(&self.pool).await?;
-        info!("Database migrations applied");
-        Ok(())
-    }
-
-    /// Get domain responses
-    pub async fn get_domain_responses(
-        &self,
-        start_date: Option<DateTime<Utc>>,
-        end_date: Option<DateTime<Utc>>,
-        limit: i64,
-    ) -> Result<Vec<DomainResponse>> {
-        let mut query = sqlx::query_as::<_, DomainResponse>(
-            r#"
-            SELECT dr.*
-            FROM domain_responses dr
-            WHERE ($1::timestamptz IS NULL OR dr.timestamp >= $1)
-              AND ($2::timestamptz IS NULL OR dr.timestamp <= $2)
-            ORDER BY dr.timestamp DESC
-            LIMIT $3
-            "#,
-        );
-
-        query = query.bind(start_date).bind(end_date).bind(limit);
-
-        Ok(query.fetch_all(&self.pool).await?)
-    }
-
-    /// Get model performance statistics
-    pub async fn get_model_performance_stats(&self) -> Result<Vec<ModelPerformance>> {
-        let stats = sqlx::query_as!(
-            ModelPerformance,
-            r#"
-            SELECT
-                llm_model,
-                COUNT(*) as "total_calls!",
-                AVG(response_time_ms) as "avg_response_time!",
-                AVG(token_count) as "avg_tokens!",
-                SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END)::float8 / COUNT(*) as "success_rate!",
-                MAX(timestamp) as "last_used!"
-            FROM domain_responses
-            WHERE timestamp > NOW() - INTERVAL '7 days'
-            GROUP BY llm_model
-            ORDER BY total_calls DESC
-            "#
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(stats)
-    }
-
-    /// Get domain coverage metrics
-    pub async fn get_domain_coverage(&self) -> Result<DomainCoverage> {
-        let coverage = sqlx::query_as!(
-            DomainCoverage,
-            r#"
-            WITH expected_domains AS (
-                SELECT COUNT(DISTINCT domain) as total
-                FROM domains
-                WHERE active = true
-            ),
-            observed_domains AS (
-                SELECT COUNT(DISTINCT domain) as total
-                FROM domain_responses
-                WHERE timestamp > NOW() - INTERVAL '24 hours'
-                AND status = 'success'
-            )
-            SELECT
-                ed.total as "expected!",
-                od.total as "observed!",
-                CASE
-                    WHEN ed.total > 0
-                    THEN od.total::float8 / ed.total
-                    ELSE 0
-                END as "coverage!"
-            FROM expected_domains ed, observed_domains od
-            "#
-        )
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(coverage)
-    }
-
-    /// Get drift scores for a domain
-    pub async fn get_domain_drift(&self, domain: &str) -> Result<Vec<DriftScore>> {
-        let scores = sqlx::query_as!(
-            DriftScore,
-            r#"
-            SELECT
-                drift_id,
-                domain,
-                prompt_id,
-                model,
-                ts_iso,
-                similarity_prev,
-                drift_score,
-                status as "status: DriftStatus",
-                explanation
-            FROM drift_scores
-            WHERE domain = $1
-            ORDER BY ts_iso DESC
-            LIMIT 10
-            "#,
-            domain
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(scores)
-    }
-
-    /// Get all domains with their status
-    pub async fn get_domains(&self) -> Result<Vec<Domain>> {
-        let domains = sqlx::query_as!(
-            Domain,
-            r#"
-            SELECT
-                domain,
-                category,
-                priority,
-                active,
-                created_at
-            FROM domains
-            WHERE active = true
-            ORDER BY priority DESC, domain
-            "#
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(domains)
-    }
-
-    /// Audit log for tracking all operations
-    async fn audit_log(&self, action: &str, table: &str, record_id: &str, value: serde_json::Value) -> Result<()> {
-        sqlx::query!(
-            r#"
-            INSERT INTO rust_audit_log (action, table_name, record_id, new_value, db_readonly, feature_flags)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            "#,
-            action,
-            table,
-            record_id,
-            value,
-            self.settings.db_readonly,
-            json!({
-                "write_drift": self.settings.feature_write_drift,
-                "cron": self.settings.feature_cron,
-                "worker_writes": self.settings.feature_worker_writes
-            })
-        )
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
-
-    /// Save a domain response
-    pub async fn save_domain_response(&self, response: &DomainResponse) -> Result<Uuid> {
-        // Check read-only mode
-        if self.settings.db_readonly {
-            warn!("Attempted to save domain response in read-only mode");
-            self.audit_log(
-                "BLOCKED_WRITE",
-                "domain_responses",
-                &response.id.to_string(),
-                json!(response),
-            )
-            .await?;
-            return Err(Error::BadRequest("Database is in read-only mode".to_string()));
-        }
-        let id = sqlx::query_scalar!(
-            r#"
-            INSERT INTO domain_responses (
-                id, domain, llm_model, llm_response, timestamp,
-                token_count, response_time_ms, status, prompt_type, embedding
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING id
-            "#,
-            response.id,
-            response.domain,
-            response.llm_model,
-            response.llm_response,
-            response.timestamp,
-            response.token_count,
-            response.response_time_ms,
-            response.status as ResponseStatus,
-            response.prompt_type,
-            response.embedding.as_deref()
-        )
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(id)
-    }
-
-    /// Save drift score
-    pub async fn save_drift_score(&self, drift: &DriftScore) -> Result<Uuid> {
-        // Check read-only mode AND feature flag
-        if self.settings.db_readonly || !self.settings.feature_write_drift {
-            warn!("Attempted to save drift score in read-only mode or feature disabled");
-            self.audit_log(
-                "BLOCKED_WRITE",
-                "drift_scores",
-                &drift.drift_id.to_string(),
-                json!(drift),
-            )
-            .await?;
-            return Err(Error::BadRequest("Drift writes are disabled".to_string()));
-        }
-        let id = sqlx::query_scalar!(
-            r#"
-            INSERT INTO drift_scores (
-                drift_id, domain, prompt_id, model, ts_iso,
-                similarity_prev, drift_score, status, explanation
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING drift_id
-            "#,
-            drift.drift_id,
-            drift.domain,
-            drift.prompt_id,
-            drift.model,
-            drift.ts_iso,
-            drift.similarity_prev,
-            drift.drift_score,
-            drift.status as DriftStatus,
-            drift.explanation
-        )
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(id)
-    }
-
-    /// Check if database is healthy
     pub async fn health_check(&self) -> bool {
         sqlx::query("SELECT 1")
             .fetch_one(&self.pool)
             .await
             .is_ok()
+    }
+
+    pub async fn get_or_create_domain(&self, domain: &str) -> Result<Uuid, sqlx::Error> {
+        // Try to get existing domain
+        let existing = sqlx::query!(
+            "SELECT id FROM domains WHERE domain = $1",
+            domain
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        if let Some(row) = existing {
+            return Ok(row.id);
+        }
+
+        // Create new domain
+        let id = Uuid::new_v4();
+        sqlx::query!(
+            "INSERT INTO domains (id, domain, status, priority, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6)",
+            id,
+            domain,
+            "pending",
+            0,
+            Utc::now(),
+            Utc::now()
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(id)
+    }
+
+    pub async fn store_response(
+        &self,
+        domain_id: Uuid,
+        model: &str,
+        prompt_id: Uuid,
+        answer: &str,
+        normalized_status: &str,
+    ) -> Result<(), sqlx::Error> {
+        let id = Uuid::new_v4();
+
+        sqlx::query!(
+            "INSERT INTO domain_responses (id, domain_id, model, prompt_id, answer, ts_iso, normalized_status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            id,
+            domain_id,
+            model,
+            prompt_id,
+            answer,
+            Utc::now(),
+            normalized_status
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn get_baseline(
+        &self,
+        domain: &str,
+        model: &str,
+        exclude_prompt_id: Uuid,
+    ) -> Result<Option<String>, sqlx::Error> {
+        let result = sqlx::query!(
+            r#"
+            SELECT dr.answer
+            FROM domain_responses dr
+            JOIN domains d ON dr.domain_id = d.id
+            WHERE d.domain = $1
+              AND dr.model = $2
+              AND dr.normalized_status = 'valid'
+              AND dr.prompt_id != $3
+            ORDER BY dr.ts_iso DESC
+            LIMIT 1
+            "#,
+            domain,
+            model,
+            exclude_prompt_id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.and_then(|r| r.answer))
+    }
+
+    pub async fn store_drift(&self, drift: &DriftAnalysis) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "INSERT INTO drift_scores (drift_id, domain, prompt_id, model, ts_iso, similarity_prev, drift_score, status, explanation)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+            drift.drift_id,
+            &drift.domain,
+            drift.prompt_id,
+            &drift.model,
+            drift.timestamp,
+            drift.similarity_prev as f64,
+            drift.drift_score as f64,
+            &drift.status,
+            &drift.explanation
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn get_drift_stats(&self, domain: &str) -> Result<DriftStats, sqlx::Error> {
+        let row = sqlx::query!(
+            r#"
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE status = 'stable') as stable,
+                COUNT(*) FILTER (WHERE status = 'drifting') as drifting,
+                COUNT(*) FILTER (WHERE status = 'decayed') as decayed
+            FROM drift_scores
+            WHERE domain = $1
+            "#,
+            domain
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(DriftStats {
+            total: row.total.unwrap_or(0),
+            stable: row.stable.unwrap_or(0),
+            drifting: row.drifting.unwrap_or(0),
+            decayed: row.decayed.unwrap_or(0),
+        })
+    }
+
+    pub async fn get_latest_drift(&self, domain: &str) -> Result<Option<DriftAnalysis>, sqlx::Error> {
+        let result = sqlx::query!(
+            r#"
+            SELECT drift_id, domain, prompt_id, model, ts_iso, similarity_prev, drift_score, status, explanation
+            FROM drift_scores
+            WHERE domain = $1
+            ORDER BY ts_iso DESC
+            LIMIT 1
+            "#,
+            domain
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.map(|r| DriftAnalysis {
+            drift_id: r.drift_id,
+            domain: r.domain,
+            model: r.model,
+            prompt_id: r.prompt_id,
+            timestamp: r.ts_iso,
+            similarity_prev: r.similarity_prev as f32,
+            drift_score: r.drift_score as f32,
+            status: r.status,
+            explanation: r.explanation.unwrap_or_default(),
+        }))
+    }
+
+    pub async fn update_domain_status(&self, domain_id: Uuid, status: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "UPDATE domains SET status = $1, updated_at = $2 WHERE id = $3",
+            status,
+            Utc::now(),
+            domain_id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub fn pool(&self) -> &PgPool {
+        &self.pool
     }
 }

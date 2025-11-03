@@ -1,64 +1,56 @@
-# Phase 5: Add all dependencies
-FROM python:3.11-slim
+# =============================================================================
+# Domain Runner v2.0 - Rust Production Dockerfile
+# Multi-stage build for optimal size and performance
+# =============================================================================
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    PORT=8080
+# Stage 1: Build
+FROM rust:1.75-slim as builder
 
 WORKDIR /app
 
-# System dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    tini \
-    libpq5 \
-    gcc \
-    g++ \
-    postgresql-client \
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Phase 5: Production essentials (lightweight)
-RUN pip install --no-cache-dir \
-    fastapi==0.104.1 \
-    uvicorn[standard]==0.24.0 \
-    psycopg2-binary==2.9.9 \
-    sqlalchemy==2.0.23 \
-    python-dotenv==1.0.0 \
-    pyyaml==6.0.1 \
-    jsonschema==4.20.0 \
-    requests==2.31.0 \
-    httpx==0.25.2 \
-    aiohttp==3.9.5 \
-    click==8.1.7 \
-    rich==13.7.0 \
-    structlog==23.2.0 \
-    prometheus-client==0.19.0 \
-    openai==1.6.1 \
-    anthropic==0.8.1 \
-    together==1.0.1 \
-    redis==5.0.1
+# Copy manifests
+COPY Cargo.toml Cargo.lock ./
 
-# Copy application files
-COPY emergency_fix.py ./emergency_fix.py
+# Create dummy main to cache dependencies
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    cargo build --release && \
+    rm -rf src
+
+# Copy source code
 COPY src ./src
-COPY config ./config
-COPY schemas ./schemas
-COPY orchestrator.py ./orchestrator.py
-COPY agents ./agents
+COPY migrations ./migrations
 
-# Copy .env.example as fallback
-COPY .env.example ./.env.example
+# Build application
+RUN touch src/main.rs && \
+    cargo build --release
 
-# Create runtime directories
-RUN mkdir -p artifacts logs
+# Stage 2: Runtime
+FROM debian:bookworm-slim
 
-EXPOSE 8080
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy binary from builder
+COPY --from=builder /app/target/release/domain-runner /app/domain-runner
+
+# Copy migrations
+COPY --from=builder /app/migrations /app/migrations
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/healthz || exit 1
+  CMD curl -f http://localhost:${PORT:-8080}/healthz || exit 1
 
-# Phase 4: Try running real API service with fallback to emergency fix
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["sh", "-c", "uvicorn src.api_service:app --host 0.0.0.0 --port ${PORT:-8080} || python emergency_fix.py"]
+# Run
+CMD ["/app/domain-runner"]
