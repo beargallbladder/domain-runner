@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy manifests
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml ./
+# Note: Cargo.lock will be generated during build if not present
 
 # Create dummy main to cache dependencies
 RUN mkdir src && \
