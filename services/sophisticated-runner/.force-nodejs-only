@@ -1,9 +1,0 @@
-FORCE_DEPLOYMENT=true
-SERVICE_TYPE=nodejs
-RUNTIME=node
-START_COMMAND=node dist/clean-index.js
-BUILD_COMMAND=npm cache clean --force && npm install && npm run build
-TIMESTAMP=2025-01-29T23:52:00Z
-VERSION=sophisticated-runner-clean-v2.0.0
-REMOVE_RUST=true
-DISABLE_DOCKER=true

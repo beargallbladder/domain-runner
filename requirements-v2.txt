@@ -1,0 +1,33 @@
+# =============================================================================
+# Domain Runner v2.0 Dependencies
+# Minimal clean stack for LLM brand memory tracking
+# =============================================================================
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+asyncpg==0.29.0
+
+# LLM Providers
+openai==1.6.1
+anthropic==0.8.1
+together==1.0.1
+
+# HTTP Client
+httpx==0.26.0
+aiohttp==3.9.5
+
+# Sentinel (Drift Detection)
+sentence-transformers==2.2.2
+scikit-learn==1.3.2
+numpy==1.24.4
+torch==2.1.2
+
+# Configuration & Utilities
+python-dotenv==1.0.0
+pydantic==2.5.2
+pydantic-settings==2.1.0

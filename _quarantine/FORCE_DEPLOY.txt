@@ -1,5 +1,0 @@
-FORCE DEPLOYMENT - CRITICAL FIX FOR 11 LLMS
-Timestamp: 2025-08-02 11:33 PST
-
-All 11 LLM providers have been fixed and are ready.
-This file forces a new deployment.
