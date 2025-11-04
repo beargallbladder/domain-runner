@@ -4,7 +4,8 @@
 # =============================================================================
 
 # Stage 1: Build
-FROM rust:1.81-slim as builder
+# Using nightly to support edition2024 (required by some dependencies)
+FROM rustlang/rust:nightly-slim as builder
 
 WORKDIR /app
 
