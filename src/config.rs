@@ -10,10 +10,18 @@ pub struct Settings {
     // Database
     pub database_url: String,
 
-    // LLM API Keys
+    // LLM API Keys (add more as needed - all optional)
     pub openai_api_key: Option<String>,
     pub anthropic_api_key: Option<String>,
     pub together_api_key: Option<String>,
+    pub google_ai_api_key: Option<String>,
+    pub cohere_api_key: Option<String>,
+    pub groq_api_key: Option<String>,
+    pub perplexity_api_key: Option<String>,
+    pub mistral_api_key: Option<String>,
+    pub ai21_api_key: Option<String>,
+    pub replicate_api_key: Option<String>,
+    pub huggingface_api_key: Option<String>,
 
     // Sentinel Configuration
     pub drift_threshold_stable: f32,
@@ -43,6 +51,14 @@ impl Settings {
             openai_api_key: env::var("OPENAI_API_KEY").ok(),
             anthropic_api_key: env::var("ANTHROPIC_API_KEY").ok(),
             together_api_key: env::var("TOGETHER_API_KEY").ok(),
+            google_ai_api_key: env::var("GOOGLE_AI_API_KEY").ok(),
+            cohere_api_key: env::var("COHERE_API_KEY").ok(),
+            groq_api_key: env::var("GROQ_API_KEY").ok(),
+            perplexity_api_key: env::var("PERPLEXITY_API_KEY").ok(),
+            mistral_api_key: env::var("MISTRAL_API_KEY").ok(),
+            ai21_api_key: env::var("AI21_API_KEY").ok(),
+            replicate_api_key: env::var("REPLICATE_API_KEY").ok(),
+            huggingface_api_key: env::var("HUGGINGFACE_API_KEY").ok(),
 
             drift_threshold_stable: env::var("DRIFT_THRESHOLD_STABLE")
                 .ok()
