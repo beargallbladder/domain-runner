@@ -4,7 +4,7 @@
 # =============================================================================
 
 # Stage 1: Build
-FROM rust:1.75-slim as builder
+FROM rust:1.81-slim as builder
 
 WORKDIR /app
 
